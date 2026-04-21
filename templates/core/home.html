@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block topbar %}
+<header class="lg:hidden fixed top-0 inset-x-0 z-50 bg-white/96 backdrop-blur-xl border-b border-n-100" style="padding-top:env(safe-area-inset-top)">
+  <div class="flex items-center h-14 px-4 gap-2">
+    <a href="/" class="flex items-center gap-2 flex-shrink-0">
+      <div class="w-7 h-7 bg-p-600 rounded-lg flex items-center justify-center shadow-sm">
+        <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </div>
+      <span class="font-serif font-medium text-lg">Nyumba<span class="text-p-600">Hub</span></span>
+    </a>
+    <div class="flex-1"></div>
+    <a href="{% url 'search:results' %}" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-n-100 transition-colors">
+      <svg class="w-5 h-5 stroke-n-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    </a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'notifications:list' %}" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-n-100 transition-colors">
+        <svg class="w-5 h-5 stroke-n-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        {% if unread_notifications_count %}<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-p-500 ring-2 ring-white"></span>{% endif %}
+      </a>
+    {% else %}
+      <a href="{% url 'accounts:login' %}" class="text-sm font-semibold text-p-700 bg-p-50 hover:bg-p-100 px-4 py-1.5 rounded-full transition-colors">Sign in</a>
+    {% endif %}
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+
+{# ── Hero welcome strip (only for non-authenticated) ── #}
+{% if not user.is_authenticated %}
+<div class="bg-gradient-to-br from-p-900 via-p-800 to-n-900 text-white px-4 pt-8 pb-6 lg:px-8 lg:ml-0">
+  <div class="max-w-lg mx-auto lg:max-w-none">
+    <p class="text-xs font-semibold uppercase tracking-widest text-p-300 mb-2">Tanzania's trusted rental platform</p>
+    <h1 class="font-serif font-normal text-2xl lg:text-3xl leading-snug mb-3">Find your next home,<br><em>verified & safe.</em></h1>
+    <p class="text-sm text-p-200 mb-5 leading-relaxed">Thousands of verified rentals across Dar es Salaam, Arusha, Mwanza and beyond. No scammers.</p>
+    <div class="flex gap-2">
+      <a href="{% url 'search:results' %}?type=rental" class="btn-g btn-primary text-sm py-2.5 px-5 rounded-xl w-auto">Browse rentals</a>
+      <a href="{% url 'accounts:signup_role' %}" class="inline-flex items-center justify-center text-sm font-semibold text-white border border-white/30 hover:bg-white/10 px-5 py-2.5 rounded-xl transition-colors">List a property</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Category filter tabs ── #}
+<div class="sticky {% if not user.is_authenticated %}top-0{% else %}top-14{% endif %} z-40 bg-white/96 backdrop-blur-xl border-b border-n-100">
+  <div class="flex gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar">
+    <a href="?type=rental" class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all {% if active_type == 'rental' or not active_type %}bg-n-900 text-white shadow-sm{% else %}bg-n-100 text-n-600 hover:bg-n-200{% endif %}">
+      <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Rentals
+    </a>
+    <a href="?type=sme" class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all {% if active_type == 'sme' %}bg-n-900 text-white shadow-sm{% else %}bg-n-100 text-n-600 hover:bg-n-200{% endif %}">
+      <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      SME Shops
+    </a>
+    <a href="?type=auto" class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all {% if active_type == 'auto' %}bg-n-900 text-white shadow-sm{% else %}bg-n-100 text-n-600 hover:bg-n-200{% endif %}">
+      <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3v-4l2-5h9l4 5h1a2 2 0 010 4h-2"/></svg>
+      Autos
+    </a>
+    {% if active_type == 'rental' or not active_type %}
+      <div class="w-px bg-n-200 self-stretch mx-1 flex-shrink-0"></div>
+      <a href="?type=rental&property=hostel" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all {% if property_filter == 'hostel' %}bg-p-100 text-p-800{% else %}text-n-500 border border-n-200 hover:border-n-300{% endif %}">Student / Hostel</a>
+      <a href="?type=rental&property=self_contained" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all {% if property_filter == 'self_contained' %}bg-p-100 text-p-800{% else %}text-n-500 border border-n-200 hover:border-n-300{% endif %}">Self Contained</a>
+      <a href="?type=rental&property=bedsitter" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all {% if property_filter == 'bedsitter' %}bg-p-100 text-p-800{% else %}text-n-500 border border-n-200 hover:border-n-300{% endif %}">Bedsitter</a>
+      <a href="?type=rental&property=single_room" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all {% if property_filter == 'single_room' %}bg-p-100 text-p-800{% else %}text-n-500 border border-n-200 hover:border-n-300{% endif %}">Single Room</a>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Featured strip ── #}
+{% if featured_listings %}
+<div class="pt-4 pb-1">
+  <div class="flex items-center justify-between px-4 mb-2.5">
+    <p class="text-xs font-bold uppercase tracking-widest text-n-400">Featured</p>
+    <a href="{% url 'search:results' %}?type={{ active_type|default:'rental' }}" class="text-xs font-semibold text-p-600">See all →</a>
+  </div>
+  <div class="flex gap-3 px-4 overflow-x-auto no-scrollbar pb-1">
+    {% for listing in featured_listings %}{% include 'components/listing_card_featured.html' with listing=listing %}{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ── Main grid ── #}
+<div class="px-4 pt-4 pb-6 lg:px-6">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-base font-bold text-n-900">
+      {% if active_type == 'sme' %}Businesses near you
+      {% elif active_type == 'auto' %}Vehicles for sale
+      {% else %}Available rentals{% endif %}
+    </h2>
+    <a href="{% url 'search:results' %}?type={{ active_type|default:'rental' }}" class="text-xs font-semibold text-p-600">See all →</a>
+  </div>
+
+  {% if listings %}
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4" id="listings-grid">
+      {% for listing in listings %}{% include 'components/listing_card.html' with listing=listing %}{% endfor %}
+    </div>
+    {% if next_page %}
+      <div class="text-center mt-6">
+        <a href="?type={{ active_type|default:'rental' }}&page={{ next_page }}" class="inline-block text-sm font-semibold text-p-600 border border-p-200 bg-p-50 hover:bg-p-100 px-6 py-2.5 rounded-full transition-colors">Load more</a>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-16">
+      <div class="w-16 h-16 rounded-2xl bg-n-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 stroke-n-400 fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <p class="text-n-500 text-sm font-medium">No listings yet in this category</p>
+      {% if user.is_provider %}<a href="{% url 'listings:create' %}" class="inline-block mt-3 text-sm font-bold text-p-600">Be the first to post →</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

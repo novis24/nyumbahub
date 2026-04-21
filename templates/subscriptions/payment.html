@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block topbar %}{% endblock %}
+{% block title %}Payment{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-n-50 px-4 py-10 lg:px-6" x-data="{ method: 'mpesa' }">
+  <div class="max-w-md mx-auto">
+
+    <a href="{% url 'subscriptions:choose_plan' %}" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-6 transition-colors">
+      <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
+    </a>
+
+    {# Order summary #}
+    <div class="card p-5 mb-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-p-100 flex items-center justify-center flex-shrink-0">
+        <svg class="w-6 h-6 stroke-p-700 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <div class="flex-1">
+        <p class="text-sm font-bold text-n-900">{{ plan|title }} plan</p>
+        <p class="text-xs text-n-500 mt-0.5">Monthly subscription · auto-renews</p>
+      </div>
+      <p class="price text-xl font-bold text-n-900">TZS {{ plan_info.price_tzs|floatformat:0 }}</p>
+    </div>
+
+    <h1 class="text-xl font-bold text-n-900 mb-4">Choose payment method</h1>
+
+    {# Method selector #}
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <label class="cursor-pointer">
+        <input type="radio" x-model="method" value="mpesa" class="sr-only">
+        <div class="card p-4 text-center border-2 transition-all" :class="method==='mpesa'?'border-p-500 bg-p-50':'border-transparent hover:border-n-200'">
+          <p class="text-sm font-bold" :class="method==='mpesa'?'text-p-800':'text-n-700'">M-Pesa</p>
+          <p class="text-xs text-n-400 mt-0.5">Vodacom</p>
+        </div>
+      </label>
+      <label class="cursor-pointer">
+        <input type="radio" x-model="method" value="tigopesa" class="sr-only">
+        <div class="card p-4 text-center border-2 transition-all" :class="method==='tigopesa'?'border-p-500 bg-p-50':'border-transparent hover:border-n-200'">
+          <p class="text-sm font-bold" :class="method==='tigopesa'?'text-p-800':'text-n-700'">Tigo Pesa</p>
+          <p class="text-xs text-n-400 mt-0.5">Tigo</p>
+        </div>
+      </label>
+    </div>
+
+    {# Instructions #}
+    <div class="card p-4 mb-5">
+      <p class="text-xs font-bold uppercase tracking-widest text-n-400 mb-3">How to pay</p>
+      <div x-show="method==='mpesa'">
+        <ol class="space-y-2.5">
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Dial <strong>*150*00#</strong> on your Vodacom line</span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Select <strong>Lipa → Lipa kwa Namba</strong></span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Business number: <strong class="font-mono">123456</strong></span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Amount: <strong>TZS {{ plan_info.price_tzs|floatformat:0 }}</strong></span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">5</span><span>Enter your M-Pesa PIN to confirm</span></li>
+        </ol>
+      </div>
+      <div x-show="method==='tigopesa'" x-cloak>
+        <ol class="space-y-2.5">
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Dial <strong>*150*01#</strong> on your Tigo line</span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Select <strong>Payments → Pay Bill</strong></span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Business number: <strong class="font-mono">654321</strong></span></li>
+          <li class="flex gap-3 text-sm text-n-700"><span class="w-6 h-6 rounded-full bg-p-100 text-p-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Amount: <strong>TZS {{ plan_info.price_tzs|floatformat:0 }}</strong></span></li>
+        </ol>
+      </div>
+    </div>
+
+    {# Confirm form #}
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="method" :value="method">
+      <div>
+        <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Transaction reference number</label>
+        <input type="text" name="reference" placeholder="e.g. RI45BH298" class="field font-mono uppercase tracking-widest" required>
+        <p class="text-xs text-n-400 mt-1">M-Pesa/Tigo sends this after successful payment</p>
+      </div>
+      <button type="submit" class="btn-g btn-primary text-base py-4">
+        <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Confirm payment
+      </button>
+    </form>
+
+    <p class="text-center text-xs text-n-400 mt-4">Need help? <a href="mailto:support@nyumbahub.co.tz" class="text-p-600 font-semibold">support@nyumbahub.co.tz</a></p>
+  </div>
+</div>
+{% endblock %}

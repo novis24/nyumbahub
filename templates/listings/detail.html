@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% block topbar %}{% endblock %}
+{% block title %}{{ listing.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto lg:max-w-4xl"
+     x-data="{
+       img: 0,
+       saved: {% if is_saved %}true{% else %}false{% endif %},
+       contact: false,
+       totalImgs: {{ images|length }}
+     }">
+
+  {# ── Floating nav over image ── #}
+  <div class="fixed top-0 inset-x-0 z-50 pointer-events-none" style="padding-top:env(safe-area-inset-top)">
+    <div class="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto lg:max-w-4xl">
+      <a href="javascript:history.back()"
+         class="pointer-events-auto w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center shadow-lg transition-transform active:scale-95">
+        <svg class="w-5 h-5 stroke-white fill-none" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="flex items-center gap-2">
+        <button @click="
+          saved=!saved;
+          fetch('{% url 'listings:toggle_save' listing.id %}',{method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+        " class="pointer-events-auto w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center shadow-lg transition-transform active:scale-95">
+          <svg class="w-5 h-5 transition-all duration-200"
+               :class="saved?'fill-red-400 stroke-red-400':'fill-none stroke-white'"
+               viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Image gallery ── #}
+  <div class="relative bg-n-900 overflow-hidden" style="aspect-ratio:4/3">
+    {% if images %}
+      {% for image in images %}
+        <img src="{{ image.image.url }}" alt="{{ listing.title }}"
+             class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+             :class="img === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0'"
+             loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+      {% endfor %}
+      {# Gradient overlay #}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+      {# Dot indicators #}
+      {% if images|length > 1 %}
+        <div class="absolute bottom-4 inset-x-0 flex justify-center gap-1.5 pointer-events-none">
+          {% for image in images %}
+            <div class="rounded-full transition-all duration-300 bg-white"
+                 :class="img === {{ forloop.counter0 }} ? 'w-5 h-1.5 opacity-100' : 'w-1.5 h-1.5 opacity-50'"></div>
+          {% endfor %}
+        </div>
+        <button @click="img = Math.max(0, img-1)" class="absolute left-0 inset-y-0 w-1/3"></button>
+        <button @click="img = Math.min(totalImgs-1, img+1)" class="absolute right-0 inset-y-0 w-1/3"></button>
+      {% endif %}
+      {# Image counter #}
+      <div class="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+        <span x-text="img+1"></span>/{{ images|length }}
+      </div>
+    {% else %}
+      <div class="absolute inset-0 bg-gradient-to-br from-n-200 to-n-300 flex items-center justify-center">
+        <svg class="w-20 h-20 stroke-n-400 fill-none" viewBox="0 0 24 24" stroke-width="0.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── Thumbnail strip ── #}
+  {% if images|length > 1 %}
+    <div class="flex gap-2 px-4 py-2 overflow-x-auto no-scrollbar bg-white border-b border-n-100">
+      {% for image in images %}
+        <button @click="img = {{ forloop.counter0 }}"
+                class="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden ring-2 transition-all"
+                :class="img === {{ forloop.counter0 }} ? 'ring-p-500' : 'ring-transparent opacity-60'">
+          <img src="{{ image.image.url }}" alt="" class="w-full h-full object-cover">
+        </button>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ── Content ── #}
+  <div class="bg-white">
+
+    <div class="px-4 pt-5 pb-4">
+      {# Badges row #}
+      <div class="flex flex-wrap gap-1.5 mb-3">
+        {% if listing.is_featured %}<span class="badge bg-amber-100 text-amber-800">⭐ Featured</span>{% endif %}
+        {% if listing.allows_students %}<span class="badge bg-p-100 text-p-800">✓ Students welcome</span>{% endif %}
+        {% if listing.is_furnished %}<span class="badge bg-n-100 text-n-700">Furnished</span>{% endif %}
+        <span class="badge bg-n-100 text-n-600">{{ listing.get_listing_type_display }}</span>
+      </div>
+
+      {# Title + price #}
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <h1 class="text-xl font-bold text-n-900 leading-tight flex-1">{{ listing.title }}</h1>
+        <div class="text-right flex-shrink-0">
+          <p class="price text-xl font-bold text-n-900">{{ listing.price_per_month }}</p>
+          {% if listing.listing_type == 'rental' %}<p class="text-xs text-n-400">/ month</p>{% endif %}
+        </div>
+      </div>
+
+      {# Location #}
+      <div class="flex items-center gap-1.5 text-sm text-n-500">
+        <svg class="w-4 h-4 stroke-p-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>{{ listing.location }}, {{ listing.city }}</span>
+      </div>
+    </div>
+
+    {# ── Rental quick stats ── #}
+    {% if listing.listing_type == 'rental' %}
+    <div class="px-4 pb-4">
+      <div class="grid grid-cols-3 gap-2">
+        {% if listing.bedrooms is not None %}
+          <div class="bg-n-50 rounded-xl p-3 text-center">
+            <p class="text-xl font-bold text-n-900">{{ listing.bedrooms }}</p>
+            <p class="text-xs text-n-500 mt-0.5">Bed{{ listing.bedrooms|pluralize:"room,rooms" }}</p>
+          </div>
+        {% endif %}
+        {% if listing.bathrooms is not None %}
+          <div class="bg-n-50 rounded-xl p-3 text-center">
+            <p class="text-xl font-bold text-n-900">{{ listing.bathrooms }}</p>
+            <p class="text-xs text-n-500 mt-0.5">Bathroom{{ listing.bathrooms|pluralize }}</p>
+          </div>
+        {% endif %}
+        {% if listing.floor_number is not None %}
+          <div class="bg-n-50 rounded-xl p-3 text-center">
+            <p class="text-xl font-bold text-n-900">{{ listing.floor_number }}</p>
+            <p class="text-xs text-n-500 mt-0.5">Floor</p>
+          </div>
+        {% endif %}
+        {% if listing.property_type %}
+          <div class="bg-p-50 rounded-xl p-3 text-center col-span-{% if listing.bedrooms is None and listing.bathrooms is None %}3{% elif listing.floor_number is None %}2{% else %}3{% endif %}">
+            <p class="text-sm font-bold text-p-800">{{ listing.get_property_type_display }}</p>
+            <p class="text-xs text-p-600 mt-0.5">Property type</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Auto stats ── #}
+    {% if listing.listing_type == 'auto' %}
+    <div class="px-4 pb-4 grid grid-cols-2 gap-2">
+      {% if listing.vehicle_make %}<div class="bg-n-50 rounded-xl p-3"><p class="text-xs text-n-500">Make</p><p class="text-sm font-bold text-n-900 mt-0.5">{{ listing.vehicle_make }}</p></div>{% endif %}
+      {% if listing.vehicle_model %}<div class="bg-n-50 rounded-xl p-3"><p class="text-xs text-n-500">Model</p><p class="text-sm font-bold text-n-900 mt-0.5">{{ listing.vehicle_model }}</p></div>{% endif %}
+      {% if listing.vehicle_year %}<div class="bg-n-50 rounded-xl p-3"><p class="text-xs text-n-500">Year</p><p class="text-sm font-bold text-n-900 mt-0.5">{{ listing.vehicle_year }}</p></div>{% endif %}
+      {% if listing.mileage_km %}<div class="bg-n-50 rounded-xl p-3"><p class="text-xs text-n-500">Mileage</p><p class="text-sm font-bold text-n-900 mt-0.5">{{ listing.mileage_km|floatformat:0 }} km</p></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {# ── Amenities ── #}
+    {% if listing.amenities_list %}
+    <div class="px-4 pb-4 border-t border-n-50 pt-4">
+      <p class="text-sm font-bold text-n-900 mb-2.5">What's included</p>
+      <div class="flex flex-wrap gap-2">
+        {% for amenity in listing.amenities_list %}
+          <span class="flex items-center gap-1.5 px-3 py-1.5 bg-p-50 border border-p-100 rounded-full text-xs font-semibold text-p-800">
+            <span class="w-1.5 h-1.5 rounded-full bg-p-500 flex-shrink-0"></span>{{ amenity|title }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Description ── #}
+    <div class="px-4 pb-4 border-t border-n-50 pt-4" x-data="{expanded:false}">
+      <p class="text-sm font-bold text-n-900 mb-2">About this listing</p>
+      <div class="text-sm text-n-600 leading-relaxed" :class="expanded?'':'line-clamp-4'">
+        {{ listing.description|linebreaksbr }}
+      </div>
+      {% if listing.description|length > 220 %}
+        <button @click="expanded=!expanded" class="text-sm font-bold text-p-600 mt-2">
+          <span x-text="expanded?'Show less':'Read more'"></span>
+        </button>
+      {% endif %}
+    </div>
+
+    {# ── Stats row ── #}
+    <div class="px-4 pb-4 flex items-center gap-4 text-xs text-n-400 border-t border-n-50 pt-3">
+      <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>{{ listing.views_count }} views</span>
+      <span>·</span>
+      <span>Listed {{ listing.created_at|timesince }} ago</span>
+    </div>
+
+    {# ── Owner card ── #}
+    <div class="mx-4 mb-4 p-4 bg-n-50 rounded-2xl border border-n-100 flex items-center gap-3">
+      {% if listing.owner.avatar %}
+        <img src="{{ listing.owner.avatar.url }}" alt="" class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
+      {% else %}
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-p-400 to-p-700 flex items-center justify-center flex-shrink-0">
+          <span class="font-bold text-white">{{ listing.owner.first_name.0|upper }}{{ listing.owner.last_name.0|upper }}</span>
+        </div>
+      {% endif %}
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-n-900">{{ listing.owner.get_full_name|default:listing.owner.username }}</p>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          {% if listing.owner.is_verified %}
+            <svg class="w-3.5 h-3.5 fill-p-600" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span class="text-xs text-p-700 font-semibold">Verified landlord</span>
+          {% else %}
+            <span class="text-xs text-n-500">{{ listing.owner.get_role_display }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <a href="{% url 'accounts:profile' %}" class="text-xs font-semibold text-n-600 border border-n-200 px-3 py-1.5 rounded-full hover:bg-white transition-colors">View</a>
+    </div>
+
+    {# Spacer for CTA #}
+    <div class="h-24 lg:hidden"></div>
+  </div>
+
+  {# ── Sticky CTA (mobile) ── #}
+  <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/96 backdrop-blur-xl border-t border-n-100 px-4 pt-3 pb-safe">
+    <div class="max-w-2xl mx-auto">
+      {% if user.is_authenticated and not user.is_provider %}
+        <button @click="contact=true" class="btn-g btn-primary py-4 text-base">
+          <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          Contact landlord
+        </button>
+      {% elif not user.is_authenticated %}
+        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn-g btn-primary py-4 text-base">
+          Sign in to contact landlord
+        </a>
+      {% elif user.is_provider and user == listing.owner %}
+        <a href="{% url 'listings:edit' listing.slug %}" class="btn-g btn-dark py-4 text-base">
+          <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Edit listing
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Contact bottom sheet ── #}
+  <div x-show="contact" x-cloak class="fixed inset-0 z-50" @click.self="contact=false">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="contact=false"></div>
+    <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl px-5 pb-safe"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-end="translate-y-full">
+
+      <div class="w-10 h-1 bg-n-200 rounded-full mx-auto mt-4 mb-5"></div>
+
+      <div class="flex items-center gap-3 mb-5">
+        {% if listing.owner.avatar %}
+          <img src="{{ listing.owner.avatar.url }}" alt="" class="w-12 h-12 rounded-xl object-cover">
+        {% else %}
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-p-400 to-p-700 flex items-center justify-center">
+            <span class="font-bold text-white text-sm">{{ listing.owner.first_name.0|upper }}{{ listing.owner.last_name.0|upper }}</span>
+          </div>
+        {% endif %}
+        <div>
+          <p class="font-bold text-n-900">{{ listing.owner.get_full_name }}</p>
+          <p class="text-xs text-n-500 mt-0.5">Responds via phone or WhatsApp</p>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        {% if listing.owner.phone %}
+          <a href="tel:{{ listing.owner.phone }}"
+             class="flex items-center gap-4 p-4 bg-n-50 hover:bg-n-100 rounded-2xl border border-n-100 transition-colors">
+            <div class="w-11 h-11 rounded-xl bg-p-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 stroke-p-700 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-n-900">Call directly</p>
+              <p class="text-xs text-n-500">{{ listing.owner.phone }}</p>
+            </div>
+            <svg class="w-4 h-4 stroke-n-300 fill-none ml-auto" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+
+          <a href="https://wa.me/{{ listing.owner.phone|cut:'+' }}?text=Hello%2C+I+found+your+listing+%22{{ listing.title|urlencode }}%22+on+NyumbaHub+and+I%27m+interested."
+             target="_blank" rel="noopener"
+             class="flex items-center gap-4 p-4 bg-n-50 hover:bg-n-100 rounded-2xl border border-n-100 transition-colors">
+            <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 fill-green-600" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-n-900">WhatsApp</p>
+              <p class="text-xs text-n-500">Send a message instantly</p>
+            </div>
+            <svg class="w-4 h-4 stroke-n-300 fill-none ml-auto" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        {% else %}
+          <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-center">
+            <p class="text-sm text-amber-800 font-medium">This landlord hasn't added a phone number yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <button @click="contact=false" class="w-full py-3.5 text-sm font-semibold text-n-500 hover:text-n-700 transition-colors">Cancel</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

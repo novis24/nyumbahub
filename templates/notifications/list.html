@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-6 pb-10 max-w-lg mx-auto lg:px-6">
+
+  <h1 class="text-base font-semibold text-surface-900 mb-4">Notifications</h1>
+
+  {% if notifications %}
+    <div class="space-y-2">
+      {% for n in notifications %}
+        <div class="flex items-start gap-3 p-4 rounded-2xl border transition-colors
+                    {% if not n.is_read %}bg-brand-50 border-brand-100{% else %}bg-white border-surface-100{% endif %}">
+
+          {# Icon by type #}
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0
+                      {% if n.notification_type == 'listing_approved' %}bg-brand-100
+                      {% elif n.notification_type == 'kyc_approved' %}bg-brand-100
+                      {% elif n.notification_type == 'kyc_rejected' %}bg-red-100
+                      {% elif n.notification_type == 'sub_expiring' %}bg-amber-100
+                      {% else %}bg-surface-100{% endif %}">
+            {% if n.notification_type == 'listing_approved' or n.notification_type == 'kyc_approved' %}
+              <svg class="w-4 h-4 stroke-brand-600 fill-none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            {% elif n.notification_type == 'kyc_rejected' %}
+              <svg class="w-4 h-4 stroke-red-600 fill-none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            {% elif n.notification_type == 'sub_expiring' %}
+              <svg class="w-4 h-4 stroke-amber-600 fill-none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.193 2.5 1.732 2.5z"/>
+              </svg>
+            {% else %}
+              <svg class="w-4 h-4 stroke-surface-500 fill-none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            {% endif %}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-surface-900">{{ n.title }}</p>
+            {% if n.body %}
+              <p class="text-xs text-surface-500 mt-0.5 leading-relaxed">{{ n.body }}</p>
+            {% endif %}
+            <p class="text-[11px] text-surface-400 mt-1.5">{{ n.created_at|timesince }} ago</p>
+          </div>
+
+          {% if not n.is_read %}
+            <span class="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1.5"></span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20">
+      <div class="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 stroke-surface-400 fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </div>
+      <p class="text-surface-500 text-sm">No notifications yet</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block page_title %}Search{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-4 pb-10 max-w-2xl mx-auto lg:max-w-none lg:px-6"
+     x-data="{ showFilters: false }">
+
+  {# ── Search bar ── #}
+  <div class="mb-4">
+    <form method="get" action="{% url 'search:results' %}"
+          hx-get="{% url 'search:results' %}?partial=1"
+          hx-target="#search-grid"
+          hx-trigger="submit, change delay:500ms"
+          hx-push-url="true">
+
+      <div class="relative mb-3">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 stroke-surface-400 fill-none pointer-events-none"
+             viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by name, area, city…"
+               class="input-field pl-11 pr-4">
+      </div>
+
+      {# Type pills inline #}
+      <div class="flex gap-2 overflow-x-auto scroll-native no-scrollbar mb-3">
+        <a href="{% url 'search:results' %}{% if q %}?q={{ q }}&{% else %}?{% endif %}type="
+           class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all
+                  {% if not listing_type %}border-surface-900 bg-surface-900 text-white{% else %}border-surface-200 text-surface-600{% endif %}">
+          All
+        </a>
+        <a href="{% url 'search:results' %}{% if q %}?q={{ q }}&{% else %}?{% endif %}type=rental"
+           class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all
+                  {% if listing_type == 'rental' %}border-surface-900 bg-surface-900 text-white{% else %}border-surface-200 text-surface-600{% endif %}">
+          Rentals
+        </a>
+        <a href="{% url 'search:results' %}{% if q %}?q={{ q }}&{% else %}?{% endif %}type=sme"
+           class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all
+                  {% if listing_type == 'sme' %}border-surface-900 bg-surface-900 text-white{% else %}border-surface-200 text-surface-600{% endif %}">
+          SME
+        </a>
+        <a href="{% url 'search:results' %}{% if q %}?q={{ q }}&{% else %}?{% endif %}type=auto"
+           class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all
+                  {% if listing_type == 'auto' %}border-surface-900 bg-surface-900 text-white{% else %}border-surface-200 text-surface-600{% endif %}">
+          Auto
+        </a>
+
+        {# Filter toggle button #}
+        <button type="button" @click="showFilters = !showFilters"
+                class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border border-surface-200 text-surface-600 ml-auto">
+          <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          Filters
+          {% if min_price or max_price or property_type or furnished or students %}
+            <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+          {% endif %}
+        </button>
+      </div>
+
+      {# ── Filter panel (progressive — hidden by default) ── #}
+      <div x-show="showFilters" x-cloak
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 -translate-y-2"
+           x-transition:enter-end="opacity-100 translate-y-0"
+           class="bg-white rounded-2xl border border-surface-100 p-4 mb-3 space-y-4">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-surface-600 mb-1.5">Min price (TZS)</label>
+            <input type="number" name="min_price" value="{{ min_price }}"
+                   placeholder="50,000" class="input-field text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-surface-600 mb-1.5">Max price (TZS)</label>
+            <input type="number" name="max_price" value="{{ max_price }}"
+                   placeholder="500,000" class="input-field text-sm">
+          </div>
+        </div>
+
+        {% if listing_type == 'rental' or not listing_type %}
+          <div>
+            <label class="block text-xs font-medium text-surface-600 mb-1.5">Property type</label>
+            <select name="property" class="input-field text-sm">
+              <option value="">Any</option>
+              {% for val, label in property_choices %}
+                <option value="{{ val }}" {% if property_type == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="furnished" value="1"
+                     {% if furnished == '1' %}checked{% endif %}
+                     class="w-4 h-4 accent-brand-600">
+              <span class="text-sm text-surface-700">Furnished</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="students" value="1"
+                     {% if students == '1' %}checked{% endif %}
+                     class="w-4 h-4 accent-brand-600">
+              <span class="text-sm text-surface-700">Students OK</span>
+            </label>
+          </div>
+        {% endif %}
+
+        <div>
+          <label class="block text-xs font-medium text-surface-600 mb-1.5">City</label>
+          <input type="text" name="city" value="{{ city }}"
+                 placeholder="Dar es Salaam" class="input-field text-sm">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-surface-900 text-white font-semibold py-3 rounded-xl text-sm">
+          Apply filters
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  {# Result count #}
+  <p class="text-xs text-surface-400 mb-3">
+    {% if q %}Results for "<span class="text-surface-700 font-medium">{{ q }}</span>" · {% endif %}
+    {{ count }} listing{{ count|pluralize }}
+  </p>
+
+  {# ── Grid ── #}
+  <div id="search-grid">
+    {% if listings %}
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+        {% for listing in listings %}
+          {% include 'components/listing_card.html' with listing=listing %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-20">
+        <div class="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 stroke-surface-400 fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <p class="text-surface-500 text-sm">No listings match your search.</p>
+        <a href="{% url 'search:results' %}" class="inline-block mt-4 text-sm font-semibold text-brand-600">
+          Clear filters
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

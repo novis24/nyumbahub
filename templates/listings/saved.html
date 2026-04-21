@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block page_title %}Saved{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-6 pb-10 max-w-2xl mx-auto lg:max-w-none lg:px-6">
+
+  <h1 class="text-base font-semibold text-surface-900 mb-4">
+    Saved listings
+    <span class="text-surface-400 font-normal text-sm">({{ saved|length }})</span>
+  </h1>
+
+  {% if saved %}
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+      {% for item in saved %}
+        {% include 'components/listing_card.html' with listing=item.listing %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20">
+      <div class="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 stroke-surface-400 fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </div>
+      <p class="text-surface-500 text-sm">No saved listings yet</p>
+      <a href="{% url 'core:home' %}" class="inline-block mt-4 text-sm font-semibold text-brand-600">
+        Browse listings →
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

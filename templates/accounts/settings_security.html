@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block page_title %}Security{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-6 pb-10 max-w-lg mx-auto lg:px-6">
+
+  <a href="{% url 'accounts:settings' %}"
+     class="flex items-center gap-2 text-surface-400 mb-6">
+    <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+    <span class="text-sm">Settings</span>
+  </a>
+
+  <h1 class="text-xl font-serif font-normal text-surface-900 mb-6">Change password</h1>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1.5">Current password</label>
+      <input type="password" name="current_password"
+             class="input-field {% if form.current_password.errors %}border-red-400{% endif %}">
+      {% if form.current_password.errors %}
+        <p class="text-xs text-red-500 mt-1">{{ form.current_password.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1.5">New password</label>
+      <input type="password" name="new_password"
+             class="input-field {% if form.new_password.errors %}border-red-400{% endif %}">
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1.5">Confirm new password</label>
+      <input type="password" name="confirm_password"
+             class="input-field {% if form.confirm_password.errors %}border-red-400{% endif %}">
+      {% if form.non_field_errors %}
+        <p class="text-xs text-red-500 mt-1">{{ form.non_field_errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="pt-2">
+      <button type="submit"
+              class="w-full bg-surface-900 hover:bg-surface-800 active:scale-[0.98] text-white font-semibold
+                     py-4 rounded-2xl text-base transition-all">
+        Update password
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

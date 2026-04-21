@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block topbar %}{% endblock %}
+{% block title %}Choose a plan{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-n-50 px-4 py-10 lg:px-6">
+  <div class="max-w-lg mx-auto">
+
+    <div class="text-center mb-8">
+      <div class="w-12 h-12 bg-p-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 stroke-p-700 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-n-900 mb-1">Choose your plan</h1>
+      <p class="text-sm text-n-500">Pay monthly. Cancel anytime. Go live instantly.</p>
+    </div>
+
+    <form id="plan-form" method="post" action="{% url 'subscriptions:choose_plan' %}">{% csrf_token %}</form>
+
+    <div class="space-y-3 mb-6">
+
+      {# Basic #}
+      <label class="group block cursor-pointer">
+        <input type="radio" name="plan" value="basic" form="plan-form" class="sr-only">
+        <div class="card p-5 border-2 group-has-[:checked]:border-n-900 group-has-[:checked]:bg-n-50 border-transparent hover:border-n-200 transition-all">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <p class="font-bold text-n-900">Basic</p>
+              <p class="text-xs text-n-400 mt-0.5">Get started</p>
+            </div>
+            <div class="text-right">
+              <p class="price text-2xl font-bold text-n-900">15,000</p>
+              <p class="text-xs text-n-400">TZS / month</p>
+            </div>
+          </div>
+          <ul class="space-y-1.5">
+            <li class="flex items-center gap-2 text-xs text-n-600"><svg class="w-4 h-4 stroke-n-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Up to 3 active listings</li>
+            <li class="flex items-center gap-2 text-xs text-n-600"><svg class="w-4 h-4 stroke-n-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>3 photos per listing</li>
+            <li class="flex items-center gap-2 text-xs text-n-300"><svg class="w-4 h-4 stroke-n-300 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>No featured placement</li>
+          </ul>
+        </div>
+      </label>
+
+      {# Standard — popular #}
+      <label class="group block cursor-pointer">
+        <input type="radio" name="plan" value="standard" form="plan-form" checked class="sr-only">
+        <div class="card p-5 border-2 border-p-500 bg-p-50 relative">
+          <span class="absolute -top-3 left-5 badge bg-p-600 text-white text-[10px] shadow">Most popular</span>
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <p class="font-bold text-n-900">Standard</p>
+              <p class="text-xs text-n-400 mt-0.5">For active landlords</p>
+            </div>
+            <div class="text-right">
+              <p class="price text-2xl font-bold text-n-900">35,000</p>
+              <p class="text-xs text-n-400">TZS / month</p>
+            </div>
+          </div>
+          <ul class="space-y-1.5">
+            <li class="flex items-center gap-2 text-xs text-n-700"><svg class="w-4 h-4 stroke-p-600 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Up to 10 active listings</li>
+            <li class="flex items-center gap-2 text-xs text-n-700"><svg class="w-4 h-4 stroke-p-600 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>8 photos per listing</li>
+            <li class="flex items-center gap-2 text-xs text-n-700"><svg class="w-4 h-4 stroke-p-600 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Priority in search results</li>
+          </ul>
+        </div>
+      </label>
+
+      {# Premium #}
+      <label class="group block cursor-pointer">
+        <input type="radio" name="plan" value="premium" form="plan-form" class="sr-only">
+        <div class="card p-5 border-2 group-has-[:checked]:border-n-900 group-has-[:checked]:bg-n-50 border-transparent hover:border-n-200 transition-all">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <p class="font-bold text-n-900">Premium</p>
+              <p class="text-xs text-n-400 mt-0.5">Scale without limits</p>
+            </div>
+            <div class="text-right">
+              <p class="price text-2xl font-bold text-n-900">70,000</p>
+              <p class="text-xs text-n-400">TZS / month</p>
+            </div>
+          </div>
+          <ul class="space-y-1.5">
+            <li class="flex items-center gap-2 text-xs text-n-600"><svg class="w-4 h-4 stroke-n-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Unlimited active listings</li>
+            <li class="flex items-center gap-2 text-xs text-n-600"><svg class="w-4 h-4 stroke-n-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>20 photos per listing</li>
+            <li class="flex items-center gap-2 text-xs text-n-600"><svg class="w-4 h-4 stroke-n-500 fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Featured badge on all listings</li>
+          </ul>
+        </div>
+      </label>
+
+    </div>
+
+    <button type="submit" form="plan-form" class="btn-g btn-primary text-base py-4">
+      Continue to payment →
+    </button>
+    <p class="text-center text-xs text-n-400 mt-3">No charge until you confirm on the next screen.</p>
+
+  </div>
+</div>
+{% endblock %}
