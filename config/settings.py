@@ -17,6 +17,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='192.168.3.10').split(',')
 CSRF_TRUSTED_ORIGINS = [
     "https://iselltz.com",
     "https://www.iselltz.com",
+    "https://iselltz.onrender.com",
 ]
 
 # ─── Applications ─────────────────────────────────────────
