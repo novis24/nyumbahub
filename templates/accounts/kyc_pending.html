@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block page_title %}Verification Pending{% endblock %}
+{% block title %}Verification Pending{% endblock %}
+{% block content %}
+<div class="px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] lg:px-6 lg:pb-10">
+  <div class="mx-auto max-w-xl">
+    <a href="{% url 'accounts:settings' %}" class="inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
+      <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back to settings
+    </a>
+
+    <div class="mt-4 rounded-[2rem] border border-n-100 bg-white p-6 text-center shadow-sm lg:p-8">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100">
+        <svg class="h-8 w-8 stroke-amber-700 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h1 class="mt-5 text-2xl font-bold text-n-900">Verification in review</h1>
+      <p class="mt-3 text-sm leading-relaxed text-n-500">Your provider verification was submitted on {{ kyc.submitted_at|date:"d M Y" }} and is currently under review. We’ll update your profile as soon as the review is complete.</p>
+      <div class="mt-6 rounded-2xl border border-n-100 bg-n-50 p-4 text-left">
+        <p class="text-xs font-bold uppercase tracking-wide text-n-500">Current status</p>
+        <p class="mt-2 text-sm font-semibold text-amber-700">{{ kyc.get_status_display }}</p>
+      </div>
+      <a href="{% url 'accounts:settings' %}" class="btn-g btn-primary mt-6">Return to settings</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

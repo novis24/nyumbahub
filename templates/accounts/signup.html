@@ -15,6 +15,21 @@
       <h1 class="text-3xl font-bold text-n-900">Create your account</h1>
       <p class="mt-2 text-sm text-n-500">Fill in the essentials to get started on iSell.</p>
 
+      {% if form.errors %}
+        <div class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {% if form.non_field_errors %}
+            {{ form.non_field_errors.0 }}
+          {% else %}
+            We could not create your account yet. Please correct the highlighted fields and try again.
+          {% endif %}
+          {% for hidden in form.hidden_fields %}
+            {% if hidden.errors %}
+              <p class="mt-2 text-xs">{{ hidden.errors.0 }}</p>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <form method="post" class="mt-6 space-y-4" novalidate>
         {% csrf_token %}
         {{ form.role }}
@@ -74,7 +89,7 @@
         </div>
 
         <label class="flex cursor-pointer items-start gap-3 border border-n-200 bg-n-50 p-4 transition-colors hover:border-p-200 hover:bg-p-50">
-          <input type="checkbox" name="agree_terms" class="mt-0.5 h-4 w-4 flex-shrink-0 accent-p-600">
+          <input type="checkbox" name="agree_terms" {% if form.agree_terms.value %}checked{% endif %} class="mt-0.5 h-4 w-4 flex-shrink-0 accent-p-600">
           <span class="text-xs leading-relaxed text-n-500">I agree to iSell’s <a href="#" class="font-medium text-p-600 underline">Terms of Service</a> and <a href="#" class="font-medium text-p-600 underline">Privacy Policy</a>.</span>
         </label>
         {% if form.agree_terms.errors %}<p class="text-xs text-red-500">{{ form.agree_terms.errors.0 }}</p>{% endif %}

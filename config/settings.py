@@ -99,23 +99,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='nyumbahub'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default=''),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
-
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='nyumbahub'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
+
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=os.getenv("DATABASE_URL"),
+#         conn_max_age=600,
+#     )
+# }
 
 # ─── Auth ─────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -169,9 +169,9 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET', default=''),
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Using local storage in development, switch to Cloudinary in production
-# DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
@@ -203,10 +203,10 @@ EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', default=False)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=30, cast=int)
-EMAIL_BACKEND = config(
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+EMAIL_BACKEND = os.getenv(
     'EMAIL_BACKEND',
-    default=DEFAULT_SMTP_BACKEND if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD else CONSOLE_EMAIL_BACKEND,
+    DEFAULT_SMTP_BACKEND if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD else CONSOLE_EMAIL_BACKEND,
 )
 NON_DELIVERING_EMAIL_BACKENDS = {
     CONSOLE_EMAIL_BACKEND,

@@ -82,7 +82,7 @@ def signup(request):
         user = form.save()
         try:
             _send_welcome_email(request, user)
-        except (SMTPException, OSError, RuntimeError):
+        except Exception:
             logger.exception('Welcome email could not be sent for %s.', user.email)
             messages.warning(
                 request,
@@ -95,6 +95,11 @@ def signup(request):
         if user.is_provider and settings.PAYMENTS_ENABLED:
             return redirect('subscriptions:choose_plan')
         return redirect('core:home')
+    if request.method == 'POST' and form.errors:
+        messages.error(
+            request,
+            form.non_field_errors()[0] if form.non_field_errors() else 'We could not create your account yet. Please correct the highlighted fields and try again.',
+        )
 
     return render(request, 'accounts/signup.html', {
         'form': form,
