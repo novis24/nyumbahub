@@ -3,91 +3,201 @@
 {% block title %}Edit — {{ listing.title }}{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-5 pb-10 max-w-lg mx-auto lg:px-6">
-  <a href="{% url 'listings:my_listings' %}" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-5 transition-colors">
-    <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>My listings
-  </a>
-  <h1 class="text-xl font-bold text-n-900 mb-5">Edit listing</h1>
+<div class="px-4 pt-5 pb-10 lg:px-6">
+  <div class="mx-auto max-w-5xl">
+    <a href="{% url 'listings:my_listings' %}" class="inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
+      <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>My listings
+    </a>
 
-  <div class="card p-5">
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
+    <div class="mt-4 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-n-900">Edit listing</h1>
+        <p class="mt-1 text-sm text-n-500">Update the full details, manage photos, and control visibility from one place.</p>
+      </div>
+      <a href="{{ listing.get_absolute_url }}" class="inline-flex items-center gap-2 rounded-full border border-n-200 bg-white px-4 py-2 text-sm font-semibold text-n-700 transition-colors hover:bg-n-50">
+        <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Preview listing
+      </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
       {% csrf_token %}
-      <div>
-        <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Title</label>
-        <input type="text" name="title" value="{{ listing.title }}" class="field">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Price (TZS)</label>
-        <div class="relative">
-          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-n-400">TZS</span>
-          <input type="number" name="price" value="{{ listing.price }}" class="field pl-14">
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Area</label>
-          <input type="text" name="location" value="{{ listing.location }}" class="field">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">City</label>
-          <input type="text" name="city" value="{{ listing.city }}" class="field">
-        </div>
-      </div>
-      {% if listing.listing_type == 'rental' %}
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Bedrooms</label>
-            <input type="number" name="bedrooms" value="{{ listing.bedrooms|default:'' }}" min="0" class="field">
+
+      <div class="space-y-6">
+        <section class="card p-5 lg:p-6">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Title</label>
+              <input type="text" name="title" value="{{ form.title.value|default:listing.title }}" class="field {% if form.title.errors %}field-error{% endif %}">
+              {% if form.title.errors %}<p class="mt-1 text-xs text-red-500">{{ form.title.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Price (TZS)</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-n-400">TZS</span>
+                <input type="number" name="price" value="{{ form.price.value|default:listing.price }}" class="field pl-14 {% if form.price.errors %}field-error{% endif %}">
+              </div>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Status</label>
+              <select name="status" class="field">
+                {% for value, label in status_choices %}
+                  {% if value != 'expired' %}
+                    <option value="{{ value }}" {% if listing.status == value %}selected{% endif %}>{{ label }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Area / Street</label>
+              <input type="text" name="location" value="{{ form.location.value|default:listing.location }}" class="field {% if form.location.errors %}field-error{% endif %}">
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">City</label>
+              <input type="text" name="city" value="{{ form.city.value|default:listing.city }}" class="field">
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Bathrooms</label>
-            <input type="number" name="bathrooms" value="{{ listing.bathrooms|default:'' }}" min="0" class="field">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="flex items-center gap-3 p-3 bg-n-50 rounded-xl border border-n-100 cursor-pointer">
-            <input type="checkbox" name="is_furnished" {% if listing.is_furnished %}checked{% endif %} class="w-4 h-4 accent-p-600">
-            <span class="text-sm font-semibold text-n-800">Furnished</span>
-          </label>
-          <label class="flex items-center gap-3 p-3 bg-n-50 rounded-xl border border-n-100 cursor-pointer">
-            <input type="checkbox" name="allows_students" {% if listing.allows_students %}checked{% endif %} class="w-4 h-4 accent-p-600">
-            <span class="text-sm font-semibold text-n-800">Students OK</span>
-          </label>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-n-700 mb-2 uppercase tracking-wide">Amenities</label>
-          <div class="grid grid-cols-2 gap-2">
-            {% for amenity in amenity_choices %}
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-n-50 border border-n-100 cursor-pointer hover:bg-p-50 hover:border-p-200 transition-colors">
-                <input type="checkbox" name="amenities" value="{{ amenity }}" {% if amenity in listing.amenities_list %}checked{% endif %} class="w-3.5 h-3.5 accent-p-600">
-                <span class="text-sm font-medium text-n-700">{{ amenity|title }}</span>
+        </section>
+
+        <section class="card p-5 lg:p-6">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-n-700">Specific details</h2>
+
+          {% if listing.listing_type == 'rental' %}
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Property type</label>
+                <select name="property_type" class="field">
+                  <option value="">Select type…</option>
+                  {% for value, label in form.property_type.field.choices %}
+                    <option value="{{ value }}" {% if form.property_type.value|default:listing.property_type == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Bedrooms</label>
+                <input type="number" name="bedrooms" value="{{ form.bedrooms.value|default:listing.bedrooms|default:'' }}" min="0" class="field">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Bathrooms</label>
+                <input type="number" name="bathrooms" value="{{ form.bathrooms.value|default:listing.bathrooms|default:'' }}" min="0" class="field">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Floor number</label>
+                <input type="number" name="floor_number" value="{{ form.floor_number.value|default:listing.floor_number|default:'' }}" min="0" class="field">
+              </div>
+              <div class="grid gap-3">
+                <label class="flex items-center gap-3 rounded-2xl border border-n-200 bg-n-50 p-3">
+                  <input type="checkbox" name="is_furnished" {% if form.is_furnished.value or listing.is_furnished %}checked{% endif %} class="h-4 w-4 accent-p-600">
+                  <span class="text-sm font-semibold text-n-800">Furnished</span>
+                </label>
+                <label class="flex items-center gap-3 rounded-2xl border border-n-200 bg-n-50 p-3">
+                  <input type="checkbox" name="allows_students" {% if form.allows_students.value or listing.allows_students %}checked{% endif %} class="h-4 w-4 accent-p-600">
+                  <span class="text-sm font-semibold text-n-800">Students welcome</span>
+                </label>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-n-700">Amenities</label>
+                <div class="grid gap-2 sm:grid-cols-2">
+                  {% for amenity in amenity_choices %}
+                    <label class="flex items-center gap-2.5 rounded-xl border border-n-100 bg-n-50 p-3 transition-colors hover:border-p-200 hover:bg-p-50">
+                      <input type="checkbox" name="amenities" value="{{ amenity }}" {% if amenity in listing.amenities_list %}checked{% endif %} class="h-3.5 w-3.5 accent-p-600">
+                      <span class="text-sm font-medium text-n-700">{{ amenity|title }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% elif listing.listing_type == 'sme' %}
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Business category</label>
+                <input type="text" name="business_category" value="{{ form.business_category.value|default:listing.business_category }}" class="field">
+              </div>
+              <label class="sm:col-span-2 flex items-center gap-3 rounded-2xl border border-n-200 bg-n-50 p-3">
+                <input type="checkbox" name="is_for_sale" {% if form.is_for_sale.value or listing.is_for_sale %}checked{% endif %} class="h-4 w-4 accent-p-600">
+                <span class="text-sm font-semibold text-n-800">This business listing is for sale</span>
               </label>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-      <div>
-        <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Description</label>
-        <textarea name="description" rows="5" class="field resize-none leading-relaxed">{{ listing.description }}</textarea>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Status</label>
-        <select name="status_field" class="field">
-          <option value="active" {% if listing.status == 'active' %}selected{% endif %}>Active — visible to everyone</option>
-          <option value="draft" {% if listing.status == 'draft' %}selected{% endif %}>Draft — hidden</option>
-          <option value="paused" {% if listing.status == 'paused' %}selected{% endif %}>Paused — temporarily hidden</option>
-        </select>
-      </div>
-      <button type="submit" class="btn-g btn-primary">Save changes</button>
-    </form>
-  </div>
+            </div>
+          {% else %}
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Vehicle make</label>
+                <input type="text" name="vehicle_make" value="{{ form.vehicle_make.value|default:listing.vehicle_make }}" class="field">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Vehicle model</label>
+                <input type="text" name="vehicle_model" value="{{ form.vehicle_model.value|default:listing.vehicle_model }}" class="field">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Vehicle year</label>
+                <input type="number" name="vehicle_year" value="{{ form.vehicle_year.value|default:listing.vehicle_year|default:'' }}" class="field">
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Mileage (km)</label>
+                <input type="number" name="mileage_km" value="{{ form.mileage_km.value|default:listing.mileage_km|default:'' }}" class="field">
+              </div>
+            </div>
+          {% endif %}
+        </section>
 
-  {# Danger zone #}
-  <div class="card p-4 mt-4 border border-red-100">
-    <p class="text-xs font-bold uppercase tracking-wide text-red-500 mb-2">Danger zone</p>
-    <form method="post" action="{% url 'listings:delete' listing.slug %}" onsubmit="return confirm('Delete this listing permanently? This cannot be undone.')">
-      {% csrf_token %}
-      <button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors">Delete this listing →</button>
+        <section class="card p-5 lg:p-6">
+          <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Description</label>
+          <textarea name="description" rows="7" class="field resize-none leading-relaxed {% if form.description.errors %}field-error{% endif %}">{{ form.description.value|default:listing.description }}</textarea>
+          {% if form.description.errors %}<p class="mt-1 text-xs text-red-500">{{ form.description.errors.0 }}</p>{% endif %}
+        </section>
+      </div>
+
+      <aside class="space-y-6">
+        <section class="card p-5 lg:p-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-n-700">Photos</h2>
+            <span class="text-xs text-n-400">{{ current_images|length }} uploaded</span>
+          </div>
+
+          {% if current_images %}
+            <div class="mt-4 space-y-3">
+              {% for image in current_images %}
+                <div class="rounded-2xl border border-n-200 bg-n-50 p-3">
+                  <img src="{{ image.image.url }}" alt="" class="h-40 w-full rounded-xl object-cover">
+                  <div class="mt-3 flex items-center justify-between gap-3">
+                    <label class="flex items-center gap-2 text-sm font-medium text-n-700">
+                      <input type="radio" name="cover_image" value="{{ image.id }}" {% if image.is_cover %}checked{% endif %} class="h-4 w-4 accent-p-600">
+                      Cover image
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-medium text-red-600">
+                      <input type="checkbox" name="remove_image_ids" value="{{ image.id }}" class="h-4 w-4 accent-red-500">
+                      Remove
+                    </label>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="mt-4 text-sm text-n-500">No photos uploaded yet.</p>
+          {% endif %}
+
+          <div class="mt-4">
+            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Add more photos</label>
+            <input type="file" name="images" multiple accept="image/*" class="field file:mr-3 file:rounded-full file:border-0 file:bg-p-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-p-700">
+          </div>
+        </section>
+
+        <section class="card p-5 lg:p-6">
+          <button type="submit" class="btn-g btn-primary">Save changes</button>
+          <p class="mt-3 text-xs leading-5 text-n-400">Edits update the live listing immediately when status is set to active.</p>
+        </section>
+
+        <section class="card border border-red-100 p-5">
+          <p class="text-xs font-bold uppercase tracking-wide text-red-500">Danger zone</p>
+          <p class="mt-2 text-sm text-n-500">Remove this listing permanently if it is no longer needed.</p>
+          <button type="submit"
+                  formaction="{% url 'listings:delete' listing.slug %}"
+                  formmethod="post"
+                  onclick="return confirm('Delete this listing permanently? This cannot be undone.')"
+                  class="mt-4 text-sm font-semibold text-red-600 transition-colors hover:text-red-700">
+            Delete this listing →
+          </button>
+        </section>
+      </aside>
     </form>
   </div>
 </div>

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Listing, PropertyType
+from .models import Listing, ListingReview, PropertyType
 
 
 class ListingForm(forms.ModelForm):
@@ -26,3 +26,20 @@ class ListingForm(forms.ModelForm):
         self.fields['price'].required = True
         self.fields['location'].required = True
         self.fields['description'].required = True
+
+
+class ListingReviewForm(forms.ModelForm):
+    class Meta:
+        model = ListingReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(
+                choices=[(5, '5 stars'), (4, '4 stars'), (3, '3 stars'), (2, '2 stars'), (1, '1 star')]
+            ),
+            'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Share your experience with this owner or listing.'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rating'].required = True
+        self.fields['comment'].required = False

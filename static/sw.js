@@ -1,4 +1,4 @@
-const CACHE = 'nyumbahub-v1';
+const CACHE = 'isell-v1';
 const OFFLINE_URL = '/offline/';
 
 const PRECACHE = [

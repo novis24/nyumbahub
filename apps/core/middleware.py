@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -15,6 +16,8 @@ class ActiveSubscriptionMiddleware:
 
     def __call__(self, request):
         if (
+            settings.PAYMENTS_ENABLED
+            and
             request.user.is_authenticated
             and request.user.is_provider
             and any(request.path.startswith(p) for p in self.GATED_PATHS)

@@ -1,3 +1,6 @@
+from smtplib import SMTPException
+
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -9,6 +12,9 @@ from .forms import (
     ProfileUpdateForm, PasswordChangeRequestForm, KYCSubmitForm
 )
 from .models import CustomUser, KYCDocument
+from apps.listings.models import Listing, ListingReview, ListingStatus
+from apps.listings.models import SavedListing
+from django.db.models import Avg, Count
 
 
 # ─── Auth ─────────────────────────────────────────────────
@@ -42,10 +48,10 @@ def signup(request):
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, f'Welcome to NyumbaHub, {user.first_name}!')
+        messages.success(request, f'Welcome to iSell, {user.first_name}!')
         # Clear session key
         request.session.pop('signup_role', None)
-        if user.is_provider:
+        if user.is_provider and settings.PAYMENTS_ENABLED:
             return redirect('subscriptions:choose_plan')
         return redirect('core:home')
 
@@ -79,13 +85,21 @@ def forgot_password(request):
     from django.contrib.auth.forms import PasswordResetForm
     form = PasswordResetForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save(
-            request=request,
-            use_https=request.is_secure(),
-            email_template_name='accounts/email/password_reset.txt',
-            html_email_template_name='accounts/email/password_reset.html',
-        )
-        return render(request, 'accounts/forgot_password_done.html')
+        try:
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                subject_template_name='accounts/email/password_reset_subject.txt',
+                email_template_name='accounts/email/password_reset.txt',
+                html_email_template_name='accounts/email/password_reset.html',
+            )
+            return render(request, 'accounts/forgot_password_done.html')
+        except SMTPException:
+            messages.error(
+                request,
+                'Password reset email could not be sent. Please verify the SMTP account settings and try again.',
+            )
     return render(request, 'accounts/forgot_password.html', {'form': form})
 
 
@@ -94,7 +108,12 @@ def forgot_password(request):
 @login_required
 def profile(request):
     """Public-facing profile page."""
-    return render(request, 'accounts/profile.html', {'profile_user': request.user})
+    return _render_profile(request, request.user)
+
+
+def public_profile(request, username):
+    profile_user = get_object_or_404(CustomUser, username=username)
+    return _render_profile(request, profile_user)
 
 
 @login_required
@@ -113,6 +132,39 @@ def profile_edit(request):
         return redirect('accounts:profile')
 
     return render(request, 'accounts/profile_edit.html', {'form': form})
+
+
+def _render_profile(request, profile_user):
+    listings = (
+        Listing.objects.filter(owner=profile_user, status=ListingStatus.ACTIVE)
+        .prefetch_related('images', 'reviews')
+        .order_by('-is_featured', '-created_at')
+    )
+    review_stats = ListingReview.objects.filter(listing__owner=profile_user).aggregate(
+        average_rating=Avg('rating'),
+        total_reviews=Count('id'),
+    )
+    recent_reviews = (
+        ListingReview.objects.filter(listing__owner=profile_user)
+        .select_related('reviewer', 'listing')
+        .exclude(comment='')
+        .order_by('-created_at')[:5]
+    )
+    saved_ids = set()
+    if request.user.is_authenticated:
+        saved_ids = set(
+            SavedListing.objects.filter(user=request.user).values_list('listing_id', flat=True)
+        )
+    return render(request, 'accounts/profile.html', {
+        'profile_user': profile_user,
+        'profile_listings': listings,
+        'owner_review_stats': {
+            'average_rating': review_stats['average_rating'] or 0,
+            'total_reviews': review_stats['total_reviews'] or 0,
+        },
+        'recent_reviews': recent_reviews,
+        'saved_ids': saved_ids,
+    })
 
 
 # ─── Settings (progressive disclosure) ────────────────────

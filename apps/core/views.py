@@ -16,10 +16,10 @@ def home(request):
         qs = qs.filter(property_type=property_filter)
 
     # Featured listings (horizontal scroll strip)
-    featured = qs.filter(is_featured=True).select_related('owner')[:6]
+    featured = qs.filter(is_featured=True).select_related('owner').prefetch_related('images', 'reviews')[:6]
 
     # Main grid
-    paginator = Paginator(qs.filter(is_featured=False).select_related('owner').prefetch_related('images'), 12)
+    paginator = Paginator(qs.filter(is_featured=False).select_related('owner').prefetch_related('images', 'reviews'), 12)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 

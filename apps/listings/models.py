@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Avg
 from django.utils.text import slugify
+from collections import Counter
 import uuid
 
 
@@ -139,6 +141,50 @@ class Listing(models.Model):
             return f"{self.price_display}/mo"
         return self.price_display
 
+    def _review_ratings(self):
+        cached_reviews = getattr(self, '_prefetched_objects_cache', {}).get('reviews')
+        if cached_reviews is not None:
+            return [review.rating for review in cached_reviews]
+        return list(self.reviews.values_list('rating', flat=True))
+
+    @property
+    def likes_count(self):
+        return self.saved_by.count()
+
+    @property
+    def reviews_count(self):
+        return len(self._review_ratings())
+
+    @property
+    def average_rating(self):
+        ratings = self._review_ratings()
+        if ratings:
+            return sum(ratings) / len(ratings)
+        stats = self.reviews.aggregate(avg=Avg('rating'))
+        return stats['avg'] or 0
+
+    @property
+    def dominant_rating(self):
+        ratings = self._review_ratings()
+        if not ratings:
+            return 0
+        counts = Counter(ratings)
+        dominant, _ = max(counts.items(), key=lambda item: (item[1], item[0]))
+        return dominant
+
+    @property
+    def dominant_rating_count(self):
+        ratings = self._review_ratings()
+        if not ratings:
+            return 0
+        counts = Counter(ratings)
+        dominant, count = max(counts.items(), key=lambda item: (item[1], item[0]))
+        return count
+
+    @property
+    def has_client_reviews(self):
+        return self.reviews_count > 0
+
 
 class ListingImage(models.Model):
     listing = models.ForeignKey(
@@ -174,3 +220,52 @@ class SavedListing(models.Model):
 
     class Meta:
         unique_together = ('user', 'listing')
+
+
+class ListingReview(models.Model):
+    listing = models.ForeignKey(
+        Listing,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='listing_reviews',
+    )
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('listing', 'reviewer')
+
+    def __str__(self):
+        return f"{self.listing.title} review by {self.reviewer}"
+
+
+class ListingView(models.Model):
+    listing = models.ForeignKey(
+        Listing,
+        on_delete=models.CASCADE,
+        related_name='unique_views',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='listing_views',
+        null=True,
+        blank=True,
+    )
+    session_key = models.CharField(max_length=40, blank=True)
+    viewer_token = models.CharField(max_length=120)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('listing', 'viewer_token')
+
+    def __str__(self):
+        return f"View of {self.listing.title} by {self.viewer_token}"

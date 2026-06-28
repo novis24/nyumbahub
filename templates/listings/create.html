@@ -201,7 +201,7 @@
       <h2 class="text-xl font-bold text-n-900 mb-1">Add photos</h2>
       <p class="text-sm text-n-500 mb-5">
         Listings with photos get 5× more inquiries.
-        {% if user.active_subscription %}Up to {{ user.active_subscription.max_images }} photos on your plan.{% endif %}
+        Up to {% if user.active_subscription %}{{ user.active_subscription.max_images }}{% else %}20{% endif %} photos per listing right now.
       </p>
 
       {# Upload zone #}

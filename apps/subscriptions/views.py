@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,6 +11,10 @@ from .models import Subscription, Plan, PaymentLog
 def choose_plan(request):
     if not request.user.is_provider:
         return redirect('core:home')
+
+    if not settings.PAYMENTS_ENABLED:
+        messages.info(request, 'Live subscription billing is temporarily unavailable while we finish the payment rollout.')
+        return redirect('listings:my_listings')
 
     if request.method == 'POST':
         plan = request.POST.get('plan', Plan.STANDARD)
@@ -41,7 +46,10 @@ def payment(request, plan):
     In production: integrate Selcom / Azampay for M-Pesa.
     For now shows the UI + a manual confirmation flow for testing.
     """
-    from django.conf import settings
+    if not settings.PAYMENTS_ENABLED:
+        messages.info(request, 'The payment flow is hidden until live billing is ready.')
+        return redirect('listings:my_listings')
+
     plan_info = settings.PLAN_LIMITS.get(plan, {})
 
     if request.method == 'POST':

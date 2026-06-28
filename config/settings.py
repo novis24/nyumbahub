@@ -1,5 +1,5 @@
 """
-NyumbaHub — Main Settings
+iSell — Main Settings
 Mobile-first housing marketplace for Tanzania.
 """
 
@@ -82,23 +82,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='nyumbahub'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default=''),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
-
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='nyumbahub'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
+
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=os.getenv("DATABASE_URL"),
+#         conn_max_age=600,
+#     )
+# }
 
 # ─── Auth ─────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -152,9 +152,9 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET', default=''),
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Using local storage in development, switch to Cloudinary in production
-# DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
@@ -176,13 +176,21 @@ USE_I18N = True
 USE_TZ = True
 
 # ─── Email ────────────────────────────────────────────────
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+DEFAULT_SMTP_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default=DEFAULT_SMTP_BACKEND if config('EMAIL_HOST_USER', default='') else 'django.core.mail.backends.console.EmailBackend',
+)
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER', default='noreply@iselltz.com')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=30, cast=int)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'genienewworld@outlook.com')
+SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
+PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=60 * 60 * 24, cast=int)
 
 # ─── Crispy Forms ─────────────────────────────────────────
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'tailwind'
@@ -192,8 +200,9 @@ CRISPY_TEMPLATE_PACK = 'tailwind'
 PHONENUMBER_DEFAULT_REGION = 'TZ'
 
 # ─── App Settings ─────────────────────────────────────────
-SITE_NAME = config('SITE_NAME', default='Iselltz')
+SITE_NAME = config('SITE_NAME', default='iSell')
 SITE_URL = config('SITE_URL', default='http://localhost:8000')
+PAYMENTS_ENABLED = config('PAYMENTS_ENABLED', default=False, cast=bool)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

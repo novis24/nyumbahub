@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Q
-from apps.listings.models import Listing, ListingStatus, ListingType, PropertyType
+from apps.listings.models import Listing, ListingStatus, ListingType, PropertyType, SavedListing
 
 
 def search_results(request):
@@ -13,7 +13,7 @@ def search_results(request):
     furnished = request.GET.get('furnished', '')
     students = request.GET.get('students', '')
 
-    qs = Listing.objects.filter(status=ListingStatus.ACTIVE).select_related('owner').prefetch_related('images')
+    qs = Listing.objects.filter(status=ListingStatus.ACTIVE).select_related('owner').prefetch_related('images', 'reviews')
 
     if q:
         qs = qs.filter(
@@ -44,12 +44,18 @@ def search_results(request):
         qs = qs.filter(allows_students=True)
 
     count = qs.count()
+    saved_ids = set()
+    if request.user.is_authenticated:
+        saved_ids = set(
+            SavedListing.objects.filter(user=request.user).values_list('listing_id', flat=True)
+        )
 
     # HTMX partial — just the grid
     if request.htmx and request.GET.get('partial'):
         return render(request, 'partials/search_results_grid.html', {
             'listings': qs[:24],
             'count': count,
+            'saved_ids': saved_ids,
         })
 
     return render(request, 'search/results.html', {
@@ -64,4 +70,5 @@ def search_results(request):
         'property_choices': PropertyType.choices,
         'furnished': furnished,
         'students': students,
+        'saved_ids': saved_ids,
     })

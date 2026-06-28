@@ -62,7 +62,8 @@
     {# Provider billing & verification — progressive disclosure, only shown to providers #}
     {% if user.is_provider %}
     <div class="card overflow-hidden">
-      <p class="px-4 pt-3.5 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-n-400">Listings & billing</p>
+      <p class="px-4 pt-3.5 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-n-400">Listings</p>
+      {% if payments_enabled %}
       <a href="{% url 'subscriptions:manage' %}" class="flex items-center gap-3 px-4 py-3.5 hover:bg-n-50 active:bg-n-100 border-t border-n-50 transition-colors">
         <div class="w-9 h-9 rounded-xl bg-p-50 flex items-center justify-center flex-shrink-0">
           <svg class="w-4 h-4 stroke-p-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -72,11 +73,22 @@
           {% if user.active_subscription %}
             <p class="text-xs text-p-600 font-semibold mt-0.5">{{ user.active_subscription.get_plan_display }} · Active</p>
           {% else %}
-            <p class="text-xs text-red-500 font-semibold mt-0.5">No active plan — tap to subscribe</p>
+            <p class="text-xs text-red-500 font-semibold mt-0.5">No active plan</p>
           {% endif %}
         </div>
         <svg class="w-4 h-4 stroke-n-300 fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
       </a>
+      {% else %}
+      <div class="flex items-start gap-3 border-t border-n-50 px-4 py-3.5">
+        <div class="w-9 h-9 rounded-xl bg-n-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 stroke-n-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5zm0 0V5m0 13v1"/></svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-n-800">Billing rollout paused</p>
+          <p class="text-xs text-n-400 mt-0.5">Subscription payments are hidden for now. You can still manage listings normally.</p>
+        </div>
+      </div>
+      {% endif %}
       <a href="{% url 'accounts:kyc_submit' %}" class="flex items-center gap-3 px-4 py-3.5 hover:bg-n-50 active:bg-n-100 border-t border-n-50 transition-colors">
         <div class="w-9 h-9 rounded-xl bg-n-100 flex items-center justify-center flex-shrink-0">
           <svg class="w-4 h-4 stroke-n-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2"/></svg>
