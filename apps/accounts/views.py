@@ -1,12 +1,15 @@
+import logging
 from smtplib import SMTPException
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
+from django.template.loader import render_to_string
 from .forms import (
     RoleSelectForm, SignupForm, LoginForm,
     ProfileUpdateForm, PasswordChangeRequestForm, KYCSubmitForm
@@ -15,6 +18,36 @@ from .models import CustomUser, KYCDocument
 from apps.listings.models import Listing, ListingReview, ListingStatus
 from apps.listings.models import SavedListing
 from django.db.models import Avg, Count
+
+
+logger = logging.getLogger(__name__)
+
+
+def _send_welcome_email(request, user):
+    if not getattr(settings, 'EMAIL_DELIVERY_ENABLED', False):
+        return False
+
+    context = {
+        'user': user,
+        'site_name': settings.SITE_NAME,
+        'site_url': settings.SITE_URL,
+        'domain': request.get_host(),
+        'protocol': 'https' if request.is_secure() else 'http',
+        'receives_notifications': user.receives_notifications,
+    }
+    subject = render_to_string('accounts/email/welcome_subject.txt', context).strip()
+    text_body = render_to_string('accounts/email/welcome.txt', context)
+    html_body = render_to_string('accounts/email/welcome.html', context)
+
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    message.attach_alternative(html_body, 'text/html')
+    message.send(fail_silently=False)
+    return True
 
 
 # ─── Auth ─────────────────────────────────────────────────
@@ -47,6 +80,14 @@ def signup(request):
     form = SignupForm(request.POST or None, initial={'role': role})
     if request.method == 'POST' and form.is_valid():
         user = form.save()
+        try:
+            _send_welcome_email(request, user)
+        except (SMTPException, OSError, RuntimeError):
+            logger.exception('Welcome email could not be sent for %s.', user.email)
+            messages.warning(
+                request,
+                'Your account was created, but we could not send the welcome email right now.',
+            )
         login(request, user)
         messages.success(request, f'Welcome to iSell, {user.first_name}!')
         # Clear session key
@@ -71,6 +112,11 @@ def login_view(request):
         login(request, user)
         next_url = request.GET.get('next', 'core:home')
         return redirect(next_url)
+    if request.method == 'POST' and form.errors:
+        messages.error(
+            request,
+            form.non_field_errors()[0] if form.non_field_errors() else 'Please correct the highlighted sign-in details and try again.',
+        )
 
     return render(request, 'accounts/login.html', {'form': form})
 
@@ -85,6 +131,12 @@ def forgot_password(request):
     from django.contrib.auth.forms import PasswordResetForm
     form = PasswordResetForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
+        if not getattr(settings, 'EMAIL_DELIVERY_ENABLED', False):
+            messages.error(
+                request,
+                'Email delivery is not configured on this server yet. Please update the mail settings and try again.',
+            )
+            return render(request, 'accounts/forgot_password.html', {'form': form})
         try:
             form.save(
                 request=request,
@@ -95,10 +147,11 @@ def forgot_password(request):
                 html_email_template_name='accounts/email/password_reset.html',
             )
             return render(request, 'accounts/forgot_password_done.html')
-        except SMTPException:
+        except (SMTPException, OSError, RuntimeError):
+            logger.exception('Password reset email could not be sent.')
             messages.error(
                 request,
-                'Password reset email could not be sent. Please verify the SMTP account settings and try again.',
+                'Password reset email could not be sent right now. Please verify the SMTP settings and try again.',
             )
     return render(request, 'accounts/forgot_password.html', {'form': form})
 

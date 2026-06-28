@@ -10,8 +10,25 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_bool(name, default=False):
+    raw_value = config(name, default=None)
+    if raw_value is None:
+        return default
+    if isinstance(raw_value, bool):
+        return raw_value
+
+    normalized = str(raw_value).strip().lower()
+    if normalized in {'1', 'true', 'yes', 'on'}:
+        return True
+    if normalized in {'0', 'false', 'no', 'off', ''}:
+        return False
+    if normalized in {'release', 'production', 'prod'}:
+        return False
+    return default
+
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = env_bool('DEBUG', default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='192.168.3.10').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
@@ -177,17 +194,26 @@ USE_TZ = True
 
 # ─── Email ────────────────────────────────────────────────
 DEFAULT_SMTP_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND',
-    default=DEFAULT_SMTP_BACKEND if config('EMAIL_HOST_USER', default='') else 'django.core.mail.backends.console.EmailBackend',
-)
+CONSOLE_EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+LOCAL_MEMORY_EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+DUMMY_EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', default=False)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=30, cast=int)
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default=DEFAULT_SMTP_BACKEND if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD else CONSOLE_EMAIL_BACKEND,
+)
+NON_DELIVERING_EMAIL_BACKENDS = {
+    CONSOLE_EMAIL_BACKEND,
+    LOCAL_MEMORY_EMAIL_BACKEND,
+    DUMMY_EMAIL_BACKEND,
+}
+EMAIL_DELIVERY_ENABLED = EMAIL_BACKEND not in NON_DELIVERING_EMAIL_BACKENDS and bool(EMAIL_HOST)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'genienewworld@outlook.com')
 SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
 PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', default=60 * 60 * 24, cast=int)
@@ -202,7 +228,7 @@ PHONENUMBER_DEFAULT_REGION = 'TZ'
 # ─── App Settings ─────────────────────────────────────────
 SITE_NAME = config('SITE_NAME', default='iSell')
 SITE_URL = config('SITE_URL', default='http://localhost:8000')
-PAYMENTS_ENABLED = config('PAYMENTS_ENABLED', default=False, cast=bool)
+PAYMENTS_ENABLED = env_bool('PAYMENTS_ENABLED', default=False)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

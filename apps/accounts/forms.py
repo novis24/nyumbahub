@@ -41,6 +41,7 @@ class SignupForm(UserCreationForm):
     )
     role = forms.CharField(widget=forms.HiddenInput)
     agree_terms = forms.BooleanField(required=True)
+    agree_updates = forms.BooleanField(required=False)
 
     class Meta:
         model = CustomUser
@@ -60,12 +61,17 @@ class SignupForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         user.role = self.cleaned_data['role']
         user.location = self.cleaned_data.get('location', '')
+        user.receives_notifications = self.cleaned_data.get('agree_updates', False)
         if commit:
             user.save()
         return user
 
 
 class LoginForm(AuthenticationForm):
+    error_messages = {
+        'invalid_login': 'We could not sign you in with that email and password. Please check both and try again.',
+        'inactive': 'This account has been disabled. Please contact support if you need help.',
+    }
     username = forms.EmailField(
         label='Email address',
         widget=forms.EmailInput(attrs={'autofocus': True, 'placeholder': 'you@email.com'}),

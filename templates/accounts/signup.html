@@ -79,6 +79,11 @@
         </label>
         {% if form.agree_terms.errors %}<p class="text-xs text-red-500">{{ form.agree_terms.errors.0 }}</p>{% endif %}
 
+        <label class="flex cursor-pointer items-start gap-3 border border-n-200 bg-white p-4 transition-colors hover:border-p-200 hover:bg-p-50/40">
+          <input type="checkbox" name="agree_updates" {% if form.agree_updates.value %}checked{% endif %} class="mt-0.5 h-4 w-4 flex-shrink-0 accent-p-600">
+          <span class="text-xs leading-relaxed text-n-500">I want to receive account and marketplace updates by email about my listings, saved properties, inquiries, security alerts, and service improvements. You can change this later in Settings.</span>
+        </label>
+
         <button type="submit" class="btn-g btn-primary mt-2">Create account</button>
       </form>
 

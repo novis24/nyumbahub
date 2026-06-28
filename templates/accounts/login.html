@@ -21,9 +21,13 @@
       <h1 class="text-3xl font-bold text-n-900">Sign in</h1>
       <p class="mt-2 text-sm text-n-500">Access your account, listings, likes, and reviews.</p>
 
-      {% if form.non_field_errors %}
+      {% if form.errors %}
         <div class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {{ form.non_field_errors.0 }}
+          {% if form.non_field_errors %}
+            {{ form.non_field_errors.0 }}
+          {% else %}
+            Please correct the highlighted sign-in details and try again.
+          {% endif %}
         </div>
       {% endif %}
 
@@ -51,6 +55,7 @@
         </div>
 
         <button type="submit" class="btn-g btn-primary mt-2">Sign in</button>
+        <p class="text-xs leading-relaxed text-n-400">By signing in, you continue under iSell's account terms and privacy practices. Email preferences can be managed any time from Settings.</p>
       </form>
 
       <p class="mt-6 text-center text-sm text-n-500">Don’t have an account? <a href="{% url 'accounts:signup_role' %}" class="font-semibold text-p-600 hover:text-p-700">Create one free</a></p>

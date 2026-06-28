@@ -1,0 +1,24 @@
+<p>Hello {{ user.first_name|default:user.username }},</p>
+
+<p>Welcome to <strong>{{ site_name }}</strong>.</p>
+
+<p>Your account has been created successfully on Tanzania's marketplace for rentals, real estate opportunities, automobiles, and growing SME listings.</p>
+
+<p>You can now:</p>
+<ul>
+  <li>browse and save trusted listings</li>
+  <li>post rental, automobile, or business listings if your account type supports it</li>
+  <li>manage inquiries and account activity from one place</li>
+</ul>
+
+<p><a href="{{ protocol }}://{{ domain }}">Open {{ site_name }}</a></p>
+
+{% if receives_notifications %}
+<p>You are receiving this email because you created an account on {{ site_name }} and agreed to receive platform email updates. You can change this preference at any time in your account settings.</p>
+{% else %}
+<p>This welcome email was sent because you created an account on {{ site_name }}. You are currently opted out of optional email updates, and you can manage that preference at any time in your account settings.</p>
+{% endif %}
+
+<p>If you did not create this account, please contact support immediately.</p>
+
+<p>Regards,<br>The {{ site_name }} Team</p>

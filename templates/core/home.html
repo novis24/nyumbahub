@@ -31,11 +31,11 @@
 {% if not user.is_authenticated %}
 <div class="bg-gradient-to-br from-p-900 via-p-800 to-n-900 text-white px-4 pt-8 pb-6 lg:px-8 lg:ml-0">
   <div class="max-w-lg mx-auto lg:max-w-none">
-    <p class="text-xs font-semibold uppercase tracking-widest text-p-300 mb-2">Tanzania's trusted rental platform</p>
-    <h1 class="font-serif font-normal text-2xl lg:text-3xl leading-snug mb-3">Find your next home,<br><em>verified & safe.</em></h1>
+    <p class="text-xs font-semibold uppercase tracking-widest text-p-300 mb-2">Tanzania's trusted rental & estate platform</p>
+    <h1 class="font-serif font-normal text-2xl lg:text-3xl leading-snug mb-3">Explore the potential in our platform <br><em>verified & safe.</em></h1>
     <p class="text-sm text-p-200 mb-5 leading-relaxed">Thousands of verified rentals across Dar es Salaam, Arusha, Mwanza and beyond. No scammers.</p>
     <div class="flex gap-2">
-      <a href="{% url 'search:results' %}?type=rental" class="btn-g btn-primary text-sm py-2.5 px-5 rounded-xl w-auto">Browse rentals</a>
+      <a href="{% url 'search:results' %}?type=rental" class="btn-g btn-primary text-sm py-2.5 px-5 rounded-xl w-auto">Browse listings</a>
       <a href="{% url 'accounts:signup_role' %}" class="inline-flex items-center justify-center text-sm font-semibold text-white border border-white/30 hover:bg-white/10 px-5 py-2.5 rounded-xl transition-colors">List a property</a>
     </div>
   </div>

@@ -3,7 +3,7 @@
 {% block title %}Edit — {{ listing.title }}{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-5 pb-10 lg:px-6">
+<div class="px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:px-6 lg:pb-10">
   <div class="mx-auto max-w-5xl">
     <a href="{% url 'listings:my_listings' %}" class="inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
       <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>My listings
@@ -96,7 +96,7 @@
               </div>
               <div class="sm:col-span-2">
                 <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-n-700">Amenities</label>
-                <div class="grid gap-2 sm:grid-cols-2">
+                <div class="grid grid-cols-2 gap-2">
                   {% for amenity in amenity_choices %}
                     <label class="flex items-center gap-2.5 rounded-xl border border-n-100 bg-n-50 p-3 transition-colors hover:border-p-200 hover:bg-p-50">
                       <input type="checkbox" name="amenities" value="{{ amenity }}" {% if amenity in listing.amenities_list %}checked{% endif %} class="h-3.5 w-3.5 accent-p-600">

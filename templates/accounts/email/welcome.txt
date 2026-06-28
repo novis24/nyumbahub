@@ -1,0 +1,24 @@
+Hello {{ user.first_name|default:user.username }},
+
+Welcome to {{ site_name }}.
+
+Your account has been created successfully on Tanzania's marketplace for rentals, real estate opportunities, automobiles, and growing SME listings.
+
+You can now:
+- browse and save trusted listings
+- post rental, automobile, or business listings if your account type supports it
+- manage inquiries and account activity from one place
+
+Visit your account:
+{{ protocol }}://{{ domain }}
+
+{% if receives_notifications %}
+You are receiving this email because you created an account on {{ site_name }} and agreed to receive platform email updates. You can change this preference at any time in your account settings.
+{% else %}
+This welcome email was sent because you created an account on {{ site_name }}. You are currently opted out of optional email updates, and you can manage that preference at any time in your account settings.
+{% endif %}
+
+If you did not create this account, please contact support immediately.
+
+Regards,
+The {{ site_name }} Team
