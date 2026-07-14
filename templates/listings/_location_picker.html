@@ -1,0 +1,23 @@
+{% if listing_type == 'rental' %}
+<section class="mt-4 rounded-2xl border border-n-200 bg-n-50 p-4" data-location-picker data-api-key="{{ geoapify_key|escape }}">
+  <h3 class="text-sm font-bold text-n-900">Pin the property location</h3>
+  <p class="mt-1 text-xs text-n-500">Search, use your current position, or tap and drag the pin. Coordinates stay hidden.</p>
+  <div class="mt-3 flex gap-2">
+    <input type="search" data-map-search placeholder="Ward, street, district or landmark" class="field flex-1">
+    <button type="button" data-map-search-button class="rounded-xl bg-n-900 px-4 text-sm font-bold text-white">Search</button>
+  </div>
+  <div data-map-results class="mt-2 hidden max-h-40 overflow-y-auto rounded-xl border border-n-200 bg-white"></div>
+  <button type="button" data-map-geolocate class="mt-3 text-sm font-semibold text-p-700">Use my current location</button>
+  <div data-map class="mt-3 h-72 overflow-hidden rounded-xl bg-n-200"></div>
+  <input type="hidden" name="latitude" value="{{ form.latitude.value|default:'' }}">
+  <input type="hidden" name="longitude" value="{{ form.longitude.value|default:'' }}">
+  <label class="mt-3 block text-xs font-bold uppercase tracking-wide text-n-700">Nearby landmark</label>
+  <input name="nearby_landmark" value="{{ form.nearby_landmark.value|default:'' }}" placeholder="e.g. Near the ward office" class="field mt-1">
+  <div class="mt-3 space-y-2 text-sm">
+    {% for value, label in form.location_precision.field.choices %}
+      <label class="flex items-center gap-2"><input type="radio" name="location_precision" value="{{ value }}" {% if form.location_precision.value == value or not form.location_precision.value and value == 'approximate' %}checked{% endif %} class="accent-p-600"> {{ label }}</label>
+    {% endfor %}
+  </div>
+  {% if form.non_field_errors %}<div class="mt-2 text-sm text-red-600">{{ form.non_field_errors }}</div>{% endif %}
+</section>
+{% endif %}

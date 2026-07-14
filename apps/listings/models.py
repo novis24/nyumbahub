@@ -4,6 +4,7 @@ from django.db.models import Avg
 from django.utils.text import slugify
 from collections import Counter
 import uuid
+from decimal import Decimal
 
 
 class ListingType(models.TextChoices):
@@ -31,6 +32,11 @@ class PropertyType(models.TextChoices):
     STUDIO = 'studio', 'Studio'
     SHARED = 'shared', 'Shared House'
     HOSTEL = 'hostel', 'Hostel / Student'
+
+
+class LocationPrecision(models.TextChoices):
+    EXACT = 'exact', 'Show exact location'
+    APPROXIMATE = 'approximate', 'Show approximate area'
 
 
 class Listing(models.Model):
@@ -62,6 +68,10 @@ class Listing(models.Model):
     city = models.CharField(max_length=60, default='Dar es Salaam')
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    nearby_landmark = models.CharField(max_length=160, blank=True)
+    location_precision = models.CharField(
+        max_length=12, choices=LocationPrecision.choices, default=LocationPrecision.APPROXIMATE
+    )
     is_featured = models.BooleanField(default=False)
     views_count = models.PositiveIntegerField(default=0)
 
@@ -141,6 +151,31 @@ class Listing(models.Model):
             return f"{self.price_display}/mo"
         return self.price_display
 
+    @property
+    def verification_badge_label(self):
+        return self.owner.verification_badge_label
+
+    @property
+    def has_public_map(self):
+        return self.listing_type == ListingType.RENTAL and self.latitude is not None and self.longitude is not None
+
+    @property
+    def public_latitude(self):
+        if not self.has_public_map:
+            return None
+        if self.location_precision == LocationPrecision.EXACT:
+            return self.latitude
+        # Deterministic coarse position (~1.1km grid): never serialize the exact value.
+        return self.latitude.quantize(Decimal('0.01'))
+
+    @property
+    def public_longitude(self):
+        if not self.has_public_map:
+            return None
+        if self.location_precision == LocationPrecision.EXACT:
+            return self.longitude
+        return self.longitude.quantize(Decimal('0.01'))
+
     def _review_ratings(self):
         cached_reviews = getattr(self, '_prefetched_objects_cache', {}).get('reviews')
         if cached_reviews is not None:
@@ -202,6 +237,60 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.listing.title}"
+
+
+class VehicleDetails(models.Model):
+    listing = models.OneToOneField(Listing, on_delete=models.CASCADE, related_name='vehicle_details')
+    category = models.CharField(max_length=30, choices=[('car','Car'),('motorcycle','Motorcycle'),('van','Van'),('truck','Truck'),('bus','Bus'),('other','Other')])
+    trim = models.CharField(max_length=60, blank=True)
+    condition = models.CharField(max_length=20, choices=[('new','New'),('foreign_used','Foreign used'),('locally_used','Locally used')])
+    body_type = models.CharField(max_length=40, blank=True)
+    exterior_colour = models.CharField(max_length=40, blank=True)
+    fuel_type = models.CharField(max_length=20, blank=True)
+    transmission = models.CharField(max_length=20, blank=True)
+    engine_capacity_cc = models.PositiveIntegerField(null=True, blank=True)
+    drivetrain = models.CharField(max_length=20, blank=True)
+    steering_position = models.CharField(max_length=10, blank=True)
+    doors = models.PositiveSmallIntegerField(null=True, blank=True)
+    seats = models.PositiveSmallIntegerField(null=True, blank=True)
+    registration_status = models.CharField(max_length=30, blank=True)
+    service_history = models.BooleanField(default=False)
+    accident_history = models.BooleanField(default=False)
+    imported = models.BooleanField(default=False)
+    warranty = models.BooleanField(default=False)
+    financing = models.BooleanField(default=False)
+    trade_in = models.BooleanField(default=False)
+    delivery = models.BooleanField(default=False)
+    features = models.CharField(max_length=500, blank=True)
+
+    @property
+    def features_list(self):
+        return [value for value in self.features.split(',') if value]
+
+
+class SMEDetails(models.Model):
+    listing = models.OneToOneField(Listing, on_delete=models.CASCADE, related_name='sme_details')
+    kind = models.CharField(max_length=10, choices=[('product','Product'),('service','Service')])
+    subcategory = models.CharField(max_length=80, blank=True)
+    brand = models.CharField(max_length=80, blank=True)
+    condition = models.CharField(max_length=30, blank=True)
+    price_type = models.CharField(max_length=20, choices=[('fixed','Fixed price'),('starting','Starting from'),('negotiable','Negotiable'),('contact','Contact for price')], default='fixed')
+    stock_available = models.BooleanField(default=False)
+    selling_unit = models.CharField(max_length=40, blank=True)
+    minimum_order = models.PositiveIntegerField(null=True, blank=True)
+    delivery = models.BooleanField(default=False)
+    pickup = models.BooleanField(default=False)
+    service_area = models.CharField(max_length=160, blank=True)
+    customers_visit = models.BooleanField(default=False)
+    provider_visits = models.BooleanField(default=False)
+    appointment_required = models.BooleanField(default=False)
+    availability = models.CharField(max_length=160, blank=True)
+    completion_time = models.CharField(max_length=80, blank=True)
+    emergency_service = models.BooleanField(default=False)
+    materials_included = models.BooleanField(default=False)
+    warranty = models.BooleanField(default=False)
+    return_exchange = models.BooleanField(default=False)
+    specifications = models.JSONField(default=dict, blank=True)
 
 
 class SavedListing(models.Model):

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, AccountRole, KYCDocument
+from phonenumber_field.formfields import PhoneNumberField
 
 
 class RoleSelectForm(forms.Form):
@@ -29,8 +30,8 @@ class SignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=60, required=True)
     last_name = forms.CharField(max_length=60, required=True)
     email = forms.EmailField(required=True)
-    phone = forms.CharField(
-        max_length=20,
+    phone = PhoneNumberField(
+        region='TZ',
         required=False,
         help_text='e.g. +255 712 345 678',
     )
@@ -55,6 +56,12 @@ class SignupForm(UserCreationForm):
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError('An account with this email already exists.')
         return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and CustomUser.objects.filter(phone=phone).exists():
+            raise forms.ValidationError('An account with this phone number already exists.')
+        return phone or None
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -92,6 +99,12 @@ class ProfileUpdateForm(forms.ModelForm):
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 3, 'maxlength': 500}),
         }
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and CustomUser.objects.filter(phone=phone).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('An account with this phone number already exists.')
+        return phone or None
 
 
 class PasswordChangeRequestForm(forms.Form):

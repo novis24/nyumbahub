@@ -258,7 +258,8 @@ def settings_security(request):
 def settings_notifications(request):
     if request.method == 'POST':
         request.user.receives_notifications = 'receives_notifications' in request.POST
-        request.user.save(update_fields=['receives_notifications'])
+        request.user.receives_push_notifications = 'receives_push_notifications' in request.POST
+        request.user.save(update_fields=['receives_notifications', 'receives_push_notifications'])
         if request.htmx:
             return HttpResponse('<span class="text-green-600 text-sm">Saved.</span>')
         messages.success(request, 'Notification preferences updated.')

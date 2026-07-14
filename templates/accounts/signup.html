@@ -62,7 +62,8 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-n-700">Phone <span class="font-normal normal-case text-n-400">(optional)</span></label>
-            <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="+255 712 345 678" autocomplete="tel" class="field">
+            <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="+255 712 345 678" autocomplete="tel" class="field {% if form.phone.errors %}field-error{% endif %}">
+            {% if form.phone.errors %}<p class="mt-1 text-xs text-red-500">{{ form.phone.errors.0 }}</p>{% endif %}
           </div>
           <div>
             <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-n-700">City / District <span class="font-normal normal-case text-n-400">(optional)</span></label>

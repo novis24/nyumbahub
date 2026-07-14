@@ -6,8 +6,7 @@
 <div class="px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] max-w-lg mx-auto lg:px-6 lg:pb-10"
      x-data="{
        step: 1,
-       maxStep: 3,
-       type: '{{ listing_type }}',
+       maxStep: {% if listing_type == 'rental' %}4{% else %}3{% endif %},
        previews: [],
        handleFiles(e) {
          Array.from(e.target.files).forEach(f => {
@@ -30,32 +29,16 @@
 
   <form method="post" enctype="multipart/form-data" id="listing-form">
     {% csrf_token %}
-    <input type="hidden" name="listing_type" :value="type">
-
     {# ══════ STEP 1 — Basics ══════ #}
     <div x-show="step===1">
-      <h2 class="text-xl font-bold text-n-900 mb-1">What are you listing?</h2>
-      <p class="text-sm text-n-500 mb-5">Choose the type and set your price.</p>
-
-      {% if user.role != 'landlord' %}
-      <div class="grid grid-cols-3 gap-2 mb-5">
-        {% for val, label in type_choices %}
-        <label class="cursor-pointer">
-          <input type="radio" x-model="type" value="{{ val }}" class="sr-only">
-          <div class="p-3 rounded-xl border-2 text-center transition-all"
-               :class="type==='{{ val }}' ? 'border-p-500 bg-p-50' : 'border-n-200 bg-white hover:border-n-300'">
-            <p class="text-xs font-bold" :class="type==='{{ val }}' ? 'text-p-700' : 'text-n-600'">{{ label }}</p>
-          </div>
-        </label>
-        {% endfor %}
-      </div>
-      {% endif %}
+      <h2 class="text-xl font-bold text-n-900 mb-1">{% if listing_type == 'rental' %}List a property{% elif listing_type == 'auto' %}List a vehicle{% else %}List a product or service{% endif %}</h2>
+      <p class="text-sm text-n-500 mb-5">{% if listing_type == 'rental' %}Add a clear property title and monthly rent.{% elif listing_type == 'auto' %}Add a clear vehicle title and selling price.{% else %}Add a clear title and price for what your business offers.{% endif %}</p>
 
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Listing title <span class="text-red-500">*</span></label>
           <input type="text" name="title" value="{{ form.title.value|default:'' }}"
-                 placeholder="e.g. Spacious 2-bedroom apartment in Kinondoni"
+                 placeholder="{% if listing_type == 'rental' %}e.g. Spacious 2-bedroom apartment in Kinondoni{% elif listing_type == 'auto' %}e.g. 2020 Toyota Hilux in excellent condition{% else %}e.g. Custom birthday cakes with delivery{% endif %}"
                  class="field {% if form.title.errors %}field-error{% endif %}">
           {% if form.title.errors %}<p class="text-xs text-red-500 mt-1">{{ form.title.errors.0 }}</p>{% endif %}
         </div>
@@ -66,7 +49,7 @@
             <input type="number" name="price" value="{{ form.price.value|default:'' }}" min="0"
                    placeholder="350,000" class="field pl-14 {% if form.price.errors %}field-error{% endif %}">
           </div>
-          <p class="text-xs text-n-400 mt-1" x-show="type==='rental'">Per month</p>
+          <p class="text-xs text-n-400 mt-1">{% if listing_type == 'rental' %}Per month{% elif listing_type == 'auto' %}Vehicle selling price{% else %}Enter the applicable price or starting price{% endif %}</p>
         </div>
       </div>
 
@@ -80,12 +63,12 @@
       <button type="button" @click="step=1" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-5 transition-colors">
         <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
       </button>
-      <h2 class="text-xl font-bold text-n-900 mb-1">Property details</h2>
-      <p class="text-sm text-n-500 mb-5">Fill in the details that matter to your buyers.</p>
+      <h2 class="text-xl font-bold text-n-900 mb-1">{% if listing_type == 'rental' %}Property details{% elif listing_type == 'auto' %}Vehicle details{% else %}Product or service details{% endif %}</h2>
+      <p class="text-sm text-n-500 mb-5">Fill in the details that matter to interested customers.</p>
 
       <div class="space-y-4">
         {# Rental fields #}
-        <template x-if="type==='rental'">
+        {% if listing_type == 'rental' %}
           <div class="space-y-4">
             <div>
               <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Property type</label>
@@ -128,11 +111,12 @@
               </div>
             </div>
           </div>
-        </template>
+        {% endif %}
 
         {# SME fields #}
-        <template x-if="type==='sme'">
+        {% if listing_type == 'sme' %}
           <div class="space-y-4">
+            <div><label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Listing type</label><select name="sme_kind" class="field"><option value="">Choose product or service…</option>{% for val,label in form.sme_kind.field.choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div>
             <div>
               <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Business category</label>
               <input type="text" name="business_category" value="{{ form.business_category.value|default:'' }}" placeholder="e.g. Electronics, Clothing, Food…" class="field">
@@ -142,11 +126,12 @@
               <div><p class="text-sm font-semibold text-n-800">For sale</p><p class="text-xs text-n-400">Uncheck if this is for rent/lease</p></div>
             </label>
           </div>
-        </template>
+        {% endif %}
 
         {# Auto fields #}
-        <template x-if="type==='auto'">
+        {% if listing_type == 'auto' %}
           <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Vehicle category</label><select name="auto_category" class="field"><option value="">Choose…</option>{% for val,label in form.auto_category.field.choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div><div><label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Condition</label><select name="auto_condition" class="field"><option value="">Choose…</option>{% for val,label in form.auto_condition.field.choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div></div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Make</label>
@@ -168,7 +153,7 @@
               </div>
             </div>
           </div>
-        </template>
+        {% endif %}
 
         {# Common — location + description #}
         <div class="grid grid-cols-2 gap-3">
@@ -183,19 +168,32 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Description <span class="text-red-500">*</span></label>
-          <textarea name="description" rows="5" placeholder="Describe the property clearly — location, access to transport, water & electricity supply, nearby landmarks, security…" class="field resize-none leading-relaxed {% if form.description.errors %}field-error{% endif %}">{{ form.description.value|default:'' }}</textarea>
+          <textarea name="description" rows="5" placeholder="{% if listing_type == 'rental' %}Describe the property, access, utilities and surroundings…{% elif listing_type == 'auto' %}Describe the vehicle condition, history and notable features…{% else %}Describe what you offer, who it is for, delivery or service details…{% endif %}" class="field resize-none leading-relaxed {% if form.description.errors %}field-error{% endif %}">{{ form.description.value|default:'' }}</textarea>
           <p class="text-xs text-n-400 mt-1">Detailed descriptions get 3× more inquiries.</p>
         </div>
       </div>
 
-      <button type="button" @click="step=3" class="btn-g btn-dark mt-8">
-        Continue to photos <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <button type="button" @click="step=3; $nextTick(()=>window.dispatchEvent(new Event('resize')))" class="btn-g btn-dark mt-8">
+        {% if listing_type == 'rental' %}Continue to location{% else %}Continue to photos{% endif %} <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
       </button>
     </div>
 
-    {# ══════ STEP 3 — Photos ══════ #}
+    {% if listing_type == 'rental' %}
+    {# ══════ STEP 3 — Property location ══════ #}
     <div x-show="step===3" x-cloak>
       <button type="button" @click="step=2" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-5 transition-colors">
+        <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
+      </button>
+      <h2 class="text-xl font-bold text-n-900 mb-1">Confirm the property location</h2>
+      <p class="text-sm text-n-500 mb-5">Place the pin near the property and choose how precisely it appears publicly.</p>
+      {% include 'listings/_location_picker.html' %}
+      <button type="button" @click="step=4" class="btn-g btn-dark mt-8">Continue to photos <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    {% endif %}
+
+    {# ══════ Final step — Photos ══════ #}
+    <div x-show="step==={% if listing_type == 'rental' %}4{% else %}3{% endif %}" x-cloak>
+      <button type="button" @click="step={% if listing_type == 'rental' %}3{% else %}2{% endif %}" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-5 transition-colors">
         <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
       </button>
       <h2 class="text-xl font-bold text-n-900 mb-1">Add photos</h2>
@@ -235,7 +233,7 @@
       <div class="space-y-2.5">
         <button type="submit" name="status" value="active" class="btn-g btn-primary py-4 text-base">
           <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Publish listing
+          {% if listing_type == 'rental' %}Publish property{% elif listing_type == 'auto' %}Publish vehicle{% else %}Publish listing{% endif %}
         </button>
         <button type="submit" name="status" value="draft" class="btn-g btn-ghost py-3.5 text-sm">
           Save as draft
@@ -248,8 +246,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  // Inject type_choices from Django into the template
-  // (already handled by x-data above)
-</script>
+{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="/static/js/location-picker.js"></script>{% endif %}
+<script>document.getElementById('listing-form')?.addEventListener('submit',function(event){const status=document.createElement('input');status.type='hidden';status.name='status';status.value=event.submitter?.value||'draft';this.appendChild(status);setTimeout(()=>this.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true),0)})</script>
 {% endblock %}

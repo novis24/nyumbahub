@@ -1,0 +1,6 @@
+<p>Hello {{ user.first_name|default:user.username }},</p>
+<p>A new listing matching what you explore most has just been added to <strong>{{ site_name }}</strong>.</p>
+<h2>{{ listing.title }}</h2>
+<p><strong>{{ listing.price_per_month }}</strong><br>{{ listing.location }}, {{ listing.city }}</p>
+<p><a href="{{ protocol }}://{{ domain }}{{ listing.get_absolute_url }}">View this listing</a></p>
+<p><small>You receive marketplace updates because you opted in. Change this anytime in Settings → Notifications.</small></p>

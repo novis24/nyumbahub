@@ -99,23 +99,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='nyumbahub'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default=''),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
-
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='nyumbahub'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
+
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=os.getenv("DATABASE_URL"),
+#         conn_max_age=600,
+#     )
+# }
 
 # ─── Auth ─────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -169,9 +169,9 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET', default=''),
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Using local storage in development, switch to Cloudinary in production
-# DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
@@ -229,6 +229,15 @@ PHONENUMBER_DEFAULT_REGION = 'TZ'
 SITE_NAME = config('SITE_NAME', default='iSell')
 SITE_URL = config('SITE_URL', default='http://localhost:8000')
 PAYMENTS_ENABLED = env_bool('PAYMENTS_ENABLED', default=False)
+GEOAPIFY_BROWSER_KEY = config('GEOAPIFY_BROWSER_KEY', default='')
+FIREBASE_API_KEY = config('FIREBASE_API_KEY', default='')
+FIREBASE_AUTH_DOMAIN = config('FIREBASE_AUTH_DOMAIN', default='')
+FIREBASE_PROJECT_ID = config('FIREBASE_PROJECT_ID', default='')
+FIREBASE_STORAGE_BUCKET = config('FIREBASE_STORAGE_BUCKET', default='')
+FIREBASE_MESSAGING_SENDER_ID = config('FIREBASE_MESSAGING_SENDER_ID', default='')
+FIREBASE_APP_ID = config('FIREBASE_APP_ID', default='')
+FIREBASE_VAPID_KEY = config('FIREBASE_VAPID_PUBLIC_KEY', default=config('FIREBASE_VAPID_KEY', default=''))
+FIREBASE_SERVICE_ACCOUNT_PATH = config('FIREBASE_SERVICE_ACCOUNT_PATH', default='')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

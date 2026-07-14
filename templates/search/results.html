@@ -2,16 +2,17 @@
 {% block page_title %}Search{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-4 pb-10 lg:px-6"
+<div class="w-full px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 lg:pb-10"
      x-data="{ showFilters: false }">
 
   {# ── Search bar ── #}
-  <div class="mb-4">
+  <div class="mb-4 px-3 sm:px-4">
     <form method="get" action="{% url 'search:results' %}"
           hx-get="{% url 'search:results' %}?partial=1"
           hx-target="#search-grid"
           hx-trigger="submit, change delay:500ms"
           hx-push-url="true">
+      <input type="hidden" name="type" value="{{ listing_type }}">
 
       <div class="relative mb-3">
         <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 stroke-n-400 fill-none pointer-events-none"
@@ -52,7 +53,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
           </svg>
           Filters
-          {% if min_price or max_price or property_type or furnished or students %}
+          {% if min_price or max_price or property_type or furnished or students or vehicle_make or vehicle_model or min_year or max_year or vehicle_condition or vehicle_category or sme_kind or business_category or price_type %}
             <span class="w-2 h-2 rounded-full bg-p-500"></span>
           {% endif %}
         </button>
@@ -105,6 +106,25 @@
           </div>
         {% endif %}
 
+        {% if listing_type == 'auto' %}
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Vehicle make</label><input name="vehicle_make" value="{{ vehicle_make }}" placeholder="Toyota" class="field text-sm"></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Model</label><input name="vehicle_model" value="{{ vehicle_model }}" placeholder="Harrier" class="field text-sm"></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Vehicle type</label><select name="vehicle_category" class="field text-sm"><option value="">Any type</option>{% for val, label in vehicle_category_choices %}<option value="{{ val }}" {% if vehicle_category == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Condition</label><select name="vehicle_condition" class="field text-sm"><option value="">Any condition</option>{% for val, label in vehicle_condition_choices %}<option value="{{ val }}" {% if vehicle_condition == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">From year</label><input type="number" name="min_year" value="{{ min_year }}" placeholder="2015" min="1886" class="field text-sm"></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">To year</label><input type="number" name="max_year" value="{{ max_year }}" placeholder="2026" min="1886" class="field text-sm"></div>
+          </div>
+        {% endif %}
+
+        {% if listing_type == 'sme' %}
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Offering</label><select name="sme_kind" class="field text-sm"><option value="">Products & services</option>{% for val, label in sme_kind_choices %}<option value="{{ val }}" {% if sme_kind == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Business category</label><input name="business_category" value="{{ business_category }}" placeholder="Furniture, catering…" class="field text-sm"></div>
+            <div><label class="mb-1.5 block text-xs font-medium text-n-600">Pricing</label><select name="price_type" class="field text-sm"><option value="">Any pricing</option>{% for val, label in price_type_choices %}<option value="{{ val }}" {% if price_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+          </div>
+        {% endif %}
+
         <div>
           <label class="mb-1.5 block text-xs font-medium text-n-600">City</label>
           <input type="text" name="city" value="{{ city }}"
@@ -121,33 +141,13 @@
   </div>
 
   {# Result count #}
-  <p class="mb-3 text-xs text-n-400">
+  <p class="mb-3 px-3 text-xs text-n-400 sm:px-4">
     {% if q %}Results for "<span class="font-medium text-n-700">{{ q }}</span>" · {% endif %}
-    {{ count }} listing{{ count|pluralize }}
+    <span id="search-count-value">{{ count }}</span> listing{{ count|pluralize }}
   </p>
 
   {# ── Grid ── #}
-  <div id="search-grid">
-    {% if listings %}
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-        {% for listing in listings %}
-          {% include 'components/listing_card.html' with listing=listing %}
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="text-center py-20">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-n-100">
-          <svg class="w-8 h-8 stroke-n-400 fill-none" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </div>
-        <p class="text-sm text-n-500">No listings match your search.</p>
-        <a href="{% url 'search:results' %}" class="mt-4 inline-block text-sm font-semibold text-p-600">
-          Clear filters
-        </a>
-      </div>
-    {% endif %}
-  </div>
+  <div id="search-grid">{% include 'partials/search_results_grid.html' %}</div>
 
 </div>
 {% endblock %}

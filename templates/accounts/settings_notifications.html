@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Notification settings{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:py-12">
+  <a href="{% url 'accounts:settings' %}" class="text-sm font-semibold text-p-700">← Settings</a>
+  <h1 class="mt-4 text-3xl font-bold text-n-900">Notifications</h1>
+  <p class="mt-2 text-sm leading-6 text-n-500">Choose how iSellTZ tells you about new listings. Marketplace emails learn from the categories you view most.</p>
+
+  <form method="post" class="mt-7 space-y-4" id="notification-settings-form">
+    {% csrf_token %}
+    <label class="flex items-start justify-between gap-5 rounded-2xl border border-n-200 bg-white p-5 shadow-sm">
+      <span><strong class="block text-sm text-n-900">Marketplace email updates</strong><span class="mt-1 block text-xs leading-5 text-n-500">Email me when relevant rentals, autos, or SME listings are published.</span></span>
+      <input type="checkbox" name="receives_notifications" {% if user.receives_notifications %}checked{% endif %} class="mt-1 h-5 w-5 accent-p-600">
+    </label>
+    <label class="flex items-start justify-between gap-5 rounded-2xl border border-n-200 bg-white p-5 shadow-sm">
+      <span><strong class="block text-sm text-n-900">Push notifications</strong><span class="mt-1 block text-xs leading-5 text-n-500">Allow timely listing alerts on this device. Phone-level permission is always controlled by you.</span></span>
+      <input id="push-toggle" type="checkbox" name="receives_push_notifications" {% if user.receives_push_notifications %}checked{% endif %} class="mt-1 h-5 w-5 accent-p-600">
+    </label>
+    <p id="push-status" class="hidden rounded-xl px-4 py-3 text-xs"></p>
+    <button class="btn-g btn-primary">Save preferences</button>
+  </form>
+</section>
+{{ firebase_config|json_script:"firebase-config" }}
+{% endblock %}
+{% block extra_scripts %}
+<script type="module">
+  const status = document.getElementById('push-status');
+  const toggle = document.getElementById('push-toggle');
+  const config = JSON.parse(document.getElementById('firebase-config').textContent);
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const showStatus = (message, error=false) => {
+    status.textContent = message; status.className = `rounded-xl px-4 py-3 text-xs ${error ? 'bg-red-50 text-red-700' : 'bg-p-50 text-p-800'}`;
+  };
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const permissionHelp = () => isIOS
+    ? 'Install iSellTZ from Safari first (Share → Add to Home Screen), open the installed app, then return here. If previously blocked, open iPhone Settings → Notifications → iSellTZ.'
+    : 'Notifications are blocked by phone or browser settings. Open Settings → Apps → your browser → Notifications, then allow notifications for this site.';
+
+  if (!window.isSecureContext) showStatus('Push notifications require the secure HTTPS version of iSellTZ.', true);
+  else if (!('Notification' in window)) showStatus(isIOS ? 'Install and open iSellTZ from your Home Screen to use notifications.' : 'This browser does not support web notifications.', true);
+  else if (Notification.permission === 'denied') showStatus(permissionHelp(), true);
+
+  toggle.addEventListener('change', async () => {
+    if (!toggle.checked) {
+      await fetch('{% url "notifications:push_unregister" %}', {method:'POST', headers:{'X-CSRFToken':csrf}});
+      showStatus('Push notifications are disabled on your saved devices.'); return;
+    }
+    if (!config.apiKey || !config.vapidKey) {
+      showStatus('Push notifications are not configured on this server yet.', true); return;
+    }
+    if (!window.isSecureContext) { showStatus('Open the HTTPS version of iSellTZ before enabling push notifications.', true); return; }
+    if (isIOS && !isInstalled) { showStatus(permissionHelp(), true); return; }
+    if (!('Notification' in window)) { showStatus('This browser does not support push notifications.', true); return; }
+    if (Notification.permission === 'denied') { showStatus(permissionHelp(), true); return; }
+    try {
+      const [{initializeApp}, {getMessaging, getToken}] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging.js')
+      ]);
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { showStatus('Permission was not granted. You can enable it later from your phone or browser settings.', true); return; }
+      const registration = await navigator.serviceWorker.ready;
+      const token = await getToken(getMessaging(initializeApp(config)), {vapidKey:config.vapidKey, serviceWorkerRegistration:registration});
+      const response = await fetch('{% url "notifications:push_register" %}', {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body:JSON.stringify({token})
+      });
+      if (!response.ok) throw new Error('This device could not be registered.');
+      showStatus('Push notifications are now enabled on this device.');
+    } catch (error) { showStatus(`${error.message} Check your connection, then try again.`, true); }
+  });
+</script>
+{% endblock %}

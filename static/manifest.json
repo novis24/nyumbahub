@@ -1,18 +1,20 @@
 {
-  "name": "iSell",
-  "short_name": "iSell",
-  "description": "Trusted rentals across Tanzania",
-  "start_url": "/",
+  "name": "iSellTZ Marketplace",
+  "short_name": "iSellTZ",
+  "description": "Trusted rentals, estates, autos and local businesses across Tanzania",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#ffffff",
-  "theme_color": "#0a0a0a",
+  "theme_color": "#087a37",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/static/icons/icon-512.png",
@@ -21,7 +23,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["lifestyle", "shopping"],
+  "categories": ["lifestyle", "shopping", "business"],
   "lang": "en",
   "dir": "ltr"
 }

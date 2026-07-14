@@ -5,4 +5,5 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('sw.js', views.service_worker, name='service_worker'),
 ]

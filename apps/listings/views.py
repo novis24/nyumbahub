@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.http import Http404, JsonResponse
 from django.utils import timezone
+from django.conf import settings
 from django.db.models import Avg, Count, F
 from datetime import timedelta
 from .models import (
@@ -21,6 +22,8 @@ AMENITY_CHOICES = [
     'wifi', 'water', 'electricity', 'security', 'parking',
     'generator', 'borehole', 'cctv', 'gym', 'pool',
 ]
+
+ROLE_LISTING_TYPES = {'landlord': ListingType.RENTAL, 'sme': ListingType.SME, 'auto': ListingType.AUTO}
 
 
 def _get_saved_ids_for_user(user):
@@ -99,12 +102,13 @@ def listing_detail(request, slug):
         'user_review': user_review,
         'can_review': can_review,
         'reviews': listing.reviews.all(),
+        'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
     })
 
 
 @login_required
 def my_listings(request):
-    listings = request.user.listings.prefetch_related('images').order_by('-created_at')
+    listings = request.user.listings.select_related('owner').prefetch_related('images').order_by('-created_at')
     sub = request.user.active_subscription
     return render(request, 'listings/my_listings.html', {
         'listings': listings,
@@ -119,19 +123,19 @@ def create_listing(request):
         return redirect('core:home')
 
     # Role determines default listing type
-    default_type = {
-        'landlord': 'rental',
-        'sme': 'sme',
-        'auto': 'auto',
-    }.get(request.user.role, 'rental')
+    default_type = ROLE_LISTING_TYPES.get(request.user.role)
+    if not default_type:
+        messages.error(request, 'Your account cannot create listings.')
+        return redirect('core:home')
 
     if request.method == 'POST':
-        form = ListingForm(request.POST, request.FILES)
+        form = ListingForm(request.POST, request.FILES, listing_type=default_type)
         if form.is_valid():
             listing = form.save(commit=False)
             listing.owner = request.user
-            listing.listing_type = request.POST.get('listing_type', default_type)
-            listing.status = request.POST.get('status', ListingStatus.DRAFT)
+            listing.listing_type = default_type
+            requested_status = request.POST.get('status', ListingStatus.DRAFT)
+            listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
 
             # Amenities — collect from checkboxes
             amenities = request.POST.getlist('amenities')
@@ -143,6 +147,7 @@ def create_listing(request):
                 listing.expires_at = timezone.now() + timedelta(days=30)
 
             listing.save()
+            form.save_details(listing)
 
             # Handle images
             images = request.FILES.getlist('images')
@@ -161,23 +166,26 @@ def create_listing(request):
                 'Listing published!' if listing.status == 'active' else 'Draft saved.'
             )
             if listing.status == ListingStatus.ACTIVE:
+                from apps.notifications.services import notify_marketplace_subscribers
+                notify_marketplace_subscribers(listing, request)
                 return redirect('listings:detail', slug=listing.slug)
             return redirect('listings:my_listings')
     else:
-        form = ListingForm(initial={'listing_type': default_type})
+        form = ListingForm(listing_type=default_type)
 
     return render(request, 'listings/create.html', {
         'form': form,
         'listing_type': default_type,
         'amenity_choices': AMENITY_CHOICES,
-        'type_choices': [('rental', 'Rental'), ('sme', 'SME'), ('auto', 'Auto')],
+        'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
     })
 
 
 @login_required
 def edit_listing(request, slug):
     listing = get_object_or_404(Listing, slug=slug, owner=request.user)
-    form = ListingForm(request.POST or None, request.FILES or None, instance=listing)
+    was_active = listing.status == ListingStatus.ACTIVE
+    form = ListingForm(request.POST or None, request.FILES or None, instance=listing, listing_type=listing.listing_type)
 
     if request.method == 'POST' and form.is_valid():
         lst = form.save(commit=False)
@@ -185,6 +193,7 @@ def edit_listing(request, slug):
         amenities = request.POST.getlist('amenities')
         lst.amenities = ','.join(amenities)
         lst.save()
+        form.save_details(lst)
         if request.POST.get('cover_image'):
             lst.images.update(is_cover=False)
             lst.images.filter(id=request.POST.get('cover_image')).update(is_cover=True)
@@ -221,6 +230,9 @@ def edit_listing(request, slug):
                 image.save(update_fields=['order'])
         messages.success(request, 'Listing updated.')
         if lst.status == ListingStatus.ACTIVE:
+            if not was_active:
+                from apps.notifications.services import notify_marketplace_subscribers
+                notify_marketplace_subscribers(lst, request)
             return redirect('listings:detail', slug=lst.slug)
         return redirect('listings:my_listings')
 
@@ -230,6 +242,8 @@ def edit_listing(request, slug):
         'amenity_choices': AMENITY_CHOICES,
         'status_choices': ListingStatus.choices,
         'current_images': listing.images.all(),
+        'listing_type': listing.listing_type,
+        'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
     })
 
 
@@ -259,7 +273,7 @@ def toggle_save(request, listing_id):
 def saved_listings(request):
     saved = SavedListing.objects.filter(
         user=request.user
-    ).select_related('listing').prefetch_related('listing__images').order_by('-saved_at')
+    ).select_related('listing', 'listing__owner').prefetch_related('listing__images').order_by('-saved_at')
     saved_ids = _get_saved_ids_for_user(request.user)
     return render(request, 'listings/saved.html', {'saved': saved, 'saved_ids': saved_ids})
 

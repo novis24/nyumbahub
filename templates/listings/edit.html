@@ -56,6 +56,7 @@
               <input type="text" name="city" value="{{ form.city.value|default:listing.city }}" class="field">
             </div>
           </div>
+          {% include 'listings/_location_picker.html' %}
         </section>
 
         <section class="card p-5 lg:p-6">
@@ -108,6 +109,7 @@
             </div>
           {% elif listing.listing_type == 'sme' %}
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div class="sm:col-span-2"><label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Product or service</label><select name="sme_kind" class="field">{% for value,label in form.sme_kind.field.choices %}<option value="{{ value }}" {% if form.sme_kind.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
               <div class="sm:col-span-2">
                 <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Business category</label>
                 <input type="text" name="business_category" value="{{ form.business_category.value|default:listing.business_category }}" class="field">
@@ -119,6 +121,7 @@
             </div>
           {% else %}
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div><label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Vehicle category</label><select name="auto_category" class="field">{% for value,label in form.auto_category.field.choices %}<option value="{{ value }}" {% if form.auto_category.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div><label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Condition</label><select name="auto_condition" class="field">{% for value,label in form.auto_condition.field.choices %}<option value="{{ value }}" {% if form.auto_condition.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
               <div>
                 <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Vehicle make</label>
                 <input type="text" name="vehicle_make" value="{{ form.vehicle_make.value|default:listing.vehicle_make }}" class="field">
@@ -202,3 +205,4 @@
   </div>
 </div>
 {% endblock %}
+{% block extra_scripts %}{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="/static/js/location-picker.js"></script>{% endif %}<script>document.querySelector('form')?.addEventListener('submit',function(){this.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true)})</script>{% endblock %}

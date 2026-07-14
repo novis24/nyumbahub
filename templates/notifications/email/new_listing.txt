@@ -1,0 +1,12 @@
+Hello {{ user.first_name|default:user.username }},
+
+A new listing matching what you explore most has just been added to {{ site_name }}.
+
+{{ listing.title }}
+{{ listing.price_per_month }} · {{ listing.location }}, {{ listing.city }}
+
+View listing: {{ protocol }}://{{ domain }}{{ listing.get_absolute_url }}
+
+You receive marketplace updates because you opted in. Change this anytime in Settings → Notifications.
+
+The {{ site_name }} Team

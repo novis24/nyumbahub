@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="iSell">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
   <link rel="manifest" href="/static/manifest.json">
   <title>{% block title %}iSell{% endblock %} — Trusted Rentals & Estate platform Tanzania</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -134,7 +136,7 @@
 </aside>
 {% endblock %}
 
-<main class="{% block main_shell_classes %}lg:ml-[260px] pt-14 lg:pt-0 mb-nav lg:mb-0 min-h-screen{% endblock %}">
+<main class="{% block main_shell_classes %}lg:ml-[260px] pt-14 lg:pt-0 mb-nav lg:mb-0 min-h-screen pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-0{% endblock %}">
   {% if messages %}
   <div class="px-4 pt-3 space-y-2">
     {% for message in messages %}
@@ -190,7 +192,33 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <script>
-  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/static/sw.js').catch(()=>{}));
+  let deferredInstallPrompt;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault(); deferredInstallPrompt = event;
+  });
+  const showInstallHelp = message => {
+    let note = document.getElementById('install-app-help');
+    if (!note) {
+      note = document.createElement('div'); note.id = 'install-app-help';
+      note.className = 'fixed inset-x-3 bottom-20 z-[100] mx-auto max-w-md rounded-2xl border border-p-200 bg-white p-4 text-sm leading-6 text-n-700 shadow-2xl lg:bottom-6';
+      note.innerHTML = '<div class="flex gap-3"><img src="/static/icons/icon-192.png" class="h-10 w-10 rounded-xl" alt=""><p class="min-w-0 flex-1" data-install-message></p><button class="self-start text-xl text-n-400" aria-label="Close">×</button></div>';
+      note.querySelector('button').onclick = () => note.remove(); document.body.appendChild(note);
+    }
+    note.querySelector('[data-install-message]').textContent = message;
+  };
+  window.installISellApp = async () => {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      showInstallHelp('iSellTZ is already installed on this device.'); return;
+    }
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; return;
+    }
+    const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    showInstallHelp(isiPhone
+      ? 'On iPhone or iPad: tap the Share button in Safari, then choose “Add to Home Screen”. Open the installed app to enable push notifications.'
+      : 'Open your browser menu and choose “Install app” or “Add to Home screen”. If it is unavailable, reload the page over HTTPS.');
+  };
+  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(()=>{}));
   document.body.addEventListener('htmx:configRequest',e=>{e.detail.headers['X-CSRFToken']='{{ csrf_token }}';});
 </script>
 {% block extra_scripts %}{% endblock %}

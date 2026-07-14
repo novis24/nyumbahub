@@ -1,6 +1,101 @@
+# =========================
+# Environment / secrets
+# =========================
 .env
-media/
-staticfiles/
+.env.*
+!.env.example
+
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.p8
+*.credentials
+*service-account*.json
+*firebase-adminsdk*.json
+google-credentials.json
+firebase-service-account.json
+
+# =========================
+# Python / Django
+# =========================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+venv/
+env/
+ENV/
+.venv/
+
+*.log
+logs/
+local_settings.py
+
 db.sqlite3
+db.sqlite3-journal
+
+media/
+uploads/
+
+staticfiles/
+collected_static/
+
+# Keep source static files tracked if your project uses them.
+# Do not ignore app/static/ or static/ unless those are generated folders.
+
+# =========================
+# Node / frontend
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+vite.config.ts.timestamp-*
+
+# =========================
+# Testing / coverage
+# =========================
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# =========================
+# Jupyter / notebooks
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup

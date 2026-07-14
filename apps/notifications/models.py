@@ -11,6 +11,7 @@ class NotificationType(models.TextChoices):
     KYC_REJECTED = 'kyc_rejected', 'Verification Rejected'
     NEW_INQUIRY = 'new_inquiry', 'New Inquiry'
     SYSTEM = 'system', 'System Message'
+    NEW_MARKET_LISTING = 'new_market_listing', 'New Marketplace Listing'
 
 
 class Notification(models.Model):
@@ -46,3 +47,16 @@ class Notification(models.Model):
                 body=body,
                 action_url=action_url,
             )
+
+
+class PushDevice(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='push_devices'
+    )
+    token = models.TextField(unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.user.email} device'

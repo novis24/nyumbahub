@@ -24,7 +24,7 @@ class CustomUser(AbstractUser):
     Role determines which features and forms the user sees.
     """
     email = models.EmailField(unique=True)
-    phone = PhoneNumberField(region='TZ', blank=True, null=True)
+    phone = PhoneNumberField(region='TZ', blank=True, null=True, unique=True)
     role = models.CharField(
         max_length=20,
         choices=AccountRole.choices,
@@ -46,6 +46,7 @@ class CustomUser(AbstractUser):
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     receives_notifications = models.BooleanField(default=True)
+    receives_push_notifications = models.BooleanField(default=False)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -77,6 +78,17 @@ class CustomUser(AbstractUser):
     @property
     def display_name(self):
         return self.get_full_name() or self.username
+
+    @property
+    def verification_badge_label(self):
+        """Public wording backed exclusively by the persisted KYC status."""
+        if not self.is_verified:
+            return ''
+        return {
+            AccountRole.SME: 'Verified Business',
+            AccountRole.LANDLORD: 'Verified Property Lister',
+            AccountRole.AUTO: 'Verified Dealer',
+        }.get(self.role, '')
 
     @property
     def active_subscription(self):

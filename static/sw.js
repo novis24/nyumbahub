@@ -1,9 +1,11 @@
-const CACHE = 'isell-v1';
+const CACHE = 'isell-v3';
 const OFFLINE_URL = '/offline/';
 
 const PRECACHE = [
   '/',
   '/static/manifest.json',
+  '/static/icons/icon-192.png',
+  '/static/icons/icon-512.png',
 ];
 
 // Install — pre-cache shell
@@ -59,7 +61,23 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE).then(c => c.put(request, clone));
           return res;
         })
-        .catch(() => caches.match(request))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('/')))
     );
   }
+});
+
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  const payload = event.data.json();
+  const notification = payload.notification || payload;
+  event.waitUntil(self.registration.showNotification(notification.title || 'iSellTZ', {
+    body: notification.body || 'A new marketplace update is available.',
+    icon: '/static/icons/icon-192.png', badge: '/static/icons/icon-192.png',
+    data: payload.data || {url: '/'},
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow(event.notification.data?.url || '/'));
 });
