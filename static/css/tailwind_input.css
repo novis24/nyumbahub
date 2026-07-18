@@ -1,3 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tailwind 3 CDN compatibility for utilities not parsed by Tailwind 2.2 JIT. */
+@layer utilities {
+  [class~="bg-[linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)]"] {
+    background-image: linear-gradient(180deg, #f8fafc 0%, #eefbf3 100%);
+  }
+
+  [class~="bg-[radial-gradient(circle_at_top_left,_rgba(22,163,74,0.14),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)]"] {
+    background-image: radial-gradient(circle at top left, rgba(22, 163, 74, 0.14), transparent 30%), linear-gradient(180deg, #f8fafc 0%, #eefbf3 100%);
+  }
+
+  [class~="shadow-[0_20px_60px_rgba(15,23,42,0.08)]"] {
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  }
+
+  [class~="shadow-[0_4px_16px_rgba(22,163,74,.4)]"] {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.4);
+  }
+
+  [class~="h-[calc(100%-4.75rem)]"] {
+    height: calc(100% - 4.75rem);
+  }
+
+  .group:has(:checked) [class~="group-has-[:checked]:border-p-500"] { border-color: #22c55e; }
+  .group:has(:checked) [class~="group-has-[:checked]:border-n-900"] { border-color: #0f172a; }
+  .group:has(:checked) [class~="group-has-[:checked]:bg-p-50"] { background-color: #f0fdf4; }
+  .group:has(:checked) [class~="group-has-[:checked]:bg-p-100"] { background-color: #dcfce7; }
+  .group:has(:checked) [class~="group-has-[:checked]:bg-p-500"] { background-color: #22c55e; }
+  .group:has(:checked) [class~="group-has-[:checked]:bg-n-50"] { background-color: #f8fafc; }
+  .group:has(:checked) [class~="group-has-[:checked]:stroke-p-600"] { stroke: #16a34a; }
+  .group:has(:checked) [class~="group-has-[:checked]:opacity-100"] { opacity: 1; }
+
+  /* Preserve the outline icon system used before the Tailwind 2 build. */
+  svg {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  svg:not([stroke-width]) { stroke-width: 1.8; }
+  .fill-none { fill: none; }
+
+  .stroke-white, .fill-white { stroke: #fff; }
+  .stroke-n-300 { stroke: #cbd5e1; }
+  .stroke-n-400, .stroke-surface-400 { stroke: #94a3b8; }
+  .stroke-n-500, .stroke-surface-500 { stroke: #64748b; }
+  .stroke-n-600 { stroke: #475569; }
+  .stroke-n-700 { stroke: #334155; }
+  .stroke-p-400 { stroke: #4ade80; }
+  .stroke-p-500 { stroke: #22c55e; }
+  .stroke-p-600, .stroke-brand-600, .fill-p-600 { stroke: #16a34a; }
+  .stroke-p-700 { stroke: #15803d; }
+  .stroke-blue-500 { stroke: #3b82f6; }
+  .stroke-amber-400, .fill-amber-400 { stroke: #fbbf24; }
+  .stroke-amber-500 { stroke: #f59e0b; }
+  .stroke-amber-600 { stroke: #d97706; }
+  .stroke-amber-700 { stroke: #b45309; }
+  .stroke-orange-500 { stroke: #f97316; }
+  .stroke-red-400, .fill-red-400 { stroke: #f87171; }
+  .stroke-red-500, .fill-red-500 { stroke: #ef4444; }
+  .stroke-red-600 { stroke: #dc2626; }
+  .fill-green-600 { stroke: #16a34a; }
+}

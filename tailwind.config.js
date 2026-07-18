@@ -1,5 +1,6 @@
 module.exports = {
-  content: [
+  mode: 'jit',
+  purge: [
     './templates/**/*.html',
     './**/templates/**/*.html',
     './apps/**/templates/**/*.html',
