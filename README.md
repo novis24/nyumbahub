@@ -20,6 +20,34 @@ npm run build:tailwind
 
 The command outputs `static/css/tailwind.css` which is referenced by templates/base.html.
 
+Building assets (production / CI)
+--------------------------------
+When deploying, run the Node build step before Django's `collectstatic` so the manifest contains `css/tailwind.css`:
+
+1. Install Node dependencies (CI/deploy):
+
+```bash
+npm ci
+```
+
+2. Build Tailwind CSS:
+
+```bash
+npm run build:tailwind
+```
+
+3. Collect static files for Django:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+Deploy hint: ensure your build environment uses Node >= 18 (or pin Tailwind to v2). On Render/CI, use the single build command below as the build step:
+
+```bash
+npm ci && npm run build:tailwind && python manage.py collectstatic --noinput
+```
+
 ---
 
 ## Stack

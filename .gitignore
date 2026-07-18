@@ -36,11 +36,18 @@ ENV/
 logs/
 local_settings.py
 
+# Local Node installation
+.local/
+node-*-linux-x64.tar.xz
+
 db.sqlite3
 db.sqlite3-journal
 
 media/
 uploads/
+
+# Generated Tailwind output
+static/css/tailwind.css
 
 staticfiles/
 collected_static/
