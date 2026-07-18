@@ -2,6 +2,24 @@
 
 Mobile-first housing marketplace for Tanzania. Built with Django 5, Tailwind CSS, Alpine.js, and HTMX.
 
+Tailwind (production)
+---------------------
+This project should not use the CDN in production. To build local Tailwind CSS:
+
+1. Install Node dev dependency and build tool:
+
+```bash
+npm install
+```
+
+2. Build the CSS once or in CI:
+
+```bash
+npm run build:tailwind
+```
+
+The command outputs `static/css/tailwind.css` which is referenced by templates/base.html.
+
 ---
 
 ## Stack

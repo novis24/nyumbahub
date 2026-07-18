@@ -1,0 +1,11 @@
+{
+  "name": "nyumbahub-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "tailwindcss": "^3.5.0"
+  },
+  "scripts": {
+    "build:tailwind": "tailwindcss -i ./static/css/tailwind_input.css -o ./static/css/tailwind.css --minify"
+  }
+}
