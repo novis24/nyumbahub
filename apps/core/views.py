@@ -105,3 +105,11 @@ def service_worker(request):
     )
     response['Service-Worker-Allowed'] = '/'
     return response
+
+
+def privacy(request):
+    return render(request, 'core/privacy.html')
+
+
+def terms(request):
+    return render(request, 'core/terms.html')

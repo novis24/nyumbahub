@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
@@ -188,6 +189,16 @@
   </div>
 </nav>
 {% endblock %}
+ 
+<footer class="mt-8 border-t border-n-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 py-6 text-sm text-n-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>© {% now "Y" %} iSellTZ</div>
+    <div class="flex items-center gap-4">
+      <a href="{% url 'core:privacy' %}" class="text-n-600 hover:text-p-700">Privacy Policy</a>
+      <a href="{% url 'core:terms' %}" class="text-n-600 hover:text-p-700">Terms of Service</a>
+    </div>
+  </div>
+</footer>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
