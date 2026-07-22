@@ -2,6 +2,14 @@ from django.conf import settings
 
 
 def global_context(request):
+    listing_type = request.GET.get('type', '')
+    path = request.path
+    show_sme_cart = (
+        listing_type == 'sme'
+        or '/cart/' in path
+        or '/checkout/' in path
+        or '/orders/' in path
+    )
     ctx = {
         'site_name': settings.SITE_NAME,
         'unread_notifications_count': 0,
@@ -15,7 +23,15 @@ def global_context(request):
             'appId': settings.FIREBASE_APP_ID,
             'vapidKey': settings.FIREBASE_VAPID_KEY,
         },
+        'show_sme_cart': show_sme_cart,
+        'cart_count': 0,
     }
+    try:
+        from apps.listings.views import cart_for_request, cart_payload
+        if show_sme_cart:
+            ctx['cart_count'] = cart_payload(cart_for_request(request))['count']
+    except Exception:
+        pass
     if request.user.is_authenticated:
         try:
             from apps.notifications.models import Notification

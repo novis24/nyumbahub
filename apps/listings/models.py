@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from django.db.models import Avg
 from django.utils.text import slugify
 from collections import Counter
@@ -237,6 +238,288 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.listing.title}"
+
+
+class HeroGroup(models.Model):
+    name = models.CharField(max_length=80)
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    rotation_seconds = models.PositiveSmallIntegerField(default=8)
+    group_duration_seconds = models.PositiveSmallIntegerField(default=40)
+    eyebrow = models.CharField(max_length=120, blank=True)
+    headline = models.CharField(max_length=160, blank=True)
+    subheading = models.CharField(max_length=240, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class HeroImage(models.Model):
+    group = models.ForeignKey(HeroGroup, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='hero/')
+    alt_text = models.CharField(max_length=120, blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        siblings = HeroImage.objects.filter(group=self.group)
+        if self.pk:
+            siblings = siblings.exclude(pk=self.pk)
+        if self.group_id and siblings.count() >= 5:
+            raise ValidationError('A hero group can contain a maximum of five images.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.group.name} image {self.order + 1}"
+
+
+class Cart(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name='sme_cart')
+    session_key = models.CharField(max_length=40, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['session_key'])]
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='cart_items')
+    quantity = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('cart', 'listing')
+
+    @property
+    def line_total(self):
+        return self.listing.price * self.quantity
+
+
+class SMEOrder(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = 'requested', 'Requested'
+        CONFIRMED = 'confirmed', 'Confirmed'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='sme_orders')
+    access_key = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
+    customer_name = models.CharField(max_length=120)
+    customer_phone = models.CharField(max_length=40)
+    customer_email = models.EmailField(blank=True)
+    fulfillment_method = models.CharField(max_length=20, choices=[('delivery', 'Delivery'), ('pickup', 'Collection')], default='delivery')
+    delivery_location = models.CharField(max_length=180, blank=True)
+    notes = models.TextField(blank=True, max_length=1000)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
+    total = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class SMEOrderItem(models.Model):
+    order = models.ForeignKey(SMEOrder, on_delete=models.CASCADE, related_name='items')
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sme_order_items')
+    listing = models.ForeignKey(Listing, on_delete=models.PROTECT, related_name='order_items')
+    title = models.CharField(max_length=120)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=0)
+    quantity = models.PositiveIntegerField()
+    line_total = models.DecimalField(max_digits=12, decimal_places=0)
+
+
+
+class ListingVideoStatus(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    UPLOADING = 'uploading', 'Uploading'
+    PROCESSING = 'processing', 'Processing'
+    READY = 'ready', 'Ready'
+    FAILED = 'failed', 'Failed'
+    DELETED = 'deleted', 'Deleted'
+
+
+class VideoReservationStatus(models.TextChoices):
+    RESERVED = 'reserved', 'Reserved'
+    UPLOADING = 'uploading', 'Uploading'
+    UPLOADED_TEMPORARILY = 'uploaded_temporarily', 'Uploaded temporarily'
+    QUEUED = 'queued', 'Queued'
+    PROCESSING = 'processing', 'Processing'
+    COMPLETED = 'completed', 'Completed'
+    EXPIRED = 'expired', 'Expired'
+    REJECTED = 'rejected', 'Rejected'
+    FAILED = 'failed', 'Failed'
+    DELETING = 'deleting', 'Deleting'
+    DELETED = 'deleted', 'Deleted'
+
+
+class GlobalVideoStoragePolicy(models.Model):
+    global_storage_cap_bytes = models.PositiveBigIntegerField()
+    committed_bytes = models.PositiveBigIntegerField(default=0)
+    reserved_bytes = models.PositiveBigIntegerField(default=0)
+    uploads_enabled = models.BooleanField(default=True)
+    recording_enabled = models.BooleanField(default=True)
+    optimization_enabled = models.BooleanField(default=True)
+    standard_video_bytes = models.PositiveBigIntegerField(default=50_000_000)
+    recommended_duration_seconds = models.PositiveIntegerField(default=60)
+    soft_video_size_bytes = models.PositiveBigIntegerField(default=50_000_000)
+    hard_video_size_bytes = models.PositiveBigIntegerField(default=200_000_000)
+    maximum_recording_seconds = models.PositiveIntegerField(default=120)
+    temporary_object_lifetime_minutes = models.PositiveIntegerField(default=60)
+    warning_threshold_percent = models.PositiveSmallIntegerField(default=80)
+    critical_threshold_percent = models.PositiveSmallIntegerField(default=95)
+    target_video_height = models.PositiveIntegerField(default=720)
+    target_frame_rate = models.PositiveIntegerField(default=30)
+    original_retention_enabled = models.BooleanField(default=False)
+    last_known_r2_usage_bytes = models.PositiveBigIntegerField(default=0)
+    last_reconciled_at = models.DateTimeField(null=True, blank=True)
+    reconciliation_status = models.CharField(max_length=40, default='never_run')
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Video Storage & Processing'
+        verbose_name_plural = 'Video Storage & Processing'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        from django.conf import settings
+        return cls.objects.get_or_create(
+            pk=1,
+            defaults={'global_storage_cap_bytes': settings.VIDEO_GLOBAL_STORAGE_CAP_BYTES},
+        )[0]
+
+    @property
+    def consumed_bytes(self):
+        return self.committed_bytes + self.reserved_bytes
+
+    @property
+    def available_bytes(self):
+        return max(self.global_storage_cap_bytes - self.consumed_bytes, 0)
+
+    @property
+    def percent_consumed(self):
+        if not self.global_storage_cap_bytes:
+            return 100
+        return round((self.consumed_bytes / self.global_storage_cap_bytes) * 100, 2)
+
+    def __str__(self):
+        return 'Video Storage & Processing'
+
+
+class ListingVideo(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='videos', null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='listing_videos')
+    object_key = models.CharField(max_length=500, unique=True)
+    original_filename = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=120)
+    file_size = models.PositiveBigIntegerField()
+    upload_status = models.CharField(max_length=20, choices=ListingVideoStatus.choices, default=ListingVideoStatus.PENDING)
+    upload_id = models.CharField(max_length=255, blank=True)
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)
+    poster_object_key = models.CharField(max_length=500, blank=True)
+    poster_url = models.URLField(blank=True)
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    moderation_state = models.CharField(max_length=30, default='unreviewed')
+    verification_metadata = models.JSONField(default=dict, blank=True)
+    error_message = models.CharField(max_length=255, blank=True)
+    upload_expires_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cleanup_required = models.BooleanField(default=False)
+    object_deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        indexes = [
+            models.Index(fields=['owner', 'upload_status']),
+            models.Index(fields=['listing', 'upload_status']),
+            models.Index(fields=['upload_expires_at']),
+        ]
+
+    def __str__(self):
+        target = self.listing.title if self.listing_id else 'unattached listing'
+        return f"Video for {target}"
+
+    @property
+    def is_ready(self):
+        return self.upload_status == ListingVideoStatus.READY
+
+    @property
+    def is_expired_pending(self):
+        return self.upload_status in {ListingVideoStatus.PENDING, ListingVideoStatus.UPLOADING} and timezone.now() > self.upload_expires_at
+
+
+class VideoUploadReservation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_upload_reservations')
+    tenant = models.CharField(max_length=120, blank=True)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='video_upload_reservations', null=True, blank=True)
+    video = models.OneToOneField(ListingVideo, on_delete=models.SET_NULL, related_name='reservation', null=True, blank=True)
+    object_key = models.CharField(max_length=500, unique=True)
+    declared_size = models.PositiveBigIntegerField()
+    expected_processed_size = models.PositiveBigIntegerField(default=0)
+    reserved_temporary_bytes = models.PositiveBigIntegerField(default=0)
+    reserved_final_bytes = models.PositiveBigIntegerField(default=0)
+    actual_uploaded_size = models.PositiveBigIntegerField(null=True, blank=True)
+    actual_processed_size = models.PositiveBigIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=32, choices=VideoReservationStatus.choices, default=VideoReservationStatus.RESERVED)
+    expiration_time = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_time = models.DateTimeField(null=True, blank=True)
+    failure_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['expiration_time', 'status']),
+        ]
+
+    @property
+    def active_reserved_bytes(self):
+        if self.status in {
+            VideoReservationStatus.RESERVED,
+            VideoReservationStatus.UPLOADING,
+            VideoReservationStatus.UPLOADED_TEMPORARILY,
+            VideoReservationStatus.QUEUED,
+            VideoReservationStatus.PROCESSING,
+        }:
+            return self.reserved_temporary_bytes + self.reserved_final_bytes
+        return 0
+
+
+class GlobalVideoStorageAudit(models.Model):
+    policy = models.ForeignKey(GlobalVideoStoragePolicy, on_delete=models.CASCADE, related_name='audit_events')
+    old_value = models.PositiveBigIntegerField(null=True, blank=True)
+    new_value = models.PositiveBigIntegerField(null=True, blank=True)
+    administrator = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    reason = models.TextField(blank=True)
+    event_type = models.CharField(max_length=40, default='cap_changed')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class VehicleDetails(models.Model):

@@ -11,6 +11,7 @@
       <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
       <span class="absolute top-2 left-2 badge bg-amber-400 text-amber-900 text-[10px]">⭐ Top Pick</span>
       {% if listing.verification_badge_label %}<span class="absolute bottom-2 left-2 badge bg-white/95 text-p-800 text-[10px]">✓ {{ listing.verification_badge_label }}</span>{% endif %}
+      {% if listing.videos.all %}<span class="absolute bottom-2 right-2 badge bg-black/70 text-white text-[10px]">Video</span>{% endif %}
     </div>
     <div class="p-3">
       <p class="price text-sm font-bold text-n-900">{{ listing.price_per_month }}</p>

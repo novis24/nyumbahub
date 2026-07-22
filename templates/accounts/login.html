@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block topbar %}{% endblock %}
 {% block desktop_sidebar %}{% endblock %}
 {% block mobile_nav %}{% endblock %}
@@ -8,9 +9,7 @@
 <div class="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)] px-5 py-10 lg:px-8">
   <div class="mx-auto max-w-md">
     <a href="/" class="mb-6 inline-flex items-center gap-3">
-      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-p-600">
-        <svg class="h-4 w-4 fill-white" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      </div>
+      <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-10 w-10 rounded-lg flex-shrink-0">
       <div>
         <p class="font-serif text-2xl text-n-900">iSell</p>
         <p class="text-xs text-n-400">Trusted listings across Tanzania</p>

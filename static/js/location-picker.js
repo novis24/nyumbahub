@@ -18,9 +18,18 @@ function initLocationPicker() {
       return true;
     }
     
+    const errorBox = root.querySelector('[data-map-error]');
+    const showError = message => {
+      if (errorBox) {
+        errorBox.textContent = message;
+        errorBox.classList.remove('hidden');
+      }
+    };
+
     // Check required dependencies
     if (!root.dataset.apiKey) {
       console.error('[LocationPicker] Missing API key');
+      showError('The map is unavailable because the Geoapify browser key is not configured on this server.');
       return false;
     }
     
@@ -78,6 +87,7 @@ function initLocationPicker() {
         const url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${encodeURIComponent(key)}`;
         console.log('[LocationPicker] Reverse geocoding:', lat, lng);
         const response = await fetch(url);
+        if (!response.ok) throw new Error(`Geoapify returned ${response.status}`);
         const data = await response.json();
         const result = data.results?.[0];
         if (result && locationInput) {
@@ -148,6 +158,7 @@ function initLocationPicker() {
           console.log('[LocationPicker] Searching for:', q);
           const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&filter=countrycode:tz&bias=countrycode:tz&format=json&limit=6&apiKey=${encodeURIComponent(key)}`;
           const response = await fetch(url);
+          if (!response.ok) throw new Error(`Geoapify returned ${response.status}`);
           const data = await response.json();
           
           console.log('[LocationPicker] Search results:', data.results?.length ?? 0);
@@ -174,7 +185,7 @@ function initLocationPicker() {
           });
         } catch (e) {
           console.error('[LocationPicker] Search error:', e);
-          alert('Search failed: ' + e.message);
+          showError('Map search could not connect to Geoapify. Check the production API key and its allowed website domains.');
         }
       }
       

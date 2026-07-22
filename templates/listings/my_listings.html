@@ -3,7 +3,7 @@
 {% block title %}My listings{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-5 pb-10 lg:px-6">
+<div class="app-page px-4 pt-5 pb-10">
 
   {# Subscription status banner #}
   {% if payments_enabled and subscription %}
@@ -45,7 +45,7 @@
   </div>
 
   {% if listings %}
-    <div class="space-y-2.5">
+    <div class="grid gap-3 xl:grid-cols-2">
       {% for listing in listings %}
         <div class="card overflow-hidden" x-data="{open:false}">
           <div class="flex items-center gap-3 p-3.5">

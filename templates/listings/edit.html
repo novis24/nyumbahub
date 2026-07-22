@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block page_title %}Edit listing{% endblock %}
 {% block title %}Edit — {{ listing.title }}{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:px-6 lg:pb-10">
-  <div class="mx-auto max-w-5xl">
+<div class="app-page px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-10">
+  <div>
     <a href="{% url 'listings:my_listings' %}" class="inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
       <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>My listings
     </a>
@@ -19,7 +20,7 @@
       </a>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
+    <form method="post" enctype="multipart/form-data" class="listing-edit-grid mt-6 grid gap-6">
       {% csrf_token %}
 
       <div class="space-y-6">
@@ -32,9 +33,9 @@
             </div>
             <div>
               <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Price (TZS)</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-n-400">TZS</span>
-                <input type="number" name="price" value="{{ form.price.value|default:listing.price }}" class="field pl-14 {% if form.price.errors %}field-error{% endif %}">
+              <div class="flex overflow-hidden rounded-xl border border-n-200 bg-white focus-within:border-p-600 focus-within:ring-2 focus-within:ring-p-100">
+                <span class="flex flex-shrink-0 items-center border-r border-n-200 bg-n-50 px-4 text-sm font-bold text-n-500">TZS</span>
+                <input type="number" name="price" value="{{ form.price.value|default:listing.price }}" class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-base text-n-900 outline-none {% if form.price.errors %}field-error{% endif %}">
               </div>
             </div>
             <div>
@@ -152,7 +153,7 @@
       <aside class="space-y-6">
         <section class="card p-5 lg:p-6">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-n-700">Photos</h2>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-n-700">Media</h2>
             <span class="text-xs text-n-400">{{ current_images|length }} uploaded</span>
           </div>
 
@@ -180,7 +181,52 @@
 
           <div class="mt-4">
             <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Add more photos</label>
-            <input type="file" name="images" multiple accept="image/*" class="field file:mr-3 file:rounded-full file:border-0 file:bg-p-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-p-700">
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex cursor-pointer items-center justify-center rounded-xl border border-n-200 bg-white px-4 py-3 text-sm font-bold text-n-700 hover:border-p-300">Browse photos<input type="file" name="images" multiple accept="image/*" class="sr-only"></label>
+              <label class="flex cursor-pointer items-center justify-center rounded-xl border border-n-200 bg-white px-4 py-3 text-sm font-bold text-n-700 hover:border-p-300">Take photo<input type="file" name="images" multiple accept="image/*" capture="environment" class="sr-only"></label>
+            </div>
+          </div>
+
+          {{ video_policy|json_script:"video-policy" }}
+          <div class="mt-5 border-t border-n-100 pt-4"
+               data-listing-media
+               data-policy-id="video-policy"
+               data-listing-id="{{ listing.id }}"
+               data-upload-url="{% url 'listings:create_video_upload' %}"
+               data-complete-url-template="{% url 'listings:complete_video_upload' '00000000-0000-0000-0000-000000000000' %}">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wide text-n-700">Videos</h3>
+              <span class="text-xs text-n-400">{{ current_videos|length }} uploaded</span>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <label class="rounded-xl border border-n-200 bg-white p-3 text-center text-xs font-bold text-n-800 cursor-pointer data-[disabled=true]:opacity-50" data-record-tile>
+                Record video
+                <input type="file" accept="video/mp4,video/webm" capture="environment" class="sr-only" data-video-input data-record-input>
+              </label>
+              <label class="rounded-xl border border-n-200 bg-white p-3 text-center text-xs font-bold text-n-800 cursor-pointer data-[disabled=true]:opacity-50" data-video-tile>
+                Upload video from device
+                <input type="file" accept="video/mp4,video/webm" class="sr-only" data-video-input>
+              </label>
+            </div>
+            <p class="mt-3 text-xs text-n-500" data-video-policy-text></p>
+            {% for video in current_videos %}
+              <div class="mt-3 rounded-xl border border-n-200 bg-n-50 p-3">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-n-800">{{ video.original_filename }}</p>
+                    <p class="text-xs text-n-500">{{ video.get_upload_status_display }} · {{ video.file_size|filesizeformat }}</p>
+                  </div>
+                  <label class="flex items-center gap-2 text-sm font-medium text-red-600">
+                    <input type="checkbox" name="remove_video_ids" value="{{ video.id }}" class="h-4 w-4 accent-red-500">
+                    Remove
+                  </label>
+                </div>
+                <input type="hidden" name="video_order" value="{{ video.id }}">
+              </div>
+            {% empty %}
+              <p class="mt-3 text-sm text-n-500">No videos uploaded yet.</p>
+            {% endfor %}
+            <div class="mt-3 grid gap-2" data-video-list></div>
           </div>
         </section>
 
@@ -205,4 +251,4 @@
   </div>
 </div>
 {% endblock %}
-{% block extra_scripts %}{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="/static/js/location-picker.js"></script>{% endif %}<script>document.querySelector('form')?.addEventListener('submit',function(){this.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true)})</script>{% endblock %}
+{% block extra_scripts %}{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="{% static 'js/location-picker.js' %}"></script>{% endif %}<script src="/static/js/listing-media.js"></script><script>document.querySelector('form')?.addEventListener('submit',function(){this.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true)})</script>{% endblock %}

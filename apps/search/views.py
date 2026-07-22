@@ -25,7 +25,7 @@ def search_results(request):
     business_category = request.GET.get('business_category', '').strip()
     price_type = request.GET.get('price_type', '')
 
-    qs = Listing.objects.filter(status=ListingStatus.ACTIVE).select_related('owner').prefetch_related('images', 'reviews')
+    qs = Listing.objects.filter(status=ListingStatus.ACTIVE).select_related('owner').prefetch_related('images', 'videos', 'reviews')
 
     if q:
         qs = qs.filter(

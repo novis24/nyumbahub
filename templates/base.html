@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" class="h-full">
 <head>
   {% load static %}
   <meta charset="UTF-8">
@@ -52,9 +52,7 @@
   <div class="flex items-center h-14 px-4 gap-2">
     {% block topbar_left %}
     <a href="/" class="flex items-center gap-2 flex-shrink-0">
-      <div class="w-7 h-7 bg-p-600 rounded-lg flex items-center justify-center shadow-sm">
-        <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      </div>
+      <img src="{% static 'icons/icon-192.png' %}" alt="" class="w-7 h-7 rounded-lg flex-shrink-0">
       <span class="font-serif font-medium text-lg leading-none">iSell</span>
     </a>
     {% endblock %}
@@ -76,12 +74,10 @@
 {% endblock %}
 
 {% block desktop_sidebar %}
-<aside class="hidden lg:flex flex-col fixed inset-y-0 left-0 w-[260px] bg-white border-r border-n-100 z-40">
+<aside class="desktop-app-sidebar hidden lg:flex flex-col fixed inset-y-0 left-0 w-[260px] bg-white border-r border-n-100 z-40">
   <div class="px-5 py-5 border-b border-n-50">
     <a href="/" class="flex items-center gap-2.5">
-      <div class="w-9 h-9 bg-p-600 rounded-xl flex items-center justify-center shadow">
-        <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      </div>
+      <img src="{% static 'icons/icon-192.png' %}" alt="" class="w-9 h-9 rounded-xl flex-shrink-0">
       <div><p class="font-serif font-medium text-xl leading-none">iSell</p><p class="text-[11px] text-n-400 mt-0.5">Trusted rentals & Estate platform · Tanzania</p></div>
     </a>
   </div>
@@ -121,7 +117,7 @@
 </aside>
 {% endblock %}
 
-<main class="{% block main_shell_classes %}lg:ml-[260px] pt-14 lg:pt-0 mb-nav lg:mb-0 min-h-screen pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-0{% endblock %}">
+<main class="{% block main_shell_classes %}pt-14 lg:pt-0 mb-nav lg:mb-0 min-h-screen pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-0{% endblock %}">
   {% if messages %}
   <div class="px-4 pt-3 space-y-2">
     {% for message in messages %}
@@ -215,6 +211,25 @@
   };
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(()=>{}));
   document.body.addEventListener('htmx:configRequest',e=>{e.detail.headers['X-CSRFToken']='{{ csrf_token }}';});
+  const cart = {
+    async state(){ const r = await fetch("{% url 'listings:cart_state' %}"); return r.json(); },
+    async add(id){ const r = await fetch(`/listings/cart/add/${id}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}, body:'{}'}); const data = await r.json(); if(!r.ok) alert(data.error || 'Cart update failed.'); cart.render(data); },
+    async update(id, quantity){ const r = await fetch(`/listings/cart/items/${id}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}, body:JSON.stringify({quantity})}); const data = await r.json(); cart.render(data); },
+    async clear(){ const r = await fetch("{% url 'listings:clear_cart' %}", {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}}); cart.render(await r.json()); },
+    money(value){ return `TZS ${Number(value || 0).toLocaleString()}`; },
+    render(data){
+      document.querySelectorAll('[data-cart-badge]').forEach(el => el.textContent = data.count || 0);
+      const total = document.querySelector('[data-cart-total]'); if(total) total.textContent = cart.money(data.total);
+      const list = document.querySelector('[data-cart-items]');
+      if(list) list.innerHTML = data.items.length ? data.items.map(item => `<div class="flex gap-3 rounded-2xl bg-white p-3 shadow-sm"><img src="${item.image}" class="h-20 w-20 rounded-xl object-cover bg-slate-100" alt=""><div class="min-w-0 flex-1"><a href="${item.url}" class="block truncate text-sm font-bold text-slate-900">${item.title}</a><p class="mt-1 text-xs font-semibold text-emerald-700">${cart.money(item.line_total)}</p><div class="mt-2 flex items-center gap-2"><button data-cart-qty="${item.id}" data-qty="${item.quantity - 1}" class="h-8 w-8 rounded-lg border">-</button><span class="text-sm font-bold">${item.quantity}</span><button data-cart-qty="${item.id}" data-qty="${item.quantity + 1}" class="h-8 w-8 rounded-lg border">+</button></div></div></div>`).join('') : '<div class="is-empty">Your SME cart is empty.</div>';
+    }
+  };
+  document.addEventListener('click', e => {
+    const add = e.target.closest('[data-add-to-cart]'); if(add) cart.add(add.dataset.addToCart);
+    const qty = e.target.closest('[data-cart-qty]'); if(qty) cart.update(qty.dataset.cartQty, Number(qty.dataset.qty));
+    if(e.target.closest('[data-cart-clear]')) cart.clear();
+  });
+  if(document.querySelector('[data-cart-page]')) cart.state().then(cart.render);
 </script>
 {% block extra_scripts %}{% endblock %}
 </body>

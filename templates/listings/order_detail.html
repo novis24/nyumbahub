@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n humanize %}
+{% block title %}{% trans "Order" %} #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="app-page max-w-3xl px-3 py-5">
+  <section class="rounded-2xl bg-white p-5 shadow-sm">
+    <p class="text-xs font-bold uppercase text-p-700">{% trans "Order request" %}</p>
+    <h1 class="mt-1 text-2xl font-black text-n-900">#{{ order.id }} · {{ order.get_status_display }}</h1>
+    <p class="mt-2 text-sm text-n-500">{{ order.customer_name }} · {{ order.customer_phone }}</p>
+    <div class="mt-5 space-y-3">{% for item in visible_items %}<div class="flex justify-between gap-3 rounded-xl bg-n-50 p-3 text-sm"><span>{{ item.quantity }} x {{ item.title }}</span><b>TZS {{ item.line_total|intcomma }}</b></div>{% endfor %}</div>
+    <div class="mt-4 flex justify-between border-t border-n-100 pt-3 text-lg font-black"><span>{% trans "Total" %}</span><span>TZS {{ order.total|intcomma }}</span></div>
+  </section>
+</div>
+{% endblock %}

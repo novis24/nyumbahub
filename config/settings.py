@@ -27,6 +27,13 @@ def env_bool(name, default=False):
         return False
     return default
 
+
+def env_int(name, default):
+    raw_value = config(name, default=None)
+    if raw_value in (None, ''):
+        return default
+    return int(raw_value)
+
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = env_bool('DEBUG', default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='192.168.3.10').split(',')
@@ -68,6 +75,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -99,23 +107,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='nyumbahub'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default=''),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
-
 DATABASES = {
-    "default": dj_database_url.config( 
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='nyumbahub'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
+
+# DATABASES = {
+#     "default": dj_database_url.config( 
+#         default=os.getenv("DATABASE_URL"),
+#         conn_max_age=600,
+#     )
+# }
 
 # ─── Auth ─────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -169,9 +177,9 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET', default=''),
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Using local storage in development, switch to Cloudinary in production
-# DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
@@ -188,6 +196,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ─── Localisation ─────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
+LANGUAGES = [
+    ('en', 'English'),
+    ('sw', 'Kiswahili'),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 TIME_ZONE = 'Africa/Dar_es_Salaam'
 USE_I18N = True
 USE_TZ = True
@@ -229,7 +242,10 @@ PHONENUMBER_DEFAULT_REGION = 'TZ'
 SITE_NAME = config('SITE_NAME', default='iSell')
 SITE_URL = config('SITE_URL', default='http://localhost:8000')
 PAYMENTS_ENABLED = env_bool('PAYMENTS_ENABLED', default=False)
-GEOAPIFY_BROWSER_KEY = config('GEOAPIFY_BROWSER_KEY', default='')
+GEOAPIFY_BROWSER_KEY = config(
+    'GEOAPIFY_BROWSER_KEY',
+    default=config('GEOAPIFY_API_KEY', default=''),
+)
 FIREBASE_API_KEY = config('FIREBASE_API_KEY', default='')
 FIREBASE_AUTH_DOMAIN = config('FIREBASE_AUTH_DOMAIN', default='')
 FIREBASE_PROJECT_ID = config('FIREBASE_PROJECT_ID', default='')
@@ -241,6 +257,25 @@ FIREBASE_SERVICE_ACCOUNT_PATH = config('FIREBASE_SERVICE_ACCOUNT_PATH', default=
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ─── Cloudflare R2 Video Storage ──────────────────────────
+R2_ACCESS_KEY_ID = config('R2_ACCESS_KEY_ID', default='')
+R2_SECRET_ACCESS_KEY = config('R2_SECRET_ACCESS_KEY', default='')
+R2_BUCKET_NAME = config('R2_BUCKET_NAME', default='')
+R2_ENDPOINT_URL = config('R2_ENDPOINT_URL', default='')
+R2_REGION = config('R2_REGION', default='auto')
+R2_PUBLIC_BASE_URL = config('R2_PUBLIC_BASE_URL', default='')
+R2_CUSTOM_DOMAIN = config('R2_CUSTOM_DOMAIN', default='')
+R2_SIGNED_URL_EXPIRY_SECONDS = env_int('R2_SIGNED_URL_EXPIRY_SECONDS', 3600)
+R2_VIDEO_PREFIX = config('R2_VIDEO_PREFIX', default='listing-videos/')
+R2_MULTIPART_THRESHOLD_MB = env_int('R2_MULTIPART_THRESHOLD_MB', 50)
+R2_MULTIPART_CHUNK_SIZE_MB = env_int('R2_MULTIPART_CHUNK_SIZE_MB', 10)
+R2_UPLOAD_URL_EXPIRY_SECONDS = env_int('R2_UPLOAD_URL_EXPIRY_SECONDS', 900)
+R2_VIDEO_DELIVERY_MODE = config('R2_VIDEO_DELIVERY_MODE', default='private')
+R2_VIDEO_MAX_SIZE_HARD_LIMIT_MB = env_int('R2_VIDEO_MAX_SIZE_HARD_LIMIT_MB', 500)
+R2_VIDEO_UPLOAD_SESSION_TTL_MINUTES = env_int('R2_VIDEO_UPLOAD_SESSION_TTL_MINUTES', 60)
+VIDEO_GLOBAL_STORAGE_CAP_BYTES = env_int('VIDEO_GLOBAL_STORAGE_CAP_BYTES', 8_000_000_000)
+STANDARD_VIDEO_BYTES = env_int('STANDARD_VIDEO_BYTES', 50_000_000)
+
 # ─── Subscription Plan Limits ─────────────────────────────
 PLAN_LIMITS = {
     'basic': {
@@ -248,17 +283,20 @@ PLAN_LIMITS = {
         'images_per_listing': 3,
         'featured': False,
         'price_tzs': 15000,
+        'video_uploads_allowed': False,
     },
     'standard': {
         'listings': 10,
         'images_per_listing': 8,
         'featured': False,
         'price_tzs': 35000,
+        'video_uploads_allowed': True,
     },
     'premium': {
         'listings': 999,
         'images_per_listing': 20,
         'featured': True,
         'price_tzs': 70000,
+        'video_uploads_allowed': True,
     },
 }

@@ -2,7 +2,7 @@
 {% block page_title %}Saved{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-6 pb-10 lg:px-6">
+<div class="app-page-wide px-4 pt-6 pb-10">
 
   <h1 class="mb-4 text-base font-semibold text-n-900">
     Liked listings
@@ -10,7 +10,7 @@
   </h1>
 
   {% if saved %}
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+    <div class="listing-cards-grid grid grid-cols-1 gap-3 sm:grid-cols-2">
       {% for item in saved %}
         {% include 'components/listing_card.html' with listing=item.listing %}
       {% endfor %}

@@ -195,7 +195,7 @@ def profile_edit(request):
 def _render_profile(request, profile_user):
     listings = (
         Listing.objects.filter(owner=profile_user, status=ListingStatus.ACTIVE)
-        .prefetch_related('images', 'reviews')
+        .prefetch_related('images', 'videos', 'reviews')
         .order_by('-is_featured', '-created_at')
     )
     review_stats = ListingReview.objects.filter(listing__owner=profile_user).aggregate(

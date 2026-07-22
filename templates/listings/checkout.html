@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load i18n humanize %}
+{% block title %}{% trans "Checkout" %}{% endblock %}
+{% block content %}
+<form method="post" class="app-page max-w-3xl px-3 py-5">
+  {% csrf_token %}
+  <h1 class="mb-4 text-2xl font-black text-n-900">{% trans "Checkout" %}</h1>
+  <div class="checkout-grid grid gap-4">
+    <section class="rounded-2xl bg-white p-4 shadow-sm">
+      <div class="space-y-3">
+        <input name="customer_name" class="field" required placeholder="{% trans 'Full name' %}" value="{{ user.display_name|default:'' }}">
+        <input name="customer_phone" class="field" required placeholder="{% trans 'Phone number' %}" value="{{ user.phone|default:'' }}">
+        <input name="customer_email" type="email" class="field" placeholder="{% trans 'Email optional' %}" value="{{ user.email|default:'' }}">
+        <select name="fulfillment_method" class="field"><option value="delivery">{% trans "Delivery" %}</option><option value="pickup">{% trans "Collection" %}</option></select>
+        <input name="delivery_location" class="field" placeholder="{% trans 'Delivery or collection details' %}">
+        <textarea name="notes" class="field" rows="4" placeholder="{% trans 'Notes for seller' %}"></textarea>
+      </div>
+    </section>
+    <aside class="rounded-2xl bg-white p-4 shadow-sm">
+      <h2 class="font-black text-n-900">{% trans "Order request" %}</h2>
+      <div class="mt-3 space-y-2 text-sm">{% for item in cart_state.items %}<div class="flex justify-between gap-3"><span>{{ item.quantity }} x {{ item.title }}</span><b>TZS {{ item.line_total|intcomma }}</b></div>{% endfor %}</div>
+      <div class="mt-4 flex justify-between border-t border-n-100 pt-3 text-lg font-black"><span>{% trans "Total" %}</span><span>TZS {{ cart_state.total|intcomma }}</span></div>
+      <p class="mt-2 text-xs text-n-500">{% trans "This creates an order request. No online payment is taken here." %}</p>
+      <button class="mt-4 w-full rounded-xl bg-p-700 py-3 text-sm font-bold text-white">{% trans "Place order request" %}</button>
+    </aside>
+  </div>
+</form>
+{% endblock %}

@@ -8,6 +8,7 @@
   </div>
   <div data-map-results class="mt-2 hidden max-h-40 overflow-y-auto rounded-xl border border-n-200 bg-white"></div>
   <button type="button" data-map-geolocate class="mt-3 text-sm font-semibold text-p-700">Use my current location</button>
+  <p data-map-error class="mt-3 hidden rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"></p>
   <div data-map class="mt-3 h-72 overflow-hidden rounded-xl bg-n-200"></div>
   <input type="hidden" name="latitude" value="{{ form.latitude.value|default:'' }}">
   <input type="hidden" name="longitude" value="{{ form.longitude.value|default:'' }}">

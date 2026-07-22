@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{{ provider.display_name }}{% endblock %}
+{% block content %}
+<div class="app-page-wide px-3 py-5 sm:px-4">
+  <section class="rounded-3xl bg-white p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      {% if provider.avatar %}<img src="{{ provider.avatar.url }}" class="h-14 w-14 rounded-2xl object-cover" alt="">{% else %}<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-p-50 font-black text-p-700">{{ provider.display_name|first }}</div>{% endif %}
+      <div class="min-w-0 flex-1">
+        <h1 class="truncate text-2xl font-black text-n-900">{{ provider.display_name }}</h1>
+        <p class="text-sm text-n-500">{{ provider.location|default:representative.city }}{% if representative.verification_badge_label %} · {{ representative.verification_badge_label }}{% endif %}</p>
+      </div>
+      {% if show_sme_cart %}<a href="{% url 'listings:cart' %}" class="rounded-xl bg-p-700 px-4 py-2 text-sm font-bold text-white">{% trans "Cart" %}</a>{% endif %}
+    </div>
+    {% if available_categories|length > 1 %}
+      <nav class="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
+        <a href="{% url 'listings:provider_gallery' provider.id %}" class="rounded-full border px-4 py-2 text-sm font-bold {% if not active_category %}border-n-900 bg-n-900 text-white{% else %}border-n-200 text-n-600{% endif %}">{% trans "All" %}</a>
+        {% for category in available_categories %}
+          <a href="?category={{ category }}" class="rounded-full border px-4 py-2 text-sm font-bold {% if active_category == category %}border-n-900 bg-n-900 text-white{% else %}border-n-200 text-n-600{% endif %}">{{ category|title }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  </section>
+  <section class="mt-5 adaptive-card-grid">
+    {% for listing in listings %}
+      {% include 'components/listing_card.html' with listing=listing %}
+    {% empty %}
+      <div class="is-empty">{% trans "No public listings in this category." %}</div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

@@ -4,7 +4,8 @@ from django.conf import settings
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator
 from django.db.models import Avg, Case, Count, IntegerField, When
-from apps.listings.models import Listing, ListingStatus, ListingType, SavedListing
+from apps.listings.models import HeroGroup, Listing, ListingStatus, ListingType, PropertyType, SavedListing, SMEDetails, VehicleDetails
+from apps.listings.views import provider_cards
 
 
 def home(request):
@@ -21,24 +22,9 @@ def home(request):
     if property_filter:
         qs = qs.filter(property_type=property_filter)
 
-    # Featured listings (horizontal scroll strip)
-    featured = qs.filter(is_featured=True).select_related('owner').prefetch_related('images', 'reviews')[:6]
-    hero_listing = (
-        qs.filter(images__isnull=False)
-        .annotate(
-            verified_rank=Case(
-                When(owner__verification_status='verified', then=1),
-                default=0,
-                output_field=IntegerField(),
-            ),
-            rating_rank=Avg('reviews__rating'),
-        )
-        .select_related('owner')
-        .prefetch_related('images')
-        .order_by('-verified_rank', '-rating_rank', '-is_featured', '-created_at')
-        .first()
-    )
-
+    hero_groups = HeroGroup.objects.filter(is_active=True).prefetch_related('images').order_by('order', 'name')
+    hero_listing = qs.filter(images__isnull=False).select_related('owner').prefetch_related('images').order_by('-is_featured', '-created_at').first()
+    featured = qs.filter(is_featured=True).select_related('owner').prefetch_related('images', 'videos', 'reviews')[:6]
     hero_content = {
         ListingType.RENTAL: {
             'eyebrow': 'Trusted homes across Tanzania',
@@ -62,9 +48,9 @@ def home(request):
             'placeholder': 'e.g. furniture or catering',
         },
     }[listing_type]
-
-    # Main grid
-    paginator = Paginator(qs.filter(is_featured=False).select_related('owner').prefetch_related('images', 'reviews'), 12)
+    popular_providers = provider_cards(qs, limit=8, order='popular')
+    recent_providers = provider_cards(qs, limit=12, order='recent')
+    paginator = Paginator(recent_providers, 12)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
@@ -86,14 +72,23 @@ def home(request):
 
     return render(request, 'core/home.html', {
         'listings': page_obj,
+        'popular_providers': popular_providers,
         'featured_listings': featured,
         'active_type': listing_type,
         'property_filter': property_filter,
         'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
         'saved_ids': saved_ids,
+        'hero_groups': hero_groups,
         'hero_listing': hero_listing,
         'hero_content': hero_content,
+        'property_choices': PropertyType.choices,
+        'vehicle_condition_choices': VehicleDetails._meta.get_field('condition').choices,
+        'vehicle_category_choices': VehicleDetails._meta.get_field('category').choices,
+        'sme_kind_choices': SMEDetails._meta.get_field('kind').choices,
+        'price_type_choices': SMEDetails._meta.get_field('price_type').choices,
+        'active_filters_count': len([value for value in [property_filter, request.GET.get('city'), request.GET.get('min_price'), request.GET.get('max_price'), request.GET.get('vehicle_make'), request.GET.get('vehicle_category'), request.GET.get('sme_kind'), request.GET.get('business_category')] if value]),
         'popular_cities': Listing.objects.filter(status=ListingStatus.ACTIVE).values('city').annotate(total=Count('id')).order_by('-total')[:5],
+        'show_sme_cart': listing_type == ListingType.SME,
     })
 
 

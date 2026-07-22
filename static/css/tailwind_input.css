@@ -4,6 +4,186 @@
 
 /* Tailwind 3 CDN compatibility for utilities not parsed by Tailwind 2.2 JIT. */
 @layer utilities {
+  @media (min-width: 1024px) {
+    .desktop-app-sidebar + main {
+      margin-left: 260px;
+      width: calc(100% - 260px);
+    }
+
+    .app-page {
+      max-width: 1180px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .app-page-wide {
+      max-width: 1440px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .profile-layout-grid {
+      grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.55fr);
+      align-items: start;
+    }
+
+    .profile-listings-grid {
+      grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+    }
+
+    .listing-cards-grid {
+      grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    }
+
+    .listing-detail-grid {
+      grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+    }
+
+    .listing-edit-grid {
+      grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
+    }
+  }
+
+  .listing-detail-shell {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .listing-media-gallery {
+    width: 100%;
+    height: clamp(280px, 42vh, 420px);
+    border-radius: 0 0 1.25rem 1.25rem;
+  }
+
+  .listing-media-gallery img,
+  .listing-media-gallery video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .listing-media-thumbs {
+    display: flex;
+    gap: 0.625rem;
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .listing-media-thumb {
+    position: relative;
+    width: 4.5rem;
+    height: 3.5rem;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 0.75rem;
+  }
+
+  .adaptive-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: 0.75rem;
+  }
+
+  .is-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .is-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+
+  .is-shortcut {
+    display: flex;
+    min-height: 4.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #334155;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  }
+
+  .is-empty {
+    grid-column: 1 / -1;
+    border-radius: 1rem;
+    background: #fff;
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  @media (min-width: 1024px) {
+    .home-hero-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    }
+
+    .checkout-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+    }
+  }
+
+  @media (min-width: 640px) {
+    .adaptive-card-grid { grid-template-columns: repeat(auto-fill, minmax(14.25rem, 1fr)); }
+  }
+
+  @media (min-width: 1024px) {
+    .listing-media-gallery {
+      height: clamp(380px, 48vh, 560px);
+      border-radius: 1.25rem;
+    }
+
+    .listing-media-thumbs {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .listing-media-thumb {
+      width: 5.75rem;
+      height: 4.25rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .listing-media-gallery {
+      height: clamp(420px, 42vh, 560px);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .profile-listings-grid,
+    .listing-cards-grid {
+      grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .profile-layout-grid {
+      grid-template-columns: minmax(0, 1.55fr) minmax(20rem, 0.45fr);
+    }
+
+    .profile-listings-grid,
+    .listing-cards-grid {
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    }
+  }
+
   [class~="bg-[linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)]"] {
     background-image: linear-gradient(180deg, #f8fafc 0%, #eefbf3 100%);
   }

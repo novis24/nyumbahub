@@ -1,11 +1,15 @@
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
 from django.urls import reverse
+from datetime import timedelta
 
 from apps.accounts.models import AccountRole, CustomUser, VerificationStatus
+from apps.subscriptions.models import Plan, Subscription, VideoPlanEntitlement
+from apps.listings.services.video_quota import complete_reservation, reserve_video_capacity
 from .forms import ListingForm
-from .models import Listing, ListingStatus, ListingType, LocationPrecision
+from .models import GlobalVideoStoragePolicy, Listing, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision
 
 
 def form_data(**overrides):
@@ -86,3 +90,62 @@ class ListingWorkflowTests(TestCase):
         self.assertRedirects(response, listing.get_absolute_url())
         home = self.client.get(reverse('core:home') + '?type=sme')
         self.assertContains(home, listing.title)
+
+
+class VideoQuotaTests(TestCase):
+    def setUp(self):
+        self.owner = CustomUser.objects.create_user(username='video', email='video@example.com', password='x', role=AccountRole.LANDLORD)
+        Subscription.objects.create(user=self.owner, plan=Plan.STANDARD, is_active=True)
+        VideoPlanEntitlement.objects.create(
+            plan=Plan.STANDARD,
+            video_uploads_allowed=True,
+            max_videos_per_listing=3,
+            max_video_size_mb=200,
+            max_aggregate_video_storage_mb=500,
+            total_video_storage_bytes=500_000_000,
+            absolute_max_video_bytes=200_000_000,
+            upload_enabled=True,
+            recording_enabled=True,
+        )
+        self.listing = Listing.objects.create(owner=self.owner, listing_type=ListingType.RENTAL, title='Video home', description='Home', price=1, location='Area')
+        self.policy = GlobalVideoStoragePolicy.get_solo()
+
+    def _video(self, size):
+        return ListingVideo.objects.create(
+            listing=self.listing,
+            owner=self.owner,
+            object_key=f'listing-videos/test-{size}.mp4',
+            original_filename='video.mp4',
+            content_type='video/mp4',
+            file_size=size,
+            upload_status=ListingVideoStatus.PENDING,
+            upload_expires_at=timezone.now() + timedelta(minutes=30),
+        )
+
+    def test_global_capacity_denies_reservation_without_exceeding_cap(self):
+        self.policy.global_storage_cap_bytes = 100
+        self.policy.committed_bytes = 80
+        self.policy.reserved_bytes = 10
+        self.policy.save()
+
+        reservation, error = reserve_video_capacity(user=self.owner, listing=self.listing, video=self._video(20), declared_size=20)
+
+        self.assertIsNone(reservation)
+        self.assertIn('temporarily unavailable', error)
+        self.policy.refresh_from_db()
+        self.assertEqual(self.policy.reserved_bytes, 10)
+
+    def test_completion_is_idempotent_and_commits_once(self):
+        self.policy.global_storage_cap_bytes = 1_000
+        self.policy.committed_bytes = 0
+        self.policy.reserved_bytes = 0
+        self.policy.save()
+        reservation, error = reserve_video_capacity(user=self.owner, listing=self.listing, video=self._video(100), declared_size=100)
+        self.assertFalse(error)
+
+        complete_reservation(reservation, 100)
+        complete_reservation(reservation, 100)
+
+        self.policy.refresh_from_db()
+        self.assertEqual(self.policy.committed_bytes, 100)
+        self.assertEqual(self.policy.reserved_bytes, 0)

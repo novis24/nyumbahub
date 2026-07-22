@@ -1,18 +1,32 @@
 {% extends 'base.html' %}
+{% load i18n static %}
 {% block title %}Find spaces that move you forward{% endblock %}
 {% block desktop_sidebar %}{% endblock %}
 {% block main_shell_classes %}min-h-screen mb-nav lg:mb-0 bg-white{% endblock %}
 {% block topbar %}
 <header class="sticky top-0 z-50 border-b border-n-100 bg-white/95 backdrop-blur-xl">
-  <div class="flex h-16 w-full items-center gap-4 px-3 sm:px-4 lg:h-[74px] lg:px-5">
+  <div class="flex h-14 w-full items-center gap-2 px-3 sm:px-4 lg:h-[74px] lg:gap-4 lg:px-5">
     <a href="/" class="flex min-w-0 items-center gap-2.5">
-      <img src="/static/icons/icon-192.png" alt="" class="h-9 w-9 rounded-xl object-cover lg:h-10 lg:w-10">
-      <span class="leading-tight"><strong class="block text-lg text-p-800">iSellTZ</strong><span class="hidden text-[10px] text-n-500 sm:block">Tanzania’s trusted marketplace</span></span>
+      <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-8 w-8 rounded-xl object-cover lg:h-10 lg:w-10">
+      <span class="leading-tight"><strong class="block text-base text-p-800 lg:text-lg">iSellTZ</strong><span class="hidden text-[10px] text-n-500 sm:block">Tanzania’s trusted marketplace</span></span>
     </a>
     <nav class="mx-auto hidden items-center gap-7 text-sm font-semibold text-n-700 lg:flex">
       <a class="text-p-700" href="/">Home</a><a href="?type=rental">Rentals</a><a href="?type=sme">SME Shops</a><a href="?type=auto">Autos</a><a href="{% url 'search:results' %}">Explore</a>
     </nav>
-    <div class="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+    <form action="{% url 'set_language' %}" method="post" class="ml-auto lg:ml-0">
+      {% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}">
+      <select name="language" onchange="this.form.submit()" class="h-9 rounded-xl border border-n-200 bg-white px-2 text-[11px] font-bold text-n-700 lg:h-10 lg:text-xs">
+        <option value="en" {% if LANGUAGE_CODE|slice:':2' == 'en' %}selected{% endif %}>EN</option>
+        <option value="sw" {% if LANGUAGE_CODE|slice:':2' == 'sw' %}selected{% endif %}>SW</option>
+      </select>
+    </form>
+    {% if show_sme_cart %}
+      <a href="{% url 'listings:cart' %}" class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-p-100 bg-p-50 text-p-700 lg:h-10 lg:w-10">
+        <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+        <span data-cart-badge class="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-p-600 px-1 text-[10px] font-bold text-white">{{ cart_count }}</span>
+      </a>
+    {% endif %}
+    <div class="hidden min-w-0 items-center gap-1.5 sm:flex lg:gap-2">
       <button data-install-app onclick="installISellApp()" class="inline-flex shrink-0 items-center gap-1 rounded-xl border border-p-200 bg-p-50 px-2.5 py-2 text-[11px] font-bold text-p-700 sm:px-3 sm:text-xs"><span aria-hidden="true">↓</span><span>Install</span><span class="hidden sm:inline"> app</span></button>
       {% if user.is_authenticated %}
         {% if user.is_provider %}<a href="{% url 'listings:create' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">List your property +</a>{% endif %}
@@ -22,59 +36,150 @@
         <a href="{% url 'accounts:login' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Sign in</a>
       {% endif %}
     </div>
+    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700 sm:hidden">{% if user.is_authenticated %}Me{% else %}Sign in{% endif %}</a>
   </div>
 </header>
 {% endblock %}
-{% block content %}
-<section class="relative isolate overflow-hidden border-b border-n-100 bg-[#f3faf5]">
-  {% if hero_listing and hero_listing.cover_image %}
-  <div class="absolute inset-y-0 right-0 hidden w-[52%] lg:block">
-    <img src="{{ hero_listing.cover_image.image.url }}" alt="" class="h-full w-full object-cover">
-    <div class="absolute inset-0 bg-gradient-to-r from-[#f3faf5] via-[#f3faf5]/50 to-transparent"></div>
-  </div>
-  {% endif %}
-  <div class="relative w-full px-3 py-10 sm:px-4 sm:py-14 lg:px-5 lg:py-20">
-    <div class="max-w-2xl">
-      <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[11px] font-bold text-p-700 shadow-sm ring-1 ring-p-100">✓ {{ hero_content.eyebrow }}</span>
-      <h1 class="mt-6 max-w-xl font-serif text-[2.35rem] font-medium leading-[1.03] text-p-900 sm:text-5xl lg:text-6xl">{{ hero_content.title_start }} <em class="font-light text-p-700">{{ hero_content.title_emphasis }}</em> {{ hero_content.title_end }}</h1>
-      <p class="mt-5 max-w-lg text-sm leading-6 text-n-600 sm:text-base">{{ hero_content.description }}</p>
 
-      <form action="{% url 'search:results' %}" class="mt-7 grid gap-2 rounded-2xl bg-white p-3 shadow-xl shadow-p-900/10 ring-1 ring-n-100 sm:grid-cols-[1.5fr_1fr_auto] sm:items-center">
-        <label class="min-w-0 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">What are you looking for?</span><input name="q" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none" placeholder="{{ hero_content.placeholder }}"></label>
-        <label class="min-w-0 border-n-100 px-3 py-2 sm:border-l"><span class="block text-[10px] font-bold text-n-500">Category</span><select name="type" onchange="window.location.href='/?type='+encodeURIComponent(this.value)" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none"><option value="rental" {% if active_type == 'rental' %}selected{% endif %}>Rentals</option><option value="auto" {% if active_type == 'auto' %}selected{% endif %}>Autos</option><option value="sme" {% if active_type == 'sme' %}selected{% endif %}>SME Shops</option></select></label>
-        <button class="rounded-xl bg-p-700 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-p-700/20">Search</button>
-      </form>
-      <div class="mt-6 grid max-w-xl grid-cols-2 gap-3 text-[11px] font-semibold text-n-600 sm:grid-cols-4"><span>✓ Verified listings</span><span>✓ Trusted agents</span><span>✓ Local support</span><span>✓ Secure experience</span></div>
+{% block content %}
+<section class="px-3 pb-6 pt-3 lg:hidden" x-data="{filters:false}">
+  <form action="{% url 'search:results' %}" class="mb-3 flex items-center gap-2">
+    <input type="hidden" name="type" value="{{ active_type }}">
+    <input name="q" class="h-11 min-w-0 flex-1 rounded-2xl border border-n-200 bg-white px-4 text-sm shadow-sm outline-none focus:border-p-500" placeholder="{% trans 'Search homes, cars, shops...' %}">
+    <button type="button" @click="filters=true" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-p-700 text-white shadow-sm">
+      <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+    </button>
+  </form>
+
+  <div class="relative overflow-hidden rounded-[1.35rem] bg-p-900 text-white shadow-xl shadow-p-900/10">
+    <div class="relative aspect-[4/5] min-h-[360px]">
+      {% for group in hero_groups %}
+        {% for image in group.images.all %}
+          <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:group.name }}" class="hero-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" data-group="{{ forloop.parentloop.counter0 }}" data-rotation="{{ group.rotation_seconds }}" data-duration="{{ group.group_duration_seconds }}">
+        {% endfor %}
+      {% empty %}
+        <div class="absolute inset-0 bg-gradient-to-br from-p-800 via-p-700 to-n-900"></div>
+      {% endfor %}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-p-900/35 to-black/10"></div>
+      <div class="absolute inset-x-0 bottom-0 p-5">
+        <span class="inline-flex rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-bold backdrop-blur-md">✓ Trusted listings</span>
+        <h1 class="mt-3 text-3xl font-black leading-tight">Find spaces that move your life forward.</h1>
+        <p class="mt-2 text-sm leading-6 text-white/85">Rentals, cars, rooms, hostels and SME shops from accountable local providers.</p>
+        <nav class="mt-4 grid grid-cols-3 gap-2">
+          <a href="?type=rental" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Rentals</a>
+          <a href="?type=auto" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Autos</a>
+          <a href="?type=sme" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">SME Shops</a>
+          <a href="?type=rental&property=hostel" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Hostels</a>
+          <a href="?type=rental&property=single_room" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Rooms</a>
+          <a href="{% url 'search:results' %}" class="rounded-2xl bg-white px-2 py-3 text-center text-[11px] font-bold text-p-800">Explore</a>
+        </nav>
+        <div class="mt-4 flex items-center justify-between text-[11px] font-semibold text-white/80"><span data-hero-count>{{ hero_groups|length }} hero group{{ hero_groups|length|pluralize }}</span><span>Swipe-ready discovery</span></div>
+      </div>
     </div>
   </div>
+
+  <div x-show="filters" x-cloak class="fixed inset-0 z-[80] bg-black/40" @click.self="filters=false">
+    <form action="{% url 'search:results' %}" class="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl">
+      <div class="mb-4 flex items-center justify-between"><b>Filters</b><a href="{% url 'core:home' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">Reset</a></div>
+      <input type="hidden" name="type" value="{{ active_type }}">
+      <div class="grid grid-cols-2 gap-3"><input name="min_price" class="field" placeholder="Min price"><input name="max_price" class="field" placeholder="Max price"></div>
+      {% if active_type == 'rental' %}
+        <select name="property" class="field mt-3"><option value="">Any property type</option>{% for val,label in property_choices %}<option value="{{ val }}" {% if property_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      {% elif active_type == 'auto' %}
+        <input name="vehicle_make" class="field mt-3" placeholder="Vehicle make"><select name="vehicle_category" class="field mt-3"><option value="">Any vehicle type</option>{% for val,label in vehicle_category_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+      {% elif active_type == 'sme' %}
+        <select name="sme_kind" class="field mt-3"><option value="">Products and services</option>{% for val,label in sme_kind_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select><input name="business_category" class="field mt-3" placeholder="Business category">
+      {% endif %}
+      <input name="city" class="field mt-3" placeholder="City">
+      <button class="mt-4 w-full rounded-xl bg-p-700 py-3 text-sm font-bold text-white">Apply filters</button>
+    </form>
+  </div>
+
+  <section class="mt-7">
+    <div class="mb-3 flex items-end justify-between"><div><p class="text-xs font-bold uppercase text-p-700">Popular near you</p><h2 class="text-xl font-black text-n-900">Local providers</h2></div><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">View all</a></div>
+    <div class="adaptive-card-grid">{% for listing in popular_providers %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">No providers found yet.</div>{% endfor %}</div>
+  </section>
+
+  <section class="mt-7">
+    <div class="mb-3"><p class="text-xs font-bold uppercase text-p-700">Recent listings</p><h2 class="text-xl font-black text-n-900">Fresh provider updates</h2></div>
+    <div class="adaptive-card-grid">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">No recent providers in this category.</div>{% endfor %}</div>
+  </section>
+
+  <section class="mt-7 grid gap-3 rounded-3xl bg-p-50 p-5 text-sm"><b class="text-p-800">Verified profiles</b><b class="text-p-800">Curated hero images</b><b class="text-p-800">Local support</b></section>
 </section>
 
-<main class="w-full px-3 py-7 sm:px-4 lg:px-5 lg:py-10">
-  <nav class="grid grid-cols-3 gap-2 rounded-2xl border border-n-100 bg-white p-2 shadow-sm sm:grid-cols-6">
-    <a href="?type=rental" class="rounded-xl bg-p-50 p-3 text-center text-xs font-bold text-p-800">⌂<span class="mt-1 block">Rentals</span></a>
-    <a href="?type=rental&property=1_bedroom" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌂<span class="mt-1 block">Estates</span></a>
-    <a href="?type=auto" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▱<span class="mt-1 block">Autos</span></a>
-    <a href="?type=sme" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▣<span class="mt-1 block">SME Shops</span></a>
-    <a href="?type=rental&property=hostel" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌁<span class="mt-1 block">Hostels</span></a>
-    <a href="?type=rental&property=single_room" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">□<span class="mt-1 block">Single Rooms</span></a>
-  </nav>
-
-  {% if featured_listings %}
-  <section class="mt-9">
-    <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-bold text-n-900"><span class="mr-2 text-p-600">—</span>Featured {{ active_type|title }}s</h2><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">View all →</a></div>
-    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in featured_listings|slice:':4' %}{% include 'components/listing_card.html' with listing=listing %}{% endfor %}</div>
+<div class="hidden lg:block">
+  <section class="relative isolate overflow-hidden border-b border-n-100 bg-[#f3faf5]">
+    {% with first_group=hero_groups|first %}
+      {% if first_group and first_group.images.all %}
+        {% with first_image=first_group.images.all|first %}
+        <div class="absolute inset-y-0 right-0 hidden w-[52%] lg:block">
+          <img src="{{ first_image.image.url }}" alt="{{ first_image.alt_text|default:first_group.name }}" class="h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-r from-[#f3faf5] via-[#f3faf5]/50 to-transparent"></div>
+        </div>
+        {% endwith %}
+      {% endif %}
+    {% endwith %}
+    <div class="relative w-full px-5 py-20">
+      <div class="max-w-2xl">
+        <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[11px] font-bold text-p-700 shadow-sm ring-1 ring-p-100">✓ {{ hero_content.eyebrow }}</span>
+        <h1 class="mt-6 max-w-xl font-serif text-6xl font-medium leading-[1.03] text-p-900">{{ hero_content.title_start }} <em class="font-light text-p-700">{{ hero_content.title_emphasis }}</em> {{ hero_content.title_end }}</h1>
+        <p class="mt-5 max-w-lg text-base leading-6 text-n-600">{{ hero_content.description }}</p>
+        <form action="{% url 'search:results' %}" class="mt-7 grid gap-2 rounded-2xl bg-white p-3 shadow-xl shadow-p-900/10 ring-1 ring-n-100 sm:grid-cols-[1.5fr_1fr_auto] sm:items-center">
+          <label class="min-w-0 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">What are you looking for?</span><input name="q" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none" placeholder="{{ hero_content.placeholder }}"></label>
+          <label class="min-w-0 border-l border-n-100 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">Category</span><select name="type" onchange="window.location.href='/?type='+encodeURIComponent(this.value)" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none"><option value="rental" {% if active_type == 'rental' %}selected{% endif %}>Rentals</option><option value="auto" {% if active_type == 'auto' %}selected{% endif %}>Autos</option><option value="sme" {% if active_type == 'sme' %}selected{% endif %}>SME Shops</option></select></label>
+          <button class="rounded-xl bg-p-700 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-p-700/20">Search</button>
+        </form>
+        <div class="mt-6 grid max-w-xl grid-cols-4 gap-3 text-[11px] font-semibold text-n-600"><span>✓ Verified listings</span><span>✓ Trusted agents</span><span>✓ Local support</span><span>✓ Secure experience</span></div>
+      </div>
+    </div>
   </section>
-  {% endif %}
 
-  <section class="mt-10">
-    <div class="mb-4 flex items-end justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-p-600">Fresh opportunities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Explore the marketplace</h2></div><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">See all →</a></div>
-    {% if listings %}<div id="listings-grid" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in listings %}{% include 'components/listing_card.html' with listing=listing %}{% endfor %}</div>{% else %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">No listings in this category yet.</div>{% endif %}
-  </section>
+  <main class="w-full px-5 py-10">
+    <nav class="grid grid-cols-6 gap-2 rounded-2xl border border-n-100 bg-white p-2 shadow-sm">
+      <a href="?type=rental" class="rounded-xl bg-p-50 p-3 text-center text-xs font-bold text-p-800">⌂<span class="mt-1 block">Rentals</span></a>
+      <a href="?type=rental&property=1_bedroom" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌂<span class="mt-1 block">Estates</span></a>
+      <a href="?type=auto" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▱<span class="mt-1 block">Autos</span></a>
+      <a href="?type=sme" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▣<span class="mt-1 block">SME Shops</span></a>
+      <a href="?type=rental&property=hostel" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌁<span class="mt-1 block">Hostels</span></a>
+      <a href="?type=rental&property=single_room" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">□<span class="mt-1 block">Single Rooms</span></a>
+    </nav>
 
-  {% if popular_cities %}
-  <section class="mt-10"><div class="mb-4"><p class="text-xs font-bold uppercase tracking-widest text-p-600">Popular cities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Explore by location</h2></div><div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{% for city in popular_cities %}<a href="{% url 'search:results' %}?location={{ city.city|urlencode }}" class="group rounded-2xl border border-n-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-p-200 hover:shadow-md"><span class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-p-50 text-p-700">⌖</span><strong class="block truncate text-sm text-n-900">{{ city.city }}</strong><span class="mt-1 block text-xs text-n-500">{{ city.total }} listing{{ city.total|pluralize }}</span></a>{% endfor %}</div></section>
-  {% endif %}
+    <section class="mt-9">
+      <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-bold text-n-900"><span class="mr-2 text-p-600">—</span>Popular near you</h2><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">View all →</a></div>
+      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in popular_providers|slice:':8' %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">No providers in this category yet.</div>{% endfor %}</div>
+    </section>
 
-  <section class="mt-8 grid gap-4 rounded-3xl bg-[#f3faf5] p-6 text-center sm:grid-cols-2 lg:grid-cols-4 lg:p-8"><div><b class="text-p-700">✓ Quality verified</b><p class="mt-1 text-xs text-n-500">Listings from accountable providers</p></div><div><b class="text-p-700">◇ Safe interactions</b><p class="mt-1 text-xs text-n-500">Clear details and trusted profiles</p></div><div><b class="text-p-700">● Trusted community</b><p class="mt-1 text-xs text-n-500">Real reviews from real people</p></div><div><b class="text-p-700">◉ Local support</b><p class="mt-1 text-xs text-n-500">Help when you need it</p></div></section>
-</main>
+    <section class="mt-10">
+      <div class="mb-4 flex items-end justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-p-600">Fresh opportunities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Recent listings</h2></div><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">See all →</a></div>
+      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">No listings in this category yet.</div>{% endfor %}</div>
+    </section>
+
+    {% if popular_cities %}
+    <section class="mt-10"><div class="mb-4"><p class="text-xs font-bold uppercase tracking-widest text-p-600">Popular cities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Explore by location</h2></div><div class="grid grid-cols-5 gap-3">{% for city in popular_cities %}<a href="{% url 'search:results' %}?city={{ city.city|urlencode }}" class="group rounded-2xl border border-n-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-p-200 hover:shadow-md"><span class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-p-50 text-p-700">⌖</span><strong class="block truncate text-sm text-n-900">{{ city.city }}</strong><span class="mt-1 block text-xs text-n-500">{{ city.total }} listing{{ city.total|pluralize }}</span></a>{% endfor %}</div></section>
+    {% endif %}
+
+    <section class="mt-8 grid gap-4 rounded-3xl bg-[#f3faf5] p-8 text-center lg:grid-cols-4"><div><b class="text-p-700">✓ Quality verified</b><p class="mt-1 text-xs text-n-500">Listings from accountable providers</p></div><div><b class="text-p-700">◇ Safe interactions</b><p class="mt-1 text-xs text-n-500">Clear details and trusted profiles</p></div><div><b class="text-p-700">● Trusted community</b><p class="mt-1 text-xs text-n-500">Real reviews from real people</p></div><div><b class="text-p-700">◉ Local support</b><p class="mt-1 text-xs text-n-500">Help when you need it</p></div></section>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.hero-slide')];
+  if (!slides.length) return;
+  const groups = [...new Set(slides.map(slide => slide.dataset.group))].map(id => slides.filter(slide => slide.dataset.group === id));
+  let groupIndex = 0, imageIndex = 0, groupStartedAt = Date.now();
+  const show = () => slides.forEach(slide => slide.style.opacity = slide === groups[groupIndex][imageIndex] ? '1' : '0');
+  const next = () => {
+    const active = groups[groupIndex][imageIndex];
+    if (Date.now() - groupStartedAt >= Number(active.dataset.duration || 40) * 1000) {
+      groupIndex = (groupIndex + 1) % groups.length; imageIndex = 0; groupStartedAt = Date.now();
+    } else imageIndex = (imageIndex + 1) % groups[groupIndex].length;
+    show(); window.setTimeout(next, Number(groups[groupIndex][imageIndex].dataset.rotation || 8) * 1000);
+  };
+  show(); window.setTimeout(next, Number(groups[0][0].dataset.rotation || 8) * 1000);
+})();
+</script>
 {% endblock %}

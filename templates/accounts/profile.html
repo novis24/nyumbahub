@@ -2,10 +2,10 @@
 {% block page_title %}Profile{% endblock %}
 {% block title %}{{ profile_user.display_name }}{% endblock %}
 {% block content %}
-<div class="w-full px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-3 lg:pb-8">
-  <div class="w-full">
+<div class="pb-[calc(7rem+env(safe-area-inset-bottom))] pt-3 lg:pb-10 lg:pt-6">
+  <div class="app-page">
     <div class="overflow-hidden border-y border-n-100 bg-white lg:rounded-2xl lg:border-x">
-      <div class="relative h-24 border-b border-n-100 bg-white">
+      <div class="relative h-24 border-b border-n-100 bg-gradient-to-br from-white to-n-50 lg:h-28">
         {% if request.user == profile_user %}
           <a href="{% url 'accounts:settings' %}" class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-n-100 text-n-600 transition-colors hover:bg-n-200">
             <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -22,11 +22,11 @@
         </div>
       </div>
 
-      <div class="grid gap-5 px-4 pb-5 pt-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)] lg:px-5">
+      <div class="profile-layout-grid grid gap-5 px-4 pb-5 pt-12 lg:gap-8 lg:px-6 lg:pb-6">
         <div>
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 class="text-2xl font-bold leading-tight text-n-900">{{ profile_user.display_name }}</h1>
+            <div class="min-w-0">
+              <h1 class="break-words text-2xl font-bold leading-tight text-n-900 lg:text-3xl">{{ profile_user.display_name }}</h1>
               <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="badge text-[11px] {% if profile_user.role == 'landlord' %}bg-p-100 text-p-800{% elif profile_user.role == 'sme' %}bg-amber-100 text-amber-800{% elif profile_user.role == 'auto' %}bg-orange-100 text-orange-800{% else %}bg-blue-100 text-blue-800{% endif %}">{{ profile_user.get_role_display }}</span>
                 {% if profile_user.is_verified %}<span class="badge bg-p-100 text-[11px] text-p-800">Verified</span>{% endif %}
@@ -43,7 +43,7 @@
           {% endif %}
 
           {% if profile_user.is_provider %}
-            <div class="mt-5 border-t border-n-100 pt-4">
+            <div class="mt-5 rounded-2xl border border-n-100 bg-n-50 p-4">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p class="text-sm font-bold text-n-900">Active listings</p>
@@ -57,7 +57,7 @@
           {% endif %}
         </div>
 
-        <aside class="space-y-4">
+        <aside class="space-y-4 lg:self-start">
           <div class="rounded-2xl border border-n-200 bg-white p-4">
             <p class="text-xs font-bold uppercase tracking-wide text-n-500">Trust signals</p>
             <div class="mt-3 grid grid-cols-2 gap-3">
@@ -86,15 +86,15 @@
     </div>
 
     {% if profile_user.is_provider %}
-      <div class="mt-5 grid w-full gap-5 px-3 sm:px-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)] lg:px-0">
-        <section>
+      <div class="profile-layout-grid mt-5 grid gap-5 px-3 sm:px-4 lg:px-0">
+        <section class="min-w-0">
           <div class="mb-3 flex items-center justify-between">
             <p class="text-sm font-bold text-n-900">Listings by {{ profile_user.first_name|default:profile_user.username }}</p>
             {% if request.user == profile_user %}<a href="{% url 'listings:create' %}" class="text-xs font-semibold text-p-600">Post new listing</a>{% endif %}
           </div>
 
           {% if profile_listings %}
-            <div class="grid grid-cols-2 gap-3 xl:grid-cols-3">
+            <div class="profile-listings-grid grid grid-cols-1 gap-3 sm:grid-cols-2">
               {% for listing in profile_listings %}
                 {% include 'components/listing_card.html' with listing=listing %}
               {% endfor %}
@@ -104,7 +104,7 @@
           {% endif %}
         </section>
 
-        <section>
+        <section class="min-w-0">
           <div class="mb-3 flex items-center justify-between">
             <p class="text-sm font-bold text-n-900">Recent customer feedback</p>
           </div>

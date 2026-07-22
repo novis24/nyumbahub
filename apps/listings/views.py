@@ -1,11 +1,14 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Avg, Count, F
+from django.db import transaction
+from django.db.models import Avg, Count, F, Q
 from datetime import timedelta
 from .models import (
     Listing,
@@ -13,10 +16,32 @@ from .models import (
     ListingReview,
     ListingStatus,
     ListingType,
+    ListingVideo,
+    ListingVideoStatus,
     ListingView,
     SavedListing,
+    Cart,
+    CartItem,
+    SMEOrder,
+    SMEOrderItem,
 )
 from .forms import ListingForm, ListingReviewForm
+from .services.r2_storage import (
+    create_presigned_playback_url,
+    create_presigned_upload,
+    delete_object,
+    make_video_object_key,
+    verify_uploaded_object,
+)
+from .services.video_policy import get_video_upload_policy, validate_video_upload_request
+from .services.video_quota import (
+    complete_reservation,
+    release_committed_video,
+    release_reservation,
+    reserve_video_capacity,
+    mark_uploaded_temporarily,
+)
+from .models import VideoReservationStatus
 
 AMENITY_CHOICES = [
     'wifi', 'water', 'electricity', 'security', 'parking',
@@ -24,6 +49,68 @@ AMENITY_CHOICES = [
 ]
 
 ROLE_LISTING_TYPES = {'landlord': ListingType.RENTAL, 'sme': ListingType.SME, 'auto': ListingType.AUTO}
+
+
+def active_public_listings():
+    return Listing.objects.filter(status=ListingStatus.ACTIVE, owner__is_active=True).select_related('owner').prefetch_related('images', 'videos', 'reviews')
+
+
+def provider_cards(qs, limit=12, order='recent'):
+    ordered = qs.order_by('-views_count' if order == 'popular' else '-created_at')
+    seen = set()
+    cards = []
+    for prefer_images in (True, False):
+        for listing in ordered:
+            if listing.owner_id in seen:
+                continue
+            if prefer_images and not listing.cover_image:
+                continue
+            seen.add(listing.owner_id)
+            cards.append(listing)
+            if len(cards) >= limit:
+                return cards
+    return cards
+
+
+def cart_for_request(request):
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        if request.session.session_key:
+            guest = Cart.objects.filter(user__isnull=True, session_key=request.session.session_key).first()
+            if guest:
+                for item in guest.items.select_related('listing'):
+                    target, created = CartItem.objects.get_or_create(cart=cart, listing=item.listing, defaults={'quantity': item.quantity})
+                    if not created:
+                        target.quantity += item.quantity
+                        target.save(update_fields=['quantity', 'updated_at'])
+                guest.delete()
+        return cart
+    if not request.session.session_key:
+        request.session.save()
+    cart, _ = Cart.objects.get_or_create(user__isnull=True, session_key=request.session.session_key)
+    return cart
+
+
+def cart_payload(cart):
+    items = []
+    total = 0
+    for item in cart.items.select_related('listing', 'listing__owner').prefetch_related('listing__images'):
+        listing = item.listing
+        if listing.listing_type != ListingType.SME or listing.status != ListingStatus.ACTIVE or not listing.owner.is_active:
+            continue
+        line_total = int(item.line_total)
+        total += line_total
+        items.append({
+            'id': item.id,
+            'listing_id': str(listing.id),
+            'title': listing.title,
+            'quantity': item.quantity,
+            'unit_price': int(listing.price),
+            'line_total': line_total,
+            'url': listing.get_absolute_url(),
+            'image': listing.cover_image.image.url if listing.cover_image else '',
+        })
+    return {'count': sum(item['quantity'] for item in items), 'total': total, 'items': items}
 
 
 def _get_saved_ids_for_user(user):
@@ -73,7 +160,7 @@ def _track_listing_view(request, listing):
 
 def listing_detail(request, slug):
     listing = get_object_or_404(
-        Listing.objects.select_related('owner').prefetch_related('images', 'reviews__reviewer'),
+        Listing.objects.select_related('owner').prefetch_related('images', 'videos', 'reviews__reviewer'),
         slug=slug,
     )
     if listing.status != ListingStatus.ACTIVE and listing.owner != request.user:
@@ -82,6 +169,7 @@ def listing_detail(request, slug):
     _track_listing_view(request, listing)
 
     images = listing.images.all()
+    videos = listing.videos.filter(upload_status=ListingVideoStatus.READY)
     saved_ids = _get_saved_ids_for_user(request.user)
     is_saved = listing.id in saved_ids
     owner_review_stats = _owner_review_stats(listing.owner)
@@ -95,6 +183,7 @@ def listing_detail(request, slug):
     return render(request, 'listings/detail.html', {
         'listing': listing,
         'images': images,
+        'videos': videos,
         'is_saved': is_saved,
         'saved_ids': saved_ids,
         'owner_review_stats': owner_review_stats,
@@ -103,12 +192,153 @@ def listing_detail(request, slug):
         'can_review': can_review,
         'reviews': listing.reviews.all(),
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
+        'show_sme_cart': listing.listing_type == ListingType.SME,
     })
+
+
+def provider_gallery(request, owner_id):
+    provider_listing_qs = active_public_listings().filter(owner_id=owner_id)
+    representative = provider_listing_qs.order_by('-is_featured', '-created_at').first()
+    if not representative:
+        raise Http404('Provider not found.')
+    category = request.GET.get('category', '')
+    available_categories = list(provider_listing_qs.values_list('listing_type', flat=True).distinct())
+    if category not in available_categories:
+        category = available_categories[0] if len(available_categories) == 1 else ''
+    listings = provider_listing_qs
+    if category:
+        listings = listings.filter(listing_type=category)
+    saved_ids = _get_saved_ids_for_user(request.user)
+    return render(request, 'listings/provider_gallery.html', {
+        'provider': representative.owner,
+        'representative': representative,
+        'listings': listings.order_by('-is_featured', '-created_at'),
+        'available_categories': available_categories,
+        'active_category': category,
+        'saved_ids': saved_ids,
+        'show_sme_cart': category == ListingType.SME or (len(available_categories) == 1 and available_categories[0] == ListingType.SME),
+    })
+
+
+@require_GET
+def cart_state(request):
+    return JsonResponse(cart_payload(cart_for_request(request)))
+
+
+@require_POST
+def add_to_cart(request, listing_id):
+    listing = get_object_or_404(Listing, id=listing_id, status=ListingStatus.ACTIVE, owner__is_active=True)
+    if listing.listing_type != ListingType.SME:
+        return JsonResponse({'error': 'Only SME products can be added to cart.'}, status=400)
+    details = getattr(listing, 'sme_details', None)
+    if details and not details.stock_available and details.kind == 'product':
+        return JsonResponse({'error': 'This product is currently unavailable.'}, status=400)
+    cart = cart_for_request(request)
+    try:
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        payload = {}
+    quantity = max(int(payload.get('quantity', 1)), 1)
+    item, created = CartItem.objects.get_or_create(cart=cart, listing=listing, defaults={'quantity': quantity})
+    if not created:
+        item.quantity += quantity
+        item.save(update_fields=['quantity', 'updated_at'])
+    return JsonResponse(cart_payload(cart))
+
+
+@require_POST
+def update_cart_item(request, item_id):
+    cart = cart_for_request(request)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        quantity = int(payload.get('quantity', 1))
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid quantity.'}, status=400)
+    if item.listing.listing_type != ListingType.SME:
+        item.delete()
+        return JsonResponse(cart_payload(cart), status=400)
+    if quantity <= 0:
+        item.delete()
+    else:
+        item.quantity = quantity
+        item.save(update_fields=['quantity', 'updated_at'])
+    return JsonResponse(cart_payload(cart))
+
+
+@require_POST
+def clear_cart(request):
+    cart = cart_for_request(request)
+    cart.items.all().delete()
+    return JsonResponse(cart_payload(cart))
+
+
+def cart_page(request):
+    cart = cart_for_request(request)
+    return render(request, 'listings/cart.html', {'cart_state': cart_payload(cart), 'show_sme_cart': True})
+
+
+def checkout(request):
+    cart = cart_for_request(request)
+    payload = cart_payload(cart)
+    if not payload['items']:
+        messages.error(request, 'Your SME cart is empty.')
+        return redirect('listings:cart')
+    if request.method == 'POST':
+        customer_name = request.POST.get('customer_name', '').strip()
+        customer_phone = request.POST.get('customer_phone', '').strip()
+        if not customer_name or not customer_phone:
+            messages.error(request, 'Add your name and phone number to request the order.')
+            return render(request, 'listings/checkout.html', {'cart_state': payload, 'show_sme_cart': True})
+        with transaction.atomic():
+            cart = Cart.objects.select_for_update().get(pk=cart.pk)
+            payload = cart_payload(cart)
+            if not payload['items']:
+                messages.error(request, 'Your SME cart is empty.')
+                return redirect('listings:cart')
+            order = SMEOrder.objects.create(
+                buyer=request.user if request.user.is_authenticated else None,
+                customer_name=customer_name,
+                customer_phone=customer_phone,
+                customer_email=request.POST.get('customer_email', '').strip(),
+                fulfillment_method=request.POST.get('fulfillment_method', 'delivery'),
+                delivery_location=request.POST.get('delivery_location', '').strip(),
+                notes=request.POST.get('notes', '').strip(),
+                total=payload['total'],
+            )
+            for row in payload['items']:
+                listing = Listing.objects.select_for_update().get(id=row['listing_id'], status=ListingStatus.ACTIVE, listing_type=ListingType.SME)
+                SMEOrderItem.objects.create(
+                    order=order,
+                    seller=listing.owner,
+                    listing=listing,
+                    title=listing.title,
+                    unit_price=listing.price,
+                    quantity=row['quantity'],
+                    line_total=listing.price * row['quantity'],
+                )
+            cart.items.all().delete()
+        return redirect('listings:order_detail', order_id=order.id, access_key=order.access_key)
+    return render(request, 'listings/checkout.html', {'cart_state': payload, 'show_sme_cart': True})
+
+
+def order_detail(request, order_id, access_key):
+    order = get_object_or_404(SMEOrder.objects.prefetch_related('items__listing'), id=order_id)
+    has_private_link = order.access_key == access_key
+    if not has_private_link and not (
+        request.user.is_authenticated
+        and (order.buyer_id == request.user.id or order.items.filter(seller=request.user).exists() or request.user.is_staff)
+    ):
+        raise Http404('Order not found.')
+    visible_items = order.items.all()
+    if request.user.is_authenticated and order.buyer_id != request.user.id and not request.user.is_staff:
+        visible_items = visible_items.filter(seller=request.user)
+    return render(request, 'listings/order_detail.html', {'order': order, 'visible_items': visible_items, 'show_sme_cart': True})
 
 
 @login_required
 def my_listings(request):
-    listings = request.user.listings.select_related('owner').prefetch_related('images').order_by('-created_at')
+    listings = request.user.listings.select_related('owner').prefetch_related('images', 'videos').order_by('-created_at')
     sub = request.user.active_subscription
     return render(request, 'listings/my_listings.html', {
         'listings': listings,
@@ -131,23 +361,32 @@ def create_listing(request):
     if request.method == 'POST':
         form = ListingForm(request.POST, request.FILES, listing_type=default_type)
         if form.is_valid():
-            listing = form.save(commit=False)
-            listing.owner = request.user
-            listing.listing_type = default_type
-            requested_status = request.POST.get('status', ListingStatus.DRAFT)
-            listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
+            with transaction.atomic():
+                listing = form.save(commit=False)
+                listing.owner = request.user
+                listing.listing_type = default_type
+                requested_status = request.POST.get('status', ListingStatus.DRAFT)
+                listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
+                listing.amenities = ','.join(request.POST.getlist('amenities'))
 
-            # Amenities — collect from checkboxes
-            amenities = request.POST.getlist('amenities')
-            listing.amenities = ','.join(amenities)
+                sub = request.user.active_subscription
+                if sub:
+                    listing.expires_at = timezone.now() + timedelta(days=30)
 
-            # Set expiry based on subscription
-            sub = request.user.active_subscription
-            if sub:
-                listing.expires_at = timezone.now() + timedelta(days=30)
+                listing.save()
+                form.save_details(listing)
 
-            listing.save()
-            form.save_details(listing)
+                pending_video_ids = request.POST.getlist('pending_video_ids')
+                pending_videos = ListingVideo.objects.select_for_update().filter(
+                    id__in=pending_video_ids,
+                    owner=request.user,
+                    listing__isnull=True,
+                    upload_status=ListingVideoStatus.READY,
+                )
+                for order, video in enumerate(pending_videos):
+                    video.listing = listing
+                    video.order = order
+                    video.save(update_fields=['listing', 'order', 'updated_at'])
 
             # Handle images
             images = request.FILES.getlist('images')
@@ -177,6 +416,7 @@ def create_listing(request):
         'form': form,
         'listing_type': default_type,
         'amenity_choices': AMENITY_CHOICES,
+        'video_policy': get_video_upload_policy(request.user).as_dict(),
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
     })
 
@@ -228,6 +468,15 @@ def edit_listing(request, slug):
             if image.order != order:
                 image.order = order
                 image.save(update_fields=['order'])
+
+        remove_video_ids = request.POST.getlist('remove_video_ids')
+        if remove_video_ids:
+            for video in lst.videos.filter(id__in=remove_video_ids, owner=request.user):
+                _mark_video_deleted(video)
+
+        for order, video_id in enumerate(request.POST.getlist('video_order')):
+            lst.videos.filter(id=video_id, owner=request.user).update(order=order)
+
         messages.success(request, 'Listing updated.')
         if lst.status == ListingStatus.ACTIVE:
             if not was_active:
@@ -242,6 +491,8 @@ def edit_listing(request, slug):
         'amenity_choices': AMENITY_CHOICES,
         'status_choices': ListingStatus.choices,
         'current_images': listing.images.all(),
+        'current_videos': listing.videos.all(),
+        'video_policy': get_video_upload_policy(request.user, listing).as_dict(),
         'listing_type': listing.listing_type,
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
     })
@@ -251,9 +502,141 @@ def edit_listing(request, slug):
 @require_POST
 def delete_listing(request, slug):
     listing = get_object_or_404(Listing, slug=slug, owner=request.user)
+    for video in listing.videos.exclude(upload_status=ListingVideoStatus.DELETED):
+        if not _mark_video_deleted(video):
+            messages.error(request, 'A listing video could not be removed from storage. Please try deleting again.')
+            return redirect('listings:edit', slug=listing.slug)
     listing.delete()
     messages.success(request, 'Listing deleted.')
     return redirect('listings:my_listings')
+
+
+@login_required
+@require_POST
+def create_video_upload(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'error': 'Invalid upload request.'}, status=400)
+
+    listing = None
+    listing_id = payload.get('listing_id')
+    if listing_id:
+        listing = get_object_or_404(Listing, id=listing_id, owner=request.user)
+
+    filename = payload.get('filename', '')
+    content_type = payload.get('content_type', '')
+    declared_size = payload.get('file_size')
+    optimize = bool(payload.get('optimize'))
+    with transaction.atomic():
+        policy, error = validate_video_upload_request(request.user, listing, filename, content_type, declared_size)
+        if error:
+            return JsonResponse({'error': error, 'policy': policy.as_dict()}, status=400)
+        object_key = make_video_object_key(request.user.id, listing.id if listing else None, filename)
+        video = ListingVideo.objects.create(
+            listing=listing,
+            owner=request.user,
+            object_key=object_key,
+            original_filename=filename[:255],
+            content_type=content_type,
+            file_size=int(declared_size),
+            upload_status=ListingVideoStatus.PENDING,
+            upload_expires_at=timezone.now() + timedelta(minutes=settings.R2_VIDEO_UPLOAD_SESSION_TTL_MINUTES),
+            order=(listing.videos.count() if listing else request.user.listing_videos.filter(listing__isnull=True).count()),
+        )
+        reservation, error = reserve_video_capacity(
+            user=request.user,
+            listing=listing,
+            video=video,
+            declared_size=int(declared_size),
+            optimize=optimize and policy.optimization_enabled,
+        )
+        if error:
+            video.upload_status = ListingVideoStatus.FAILED
+            video.error_message = error
+            video.save(update_fields=['upload_status', 'error_message', 'updated_at'])
+            return JsonResponse({'error': error, 'policy': policy.as_dict()}, status=503)
+
+    try:
+        upload = create_presigned_upload(video)
+    except RuntimeError as exc:
+        video.upload_status = ListingVideoStatus.FAILED
+        video.error_message = str(exc)
+        video.save(update_fields=['upload_status', 'error_message', 'updated_at'])
+        release_reservation(reservation, VideoReservationStatus.FAILED, str(exc))
+        return JsonResponse({'error': str(exc)}, status=503)
+
+    video.upload_status = ListingVideoStatus.UPLOADING
+    video.save(update_fields=['upload_status', 'updated_at'])
+    return JsonResponse({'video_id': str(video.id), 'upload': upload, 'policy': policy.as_dict()})
+
+
+@login_required
+@require_POST
+def complete_video_upload(request, video_id):
+    video = get_object_or_404(ListingVideo, id=video_id, owner=request.user)
+    if video.upload_status == ListingVideoStatus.READY:
+        return JsonResponse({'video_id': str(video.id), 'status': video.upload_status})
+    reservation = getattr(video, 'reservation', None)
+    if video.is_expired_pending:
+        video.upload_status = ListingVideoStatus.FAILED
+        video.error_message = 'Upload session expired.'
+        video.save(update_fields=['upload_status', 'error_message', 'updated_at'])
+        if reservation:
+            release_reservation(reservation, VideoReservationStatus.EXPIRED, video.error_message)
+        return JsonResponse({'error': video.error_message}, status=400)
+    ok, metadata = verify_uploaded_object(video)
+    if not ok:
+        video.upload_status = ListingVideoStatus.FAILED
+        video.error_message = 'Uploaded object could not be verified.'
+        video.verification_metadata = metadata
+        video.save(update_fields=['upload_status', 'error_message', 'verification_metadata', 'updated_at'])
+        if reservation:
+            release_reservation(reservation, VideoReservationStatus.REJECTED, video.error_message)
+        delete_object(video)
+        return JsonResponse({'error': video.error_message}, status=400)
+    actual_size = int(metadata.get('content_length') or video.file_size)
+    if reservation:
+        mark_uploaded_temporarily(reservation, actual_size)
+        complete_reservation(reservation, actual_size)
+    video.upload_status = ListingVideoStatus.READY
+    video.completed_at = timezone.now()
+    video.file_size = actual_size
+    video.verification_metadata = metadata
+    video.save(update_fields=['upload_status', 'completed_at', 'file_size', 'verification_metadata', 'updated_at'])
+    return JsonResponse({'video_id': str(video.id), 'status': video.upload_status})
+
+
+def video_playback_url(request, video_id):
+    video = get_object_or_404(ListingVideo.objects.select_related('listing'), id=video_id, upload_status=ListingVideoStatus.READY)
+    if video.listing and video.listing.status == ListingStatus.ACTIVE:
+        pass
+    elif not request.user.is_authenticated or (video.owner != request.user and not request.user.is_staff):
+        raise Http404('Video not found.')
+    return JsonResponse({'url': create_presigned_playback_url(video), 'expires_in': settings.R2_SIGNED_URL_EXPIRY_SECONDS})
+
+
+@login_required
+@require_POST
+def delete_video(request, video_id):
+    video = get_object_or_404(ListingVideo, id=video_id, owner=request.user)
+    _mark_video_deleted(video)
+    return JsonResponse({'deleted': True})
+
+
+def _mark_video_deleted(video):
+    deleted = delete_object(video)
+    was_committed = video.upload_status == ListingVideoStatus.READY
+    reservation = getattr(video, 'reservation', None)
+    video.upload_status = ListingVideoStatus.DELETED
+    video.cleanup_required = not deleted
+    video.object_deleted_at = timezone.now() if deleted else None
+    video.save(update_fields=['upload_status', 'cleanup_required', 'object_deleted_at', 'updated_at'])
+    if was_committed:
+        release_committed_video(video)
+    elif reservation:
+        release_reservation(reservation, VideoReservationStatus.DELETED, 'Video deleted before completion.')
+    return deleted
 
 
 @login_required

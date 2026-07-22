@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block page_title %}New listing{% endblock %}
 {% block title %}New listing{% endblock %}
 
 {% block content %}
-<div class="px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] max-w-lg mx-auto lg:px-6 lg:pb-10"
+<div class="app-page px-4 pt-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] max-w-lg mx-auto lg:max-w-3xl lg:pb-10"
      x-data="{
        step: 1,
        maxStep: {% if listing_type == 'rental' %}4{% else %}3{% endif %},
@@ -44,10 +45,10 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-n-700 mb-1.5 uppercase tracking-wide">Price (TZS) <span class="text-red-500">*</span></label>
-          <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-n-400">TZS</span>
+          <div class="flex overflow-hidden rounded-xl border border-n-200 bg-white focus-within:border-p-600 focus-within:ring-2 focus-within:ring-p-100">
+            <span class="flex flex-shrink-0 items-center border-r border-n-200 bg-n-50 px-4 text-sm font-bold text-n-500">TZS</span>
             <input type="number" name="price" value="{{ form.price.value|default:'' }}" min="0"
-                   placeholder="350,000" class="field pl-14 {% if form.price.errors %}field-error{% endif %}">
+                   placeholder="350000" class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-base text-n-900 outline-none {% if form.price.errors %}field-error{% endif %}">
           </div>
           <p class="text-xs text-n-400 mt-1">{% if listing_type == 'rental' %}Per month{% elif listing_type == 'auto' %}Vehicle selling price{% else %}Enter the applicable price or starting price{% endif %}</p>
         </div>
@@ -196,23 +197,43 @@
       <button type="button" @click="step={% if listing_type == 'rental' %}3{% else %}2{% endif %}" class="inline-flex items-center gap-2 text-n-500 hover:text-n-700 text-sm font-medium mb-5 transition-colors">
         <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
       </button>
-      <h2 class="text-xl font-bold text-n-900 mb-1">Add photos</h2>
+      <h2 class="text-xl font-bold text-n-900 mb-1">Add media</h2>
       <p class="text-sm text-n-500 mb-5">
-        Listings with photos get 5× more inquiries.
+        Listings with photos and video get more inquiries.
         Up to {% if user.active_subscription %}{{ user.active_subscription.max_images }}{% else %}20{% endif %} photos per listing right now.
       </p>
 
-      {# Upload zone #}
-      <label class="flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed border-n-200 bg-n-50 hover:border-p-400 hover:bg-p-50 cursor-pointer transition-all mb-4">
-        <div class="w-12 h-12 rounded-2xl bg-white border border-n-200 flex items-center justify-center shadow-soft">
-          <svg class="w-6 h-6 stroke-n-400 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      {{ video_policy|json_script:"video-policy" }}
+      <div class="rounded-2xl border border-n-200 bg-n-50 p-3 mb-4"
+           data-listing-media
+           data-policy-id="video-policy"
+           data-upload-url="{% url 'listings:create_video_upload' %}"
+           data-complete-url-template="{% url 'listings:complete_video_upload' '00000000-0000-0000-0000-000000000000' %}">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <label class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-n-200 bg-white p-3 text-center cursor-pointer hover:border-p-300">
+            <svg class="w-5 h-5 stroke-p-600 fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4-4a2 2 0 012.8 0L16 17m-2-3l1-1a2 2 0 012.8 0L20 15M5 5h14v14H5z"/></svg>
+            <span class="text-xs font-bold text-n-800">Browse photos</span>
+            <input type="file" name="images" multiple accept="image/*" class="sr-only" @change="handleFiles($event)">
+          </label>
+          <label class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-n-200 bg-white p-3 text-center cursor-pointer hover:border-p-300">
+            <svg class="w-5 h-5 stroke-p-600 fill-none" viewBox="0 0 24 24" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3"/></svg>
+            <span class="text-xs font-bold text-n-800">Take photo</span>
+            <input type="file" name="images" multiple accept="image/*" capture="environment" class="sr-only" @change="handleFiles($event)">
+          </label>
+          <label class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-n-200 bg-white p-3 text-center cursor-pointer hover:border-p-300 data-[disabled=true]:opacity-50" data-record-tile>
+            <svg class="w-5 h-5 stroke-p-600 fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.5-2.5v9L15 14m-9 4h8a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span class="text-xs font-bold text-n-800">Record video</span>
+            <input type="file" accept="video/mp4,video/webm" capture="environment" class="sr-only" data-video-input data-record-input>
+          </label>
+          <label class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-n-200 bg-white p-3 text-center cursor-pointer hover:border-p-300 data-[disabled=true]:opacity-50" data-video-tile>
+            <svg class="w-5 h-5 stroke-p-600 fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 20h16"/></svg>
+            <span class="text-xs font-bold text-n-800">Upload video from device</span>
+            <input type="file" accept="video/mp4,video/webm" class="sr-only" data-video-input>
+          </label>
         </div>
-        <div class="text-center">
-          <p class="text-sm font-bold text-n-800">Tap to add photos</p>
-          <p class="text-xs text-n-400 mt-0.5">JPG or PNG · up to 10MB each</p>
-        </div>
-        <input type="file" name="images" multiple accept="image/*" class="sr-only" @change="handleFiles($event)">
-      </label>
+        <p class="mt-3 text-xs text-n-500" data-video-policy-text></p>
+        <div class="mt-3 grid gap-2" data-video-list></div>
+      </div>
 
       {# Preview grid #}
       <div class="grid grid-cols-3 gap-2 mb-6" x-show="previews.length > 0">
@@ -246,6 +267,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="/static/js/location-picker.js"></script>{% endif %}
+{% if listing_type == 'rental' %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="{% static 'js/location-picker.js' %}"></script>{% endif %}
+<script src="/static/js/listing-media.js"></script>
 <script>document.getElementById('listing-form')?.addEventListener('submit',function(event){const status=document.createElement('input');status.type='hidden';status.name='status';status.value=event.submitter?.value||'draft';this.appendChild(status);setTimeout(()=>this.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true),0)})</script>
 {% endblock %}

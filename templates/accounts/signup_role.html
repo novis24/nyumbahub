@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block topbar %}{% endblock %}
 {% block title %}Create account{% endblock %}
 {% block content %}
@@ -7,9 +8,7 @@
   <div class="w-full max-w-md">
     <div class="text-center mb-8">
       <a href="/" class="inline-flex items-center gap-2 mb-6">
-        <div class="w-9 h-9 bg-p-600 rounded-xl flex items-center justify-center shadow">
-          <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-        </div>
+        <img src="{% static 'icons/icon-192.png' %}" alt="" class="w-9 h-9 rounded-xl flex-shrink-0">
         <span class="font-serif font-medium text-2xl">iSell</span>
       </a>
       <h1 class="text-2xl font-bold text-n-900 mb-1">Join iSell</h1>
