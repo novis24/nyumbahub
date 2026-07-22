@@ -6,11 +6,14 @@
 <div class="min-h-screen bg-n-50 flex flex-col items-center justify-center px-5 py-12">
 
   <div class="w-full max-w-md">
-    <div class="text-center mb-8">
-      <a href="/" class="inline-flex items-center gap-2 mb-6">
-        <img src="{% static 'icons/icon-192.png' %}" alt="" class="w-9 h-9 rounded-xl flex-shrink-0">
-        <span class="font-serif font-medium text-2xl">iSell</span>
-      </a>
+    <div class="mb-8 text-center">
+      <div class="mb-6 flex items-center justify-between gap-4">
+        <a href="/" class="inline-flex items-center gap-2">
+          <img src="{% static 'icons/icon-192.png' %}" alt="" class="w-9 h-9 rounded-xl flex-shrink-0">
+          <span class="font-serif font-medium text-2xl">iSell</span>
+        </a>
+        {% include "partials/language_toggle.html" %}
+      </div>
       <h1 class="text-2xl font-bold text-n-900 mb-1">Join iSell</h1>
       <p class="text-sm text-n-500">How are you planning to use iSell?</p>
     </div>

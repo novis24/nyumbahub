@@ -21,7 +21,8 @@
       </a>
     {% endif %}
     <div class="hidden min-w-0 items-center gap-1.5 sm:flex lg:gap-2">
-      <button data-install-app onclick="installISellApp()" class="inline-flex shrink-0 items-center gap-1 rounded-xl border border-p-200 bg-p-50 px-2.5 py-2 text-[11px] font-bold text-p-700 sm:px-3 sm:text-xs"><span aria-hidden="true">↓</span><span>{% trans "Install" %}</span><span class="hidden sm:inline"> {% trans "app" %}</span></button>
+      <button data-install-app onclick="installISellApp()" hidden class="inline-flex shrink-0 items-center gap-1 rounded-xl border border-p-200 bg-p-50 px-2.5 py-2 text-[11px] font-bold text-p-700 sm:px-3 sm:text-xs"><span aria-hidden="true">↓</span><span>{% trans "Install" %}</span><span class="hidden sm:inline"> {% trans "app" %}</span></button>
+      <span data-install-fallback hidden class="max-w-[11rem] text-[10px] font-semibold leading-4 text-n-500"></span>
       {% if user.is_authenticated %}
         {% if user.is_provider %}<a href="{% url 'listings:create' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">{% trans "List your property" %} +</a>{% endif %}
         <a href="{% url 'accounts:profile' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">{% trans "My account" %}</a>
@@ -30,7 +31,13 @@
         <a href="{% url 'accounts:login' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">{% trans "Sign in" %}</a>
       {% endif %}
     </div>
-    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700 sm:hidden">{% if user.is_authenticated %}{% trans "Me" %}{% else %}{% trans "Sign in" %}{% endif %}</a>
+    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700 sm:hidden" aria-label="{% if user.is_authenticated %}{% trans 'Profile' %}{% else %}{% trans 'Sign in' %}{% endif %}">
+      {% if user.is_authenticated %}
+        <svg class="h-4 w-4 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      {% else %}
+        {% trans "Sign in" %}
+      {% endif %}
+    </a>
   </div>
 </header>
 {% endblock %}
@@ -46,6 +53,7 @@
       <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
     </button>
   </form>
+  <p data-install-fallback hidden class="mb-3 rounded-2xl border border-n-100 bg-n-50 px-3 py-2 text-[11px] font-semibold leading-5 text-n-600"></p>
 
   <div class="relative -mx-3 overflow-hidden text-n-900">
     <div class="relative min-h-[320px] overflow-hidden rounded-b-[2rem] bg-n-50">
@@ -63,12 +71,12 @@
         <h1 class="mt-3 max-w-sm text-[1.85rem] font-black leading-tight text-n-900" data-hero-type-title>{% trans "Find what moves your life forward." %}</h1>
         <p class="mt-2 max-w-sm text-sm leading-6 text-n-600" data-hero-type-copy>{% trans "Rentals, cars, rooms, hostels and SME shops from accountable local providers." %}</p>
         <nav class="mt-4 grid grid-cols-3 gap-2">
-          <a href="?type=rental" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Rentals" %}</a>
-          <a href="?type=auto" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Autos" %}</a>
-          <a href="?type=sme" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "SME Shops" %}</a>
+          <a href="?type=rental" aria-pressed="{% if active_type == 'rental' %}true{% else %}false{% endif %}" class="rounded-2xl border px-2 py-2.5 text-center text-[11px] font-bold shadow-sm backdrop-blur-md {% if active_type == 'rental' %}border-p-600 bg-p-700/90 text-white{% else %}border-white/70 bg-white/55 text-n-800{% endif %}">{% trans "Rentals" %}</a>
+          <a href="?type=auto" aria-pressed="{% if active_type == 'auto' %}true{% else %}false{% endif %}" class="rounded-2xl border px-2 py-2.5 text-center text-[11px] font-bold shadow-sm backdrop-blur-md {% if active_type == 'auto' %}border-p-600 bg-p-700/90 text-white{% else %}border-white/70 bg-white/55 text-n-800{% endif %}">{% trans "Autos" %}</a>
+          <a href="?type=sme" aria-pressed="{% if active_type == 'sme' %}true{% else %}false{% endif %}" class="rounded-2xl border px-2 py-2.5 text-center text-[11px] font-bold shadow-sm backdrop-blur-md {% if active_type == 'sme' %}border-p-600 bg-p-700/90 text-white{% else %}border-white/70 bg-white/55 text-n-800{% endif %}">{% trans "SME Shops" %}</a>
           <a href="?type=rental&property=hostel" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Hostels" %}</a>
           <a href="?type=rental&property=single_room" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Rooms" %}</a>
-          <a href="{% url 'search:results' %}" class="rounded-2xl bg-p-700/90 px-2 py-2.5 text-center text-[11px] font-bold text-white shadow-sm">{% trans "Explore" %}</a>
+          <a href="{% url 'core:home' %}" aria-pressed="{% if not active_type %}true{% else %}false{% endif %}" class="rounded-2xl px-2 py-2.5 text-center text-[11px] font-bold shadow-sm {% if not active_type %}bg-p-700/90 text-white{% else %}border border-white/70 bg-white/55 text-n-800 backdrop-blur-md{% endif %}">{% trans "Explore" %}</a>
         </nav>
         <div class="mt-3 flex items-center justify-between text-[11px] font-semibold text-n-500"><span data-hero-type-cta>{% trans "Explore every category" %}</span><span>{% trans "Curated by iSellTZ" %}</span></div>
       </div>
@@ -144,13 +152,14 @@
   </section>
 
   <main class="w-full px-5 py-10">
-    <nav class="grid grid-cols-6 gap-2 rounded-2xl border border-n-100 bg-white p-2 shadow-sm">
-      <a href="?type=rental" class="rounded-xl bg-p-50 p-3 text-center text-xs font-bold text-p-800">⌂<span class="mt-1 block">{% trans "Rentals" %}</span></a>
-      <a href="?type=rental&property=1_bedroom" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌂<span class="mt-1 block">{% trans "Estates" %}</span></a>
-      <a href="?type=auto" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▱<span class="mt-1 block">{% trans "Autos" %}</span></a>
-      <a href="?type=sme" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▣<span class="mt-1 block">{% trans "SME Shops" %}</span></a>
-      <a href="?type=rental&property=hostel" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌁<span class="mt-1 block">{% trans "Hostels" %}</span></a>
-      <a href="?type=rental&property=single_room" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">□<span class="mt-1 block">{% trans "Single Rooms" %}</span></a>
+    <nav class="grid grid-cols-7 gap-2 rounded-2xl border border-n-100 bg-white p-2 shadow-sm">
+      <a href="{% url 'core:home' %}" aria-pressed="{% if not active_type %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if not active_type %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">⌕<span class="mt-1 block">{% trans "Explore" %}</span></a>
+      <a href="?type=rental" aria-pressed="{% if active_type == 'rental' and not property_filter %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'rental' and not property_filter %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">⌂<span class="mt-1 block">{% trans "Rentals" %}</span></a>
+      <a href="?type=rental&property=1_bedroom" aria-pressed="{% if active_type == 'rental' and property_filter == '1_bedroom' %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'rental' and property_filter == '1_bedroom' %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">⌂<span class="mt-1 block">{% trans "Estates" %}</span></a>
+      <a href="?type=auto" aria-pressed="{% if active_type == 'auto' %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'auto' %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">▱<span class="mt-1 block">{% trans "Autos" %}</span></a>
+      <a href="?type=sme" aria-pressed="{% if active_type == 'sme' %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'sme' %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">▣<span class="mt-1 block">{% trans "SME Shops" %}</span></a>
+      <a href="?type=rental&property=hostel" aria-pressed="{% if active_type == 'rental' and property_filter == 'hostel' %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'rental' and property_filter == 'hostel' %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">⌁<span class="mt-1 block">{% trans "Hostels" %}</span></a>
+      <a href="?type=rental&property=single_room" aria-pressed="{% if active_type == 'rental' and property_filter == 'single_room' %}true{% else %}false{% endif %}" class="rounded-xl p-3 text-center text-xs font-bold {% if active_type == 'rental' and property_filter == 'single_room' %}bg-p-50 text-p-800{% else %}text-n-700 hover:bg-n-50{% endif %}">□<span class="mt-1 block">{% trans "Single Rooms" %}</span></a>
     </nav>
 
     <section class="mt-9">

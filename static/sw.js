@@ -1,14 +1,13 @@
-const CACHE = 'isell-v3';
-const OFFLINE_URL = '/offline/';
+const CACHE = 'iselltz-static-v4';
+const OLD_CACHES = ['isell-v1', 'isell-v2', 'isell-v3'];
 
 const PRECACHE = [
-  '/',
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
+  '/static/icons/apple-touch-icon.png',
 ];
 
-// Install — pre-cache shell
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(PRECACHE))
@@ -16,52 +15,31 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activate — clear old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE || OLD_CACHES.includes(k)).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch strategy:
-// - Static assets (CSS, JS, fonts, images) → Cache first
-// - Navigation (HTML pages) → Network first, fall back to cache
-// - API / HTMX requests → Network only
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // Skip non-GET and cross-origin
   if (request.method !== 'GET' || url.origin !== location.origin) return;
+  if (request.headers.get('HX-Request')) return;
 
-  // Static assets — cache first
   if (url.pathname.startsWith('/static/')) {
     e.respondWith(
       caches.match(request).then(cached => cached || fetch(request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(request, clone));
-        return res;
-      }))
-    );
-    return;
-  }
-
-  // HTMX partial requests — network only
-  if (request.headers.get('HX-Request')) return;
-
-  // HTML navigation — network first
-  if (request.headers.get('Accept')?.includes('text/html')) {
-    e.respondWith(
-      fetch(request)
-        .then(res => {
+        if (res.ok) {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(request, clone));
-          return res;
-        })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('/')))
+        }
+        return res;
+      }))
     );
   }
 });

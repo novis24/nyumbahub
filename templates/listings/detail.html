@@ -127,7 +127,6 @@
       <div class="shrink-0 sm:text-right">
         <p class="price text-2xl font-bold text-n-900 lg:text-3xl">{{ listing.price_per_month }}</p>
         {% if listing.listing_type == 'rental' %}<p class="text-xs text-n-400">per month</p>{% endif %}
-        {% if listing.listing_type == 'sme' %}<button type="button" data-add-to-cart="{{ listing.id }}" class="mt-3 hidden rounded-xl bg-p-700 px-5 py-3 text-sm font-bold text-white sm:inline-flex">Add to cart</button>{% endif %}
       </div>
     </div>
     {% if listing.verification_badge_label %}<div class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-p-50 px-3 py-1.5 text-xs font-bold text-p-800">✓ {{ listing.verification_badge_label }}</div>{% endif %}
@@ -300,7 +299,7 @@
       <div class="h-28 lg:hidden"></div>
     </div>
 
-    <aside class="space-y-4">
+    <aside class="hidden space-y-4 lg:block">
       <div id="contact-host" class="rounded-2xl border border-n-100 bg-n-50 p-4">
         <div class="flex items-center gap-3">
           {% if listing.owner.avatar %}
@@ -356,6 +355,8 @@
         {% if listing.listing_type == 'sme' %}<button type="button" data-add-to-cart="{{ listing.id }}" class="btn-g btn-primary py-4 text-base">Add to cart</button>{% else %}<button @click="contact = true" class="btn-g btn-primary py-4 text-base">View contact options</button>{% endif %}
       {% elif not user.is_authenticated %}
         <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn-g btn-primary py-4 text-base">Sign in to view contact options</a>
+      {% elif user == listing.owner %}
+        <a href="{% url 'listings:edit' listing.slug %}" class="btn-g btn-dark py-4 text-base">Edit listing</a>
       {% endif %}
     </div>
   </div>

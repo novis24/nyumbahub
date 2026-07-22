@@ -1,4 +1,6 @@
 from pathlib import Path
+import json
+import struct
 
 from django.conf import settings
 from django.test import TestCase, override_settings
@@ -19,6 +21,44 @@ class HomePageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Service-Worker-Allowed'], '/')
         self.assertEqual(response['Content-Type'], 'application/javascript')
+        body = b''.join(response.streaming_content)
+        self.assertGreater(len(body.strip()), 100)
+        self.assertIn(b"self.addEventListener('fetch'", body)
+
+    def test_home_registers_service_worker_from_root_scope(self):
+        response = self.client.get(reverse('core:home'))
+        html = response.content.decode()
+        self.assertIn("navigator.serviceWorker.register('/sw.js', {scope:'/'})", html)
+
+    def test_manifest_is_available_and_installable(self):
+        manifest_path = Path(settings.BASE_DIR) / 'static' / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        self.assertEqual(manifest['name'], 'iSellTZ Marketplace')
+        self.assertEqual(manifest['short_name'], 'iSellTZ')
+        self.assertEqual(manifest['start_url'], '/?source=pwa')
+        self.assertEqual(manifest['scope'], '/')
+        self.assertEqual(manifest['display'], 'standalone')
+        self.assertRegex(manifest['theme_color'], r'^#[0-9a-fA-F]{6}$')
+        self.assertRegex(manifest['background_color'], r'^#[0-9a-fA-F]{6}$')
+
+        icons = {icon['sizes']: icon for icon in manifest['icons']}
+        self.assertEqual(icons['192x192']['src'], '/static/icons/icon-192.png')
+        self.assertEqual(icons['512x512']['src'], '/static/icons/icon-512.png')
+        self.assertIn('maskable', icons['512x512']['purpose'])
+
+    def test_required_pwa_icons_exist_at_declared_sizes(self):
+        expected_sizes = {
+            'icon-192.png': (192, 192),
+            'icon-512.png': (512, 512),
+        }
+        for filename, expected in expected_sizes.items():
+            with self.subTest(filename=filename):
+                path = Path(settings.BASE_DIR) / 'static' / 'icons' / filename
+                self.assertTrue(path.exists())
+                with path.open('rb') as image:
+                    image.seek(16)
+                    width, height = struct.unpack('>II', image.read(8))
+                self.assertEqual((width, height), expected)
 
 
 class BilingualInterfaceTests(TestCase):

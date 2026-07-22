@@ -7,9 +7,12 @@
 {% block content %}
 <div class="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)] px-5 py-10 lg:px-8">
   <div class="mx-auto max-w-xl">
-    <a href="{% url 'accounts:signup_role' %}" class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
-      <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
-    </a>
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <a href="{% url 'accounts:signup_role' %}" class="inline-flex items-center gap-2 text-sm font-medium text-n-500 transition-colors hover:text-n-700">
+        <svg class="h-4 w-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>Back
+      </a>
+      {% include "partials/language_toggle.html" %}
+    </div>
 
     <div class="border border-n-100 bg-white p-6 shadow-sm lg:p-8">
       <h1 class="text-3xl font-bold text-n-900">Create your account</h1>

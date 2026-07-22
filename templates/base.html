@@ -60,6 +60,7 @@
     <div class="flex-1 min-w-0">{% block topbar_title %}{% endblock %}</div>
     <div class="flex items-center gap-1 flex-shrink-0">
       {% block topbar_right %}
+      {% include "partials/language_toggle.html" %}
       {% if user.is_authenticated %}
         <a href="{% url 'notifications:list' %}" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-n-100 transition-colors">
           <svg class="w-5 h-5 stroke-n-600 fill-none" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -75,9 +76,6 @@
 {% endblock %}
 
 {% block global_language_toggle %}
-<div class="fixed right-3 top-[calc(.75rem+env(safe-area-inset-top))] z-[70] lg:right-4 lg:top-4">
-  {% include "partials/language_toggle.html" %}
-</div>
 {% endblock %}
 
 {% block desktop_sidebar %}
@@ -113,6 +111,9 @@
     {% endif %}
   </nav>
   <div class="px-4 py-4 border-t border-n-50 space-y-2">
+    <div class="flex justify-start">
+      {% include "partials/language_toggle.html" %}
+    </div>
     {% if user.is_authenticated and user.is_provider %}
       <a href="{% url 'listings:create' %}" class="btn-g btn-primary text-sm py-3 rounded-xl">
         <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>{% trans "Post a listing" %}</a>
@@ -171,7 +172,7 @@
     <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="flex flex-col items-center justify-center gap-0.5 {% if request.resolver_match.namespace == 'accounts' %}text-p-600{% else %}text-n-400{% endif %}">
       {% if user.is_authenticated and user.avatar %}<img src="{{ user.avatar.url }}" alt="" class="w-6 h-6 rounded-full object-cover ring-2 ring-p-200">
       {% else %}<svg class="w-[22px] h-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>{% endif %}
-      <span class="text-[10px] font-medium">{% if user.is_authenticated %}{% trans "Me" %}{% else %}{% trans "Sign in" %}{% endif %}</span>
+      <span class="{% if user.is_authenticated %}sr-only{% else %}text-[10px] font-medium{% endif %}">{% if user.is_authenticated %}{% trans "Profile" %}{% else %}{% trans "Sign in" %}{% endif %}</span>
     </a>
   </div>
 </nav>
@@ -191,8 +192,32 @@
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <script>
   let deferredInstallPrompt;
+  const isStandaloneApp = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const installButtons = () => document.querySelectorAll('[data-install-app]');
+  const installFallbacks = () => document.querySelectorAll('[data-install-fallback]');
+  const isIOSDevice = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const updateInstallControls = () => {
+    const canPrompt = Boolean(deferredInstallPrompt) && !isStandaloneApp();
+    installButtons().forEach(button => {
+      button.hidden = !canPrompt;
+      button.disabled = !canPrompt;
+      button.setAttribute('aria-hidden', canPrompt ? 'false' : 'true');
+    });
+    installFallbacks().forEach(fallback => {
+      fallback.hidden = canPrompt || isStandaloneApp();
+      fallback.textContent = isIOSDevice()
+        ? '{% trans "On iPhone or iPad: use Share, then Add to Home Screen." %}'
+        : '{% trans "Install from your browser menu when available." %}';
+    });
+  };
   window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault(); deferredInstallPrompt = event;
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallControls();
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    updateInstallControls();
   });
   const showInstallHelp = message => {
     let note = document.getElementById('install-app-help');
@@ -205,18 +230,22 @@
     note.querySelector('[data-install-message]').textContent = message;
   };
   window.installISellApp = async () => {
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    if (isStandaloneApp()) {
       showInstallHelp('{% trans "iSellTZ is already installed on this device." %}'); return;
     }
     if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      updateInstallControls();
+      return;
     }
-    const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    showInstallHelp(isiPhone
+    showInstallHelp(isIOSDevice()
       ? '{% trans "On iPhone or iPad: tap the Share button in Safari, then choose Add to Home Screen. Open the installed app to enable push notifications." %}'
       : '{% trans "Open your browser menu and choose Install app or Add to Home screen. If it is unavailable, reload the page over HTTPS." %}');
   };
-  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(()=>{}));
+  updateInstallControls();
+  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(error=>console.warn('iSellTZ service worker registration failed', error)));
   document.body.addEventListener('htmx:configRequest',e=>{e.detail.headers['X-CSRFToken']='{{ csrf_token }}';});
   function syncProductSubcategories(scope=document) {
     scope.querySelectorAll('[data-product-category]').forEach(category => {
