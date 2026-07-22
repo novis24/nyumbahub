@@ -52,29 +52,30 @@
     </button>
   </form>
 
-  <div class="relative overflow-hidden rounded-[1.35rem] bg-p-900 text-white shadow-xl shadow-p-900/10">
-    <div class="relative aspect-[4/5] min-h-[360px]">
+  <div class="relative -mx-3 overflow-hidden text-n-900">
+    <div class="relative min-h-[320px] overflow-hidden rounded-b-[2rem] bg-n-50">
       {% for group in hero_groups %}
         {% for image in group.images.all %}
           <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:group.name }}" class="hero-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" data-group="{{ forloop.parentloop.counter0 }}" data-rotation="{{ group.rotation_seconds }}" data-duration="{{ group.group_duration_seconds }}">
         {% endfor %}
       {% empty %}
-        <div class="absolute inset-0 bg-gradient-to-br from-p-800 via-p-700 to-n-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-p-50 via-white to-n-100"></div>
       {% endfor %}
-      <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-p-900/35 to-black/10"></div>
-      <div class="absolute inset-x-0 bottom-0 p-5">
-        <span class="inline-flex rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-bold backdrop-blur-md">✓ <span data-hero-type-label>Trusted listings</span></span>
-        <h1 class="mt-3 text-3xl font-black leading-tight">Find spaces that move your life forward.</h1>
-        <p class="mt-2 text-sm leading-6 text-white/85" data-hero-type-copy>Rentals, cars, rooms, hostels and SME shops from accountable local providers.</p>
+      <div class="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-white/25"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-p-50/70 via-transparent to-p-900/10"></div>
+      <div class="absolute inset-x-0 bottom-0 px-5 pb-5 pt-16 transition-opacity duration-500 ease-out" data-hero-copy-wrap>
+        <span class="inline-flex rounded-full border border-p-100 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-p-800 shadow-sm backdrop-blur-md">✓ <span data-hero-type-label>Trusted listings</span></span>
+        <h1 class="mt-3 max-w-sm text-[1.85rem] font-black leading-tight text-n-900" data-hero-type-title>Find what moves your life forward.</h1>
+        <p class="mt-2 max-w-sm text-sm leading-6 text-n-600" data-hero-type-copy>Rentals, cars, rooms, hostels and SME shops from accountable local providers.</p>
         <nav class="mt-4 grid grid-cols-3 gap-2">
-          <a href="?type=rental" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Rentals</a>
-          <a href="?type=auto" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Autos</a>
-          <a href="?type=sme" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">SME Shops</a>
-          <a href="?type=rental&property=hostel" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Hostels</a>
-          <a href="?type=rental&property=single_room" class="rounded-2xl bg-white/15 px-2 py-3 text-center text-[11px] font-bold backdrop-blur-md">Rooms</a>
-          <a href="{% url 'search:results' %}" class="rounded-2xl bg-white px-2 py-3 text-center text-[11px] font-bold text-p-800">Explore</a>
+          <a href="?type=rental" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Rentals</a>
+          <a href="?type=auto" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Autos</a>
+          <a href="?type=sme" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">SME Shops</a>
+          <a href="?type=rental&property=hostel" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Hostels</a>
+          <a href="?type=rental&property=single_room" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Rooms</a>
+          <a href="{% url 'search:results' %}" class="rounded-2xl bg-p-700/90 px-2 py-2.5 text-center text-[11px] font-bold text-white shadow-sm">Explore</a>
         </nav>
-        <div class="mt-4 flex items-center justify-between text-[11px] font-semibold text-white/80"><span data-hero-type-cta>Explore every category</span><span>Curated by iSellTZ</span></div>
+        <div class="mt-3 flex items-center justify-between text-[11px] font-semibold text-n-500"><span data-hero-type-cta>Explore every category</span><span>Curated by iSellTZ</span></div>
       </div>
     </div>
   </div>
@@ -195,22 +196,29 @@
 })();
 (() => {
   const label = document.querySelector('[data-hero-type-label]');
+  const title = document.querySelector('[data-hero-type-title]');
   const copy = document.querySelector('[data-hero-type-copy]');
   const cta = document.querySelector('[data-hero-type-cta]');
-  if (!label || !copy || !cta) return;
+  const wrap = document.querySelector('[data-hero-copy-wrap]');
+  if (!label || !title || !copy || !cta || !wrap) return;
   const types = [
-    ['Rentals', 'Explore rentals, estates and family homes from accountable local providers.', 'Homes and rentals'],
-    ['Autos', 'Find vehicles and dealers with clear details, images and contact paths.', 'Cars and dealers'],
-    ['SME Shops', 'Discover local products from Tanzanian shops with cart and checkout support.', 'Products and shops'],
-    ['Hostels', 'Compare hostels and student-friendly spaces near key areas.', 'Student housing'],
-    ['Single Rooms', 'Browse compact rooms and affordable spaces without losing context.', 'Rooms near you']
+    ['Rentals', 'Find spaces that move your life forward.', 'Explore rentals, estates and family homes from accountable local providers.', 'Homes and rentals'],
+    ['Autos', 'Find vehicles that move you forward.', 'Find vehicles and dealers with clear details, images and contact paths.', 'Cars and dealers'],
+    ['SME Shops', 'Find local shops that keep life moving.', 'Discover local products from Tanzanian shops with cart and checkout support.', 'Products and shops'],
+    ['Hostels', 'Find student spaces that fit your rhythm.', 'Compare hostels and student-friendly spaces near key areas.', 'Student housing'],
+    ['Single Rooms', 'Find compact rooms that work for you.', 'Browse compact rooms and affordable spaces without losing context.', 'Rooms near you']
   ];
   let i = 0;
   window.setInterval(() => {
     i = (i + 1) % types.length;
-    label.textContent = types[i][0];
-    copy.textContent = types[i][1];
-    cta.textContent = types[i][2];
+    wrap.style.opacity = '0';
+    window.setTimeout(() => {
+      label.textContent = types[i][0];
+      title.textContent = types[i][1];
+      copy.textContent = types[i][2];
+      cta.textContent = types[i][3];
+      wrap.style.opacity = '1';
+    }, 220);
   }, 4500);
 })();
 document.querySelectorAll('[data-use-location]').forEach(button => {

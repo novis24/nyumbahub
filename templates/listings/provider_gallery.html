@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ provider.display_name }}{% endblock %}
+{% block title %}{{ provider.public_name }}{% endblock %}
 {% block content %}
 <div class="app-page-wide px-3 py-5 sm:px-4">
   <section class="rounded-3xl bg-white p-4 shadow-sm">
     <div class="flex items-center gap-3">
-      {% if provider.avatar %}<img src="{{ provider.avatar.url }}" class="h-14 w-14 rounded-2xl object-cover" alt="">{% else %}<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-p-50 font-black text-p-700">{{ provider.display_name|first }}</div>{% endif %}
+      {% if provider.avatar %}<img src="{{ provider.avatar.url }}" class="h-14 w-14 rounded-2xl object-cover" alt="">{% else %}<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-p-50 font-black text-p-700">{{ provider.public_name|first }}</div>{% endif %}
       <div class="min-w-0 flex-1">
-        <h1 class="truncate text-2xl font-black text-n-900">{{ provider.display_name }}</h1>
+        <h1 class="truncate text-2xl font-black text-n-900">{{ provider.public_name }}</h1>
         <p class="text-sm text-n-500">{{ provider.location|default:representative.city }}{% if representative.verification_badge_label %} · {{ representative.verification_badge_label }}{% endif %}</p>
       </div>
       {% if show_sme_cart %}<a href="{% url 'listings:cart' %}" class="rounded-xl bg-p-700 px-4 py-2 text-sm font-bold text-white">{% trans "Cart" %}</a>{% endif %}
@@ -21,9 +21,20 @@
       </nav>
     {% endif %}
   </section>
-  <section class="mt-5 adaptive-card-grid">
+  <section class="provider-media-grid mt-5">
     {% for listing in listings %}
-      {% include 'components/listing_card.html' with listing=listing %}
+      <a href="{{ listing.get_absolute_url }}" class="provider-media-tile" aria-label="{{ listing.title }}">
+        {% if listing.cover_image %}
+          <img src="{{ listing.cover_image.image.url }}" alt="{{ listing.title }}" loading="lazy">
+        {% else %}
+          <div class="provider-media-empty">{% trans "No image" %}</div>
+        {% endif %}
+        {% if listing.videos.all %}
+          <span class="provider-media-video">
+            <svg class="h-3.5 w-3.5 fill-white stroke-white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+        {% endif %}
+      </a>
     {% empty %}
       <div class="is-empty">{% trans "No public listings in this category." %}</div>
     {% endfor %}

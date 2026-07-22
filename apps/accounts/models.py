@@ -89,6 +89,10 @@ class CustomUser(AbstractUser):
         return self.get_full_name() or self.username
 
     @property
+    def public_name(self):
+        return self.shop_name or self.display_name
+
+    @property
     def verification_badge_label(self):
         """Public wording backed exclusively by the persisted KYC status."""
         if not self.is_verified:

@@ -311,7 +311,7 @@
             </div>
           {% endif %}
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-bold text-n-900">{{ listing.owner.display_name }}</p>
+            <p class="truncate text-sm font-bold text-n-900">{{ listing.owner.public_name }}</p>
             <div class="mt-0.5 flex items-center gap-1.5">
               {% if listing.owner.is_verified %}
                 <svg class="h-3.5 w-3.5 fill-p-600" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
@@ -356,8 +356,6 @@
         {% if listing.listing_type == 'sme' %}<button type="button" data-add-to-cart="{{ listing.id }}" class="btn-g btn-primary py-4 text-base">Add to cart</button>{% else %}<button @click="contact = true" class="btn-g btn-primary py-4 text-base">View contact options</button>{% endif %}
       {% elif not user.is_authenticated %}
         <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn-g btn-primary py-4 text-base">Sign in to view contact options</a>
-      {% elif user.is_provider and user == listing.owner %}
-        <a href="{% url 'listings:edit' listing.slug %}" class="btn-g btn-dark py-4 text-base">Edit listing</a>
       {% endif %}
     </div>
   </div>
@@ -410,7 +408,7 @@
           </div>
         {% endif %}
         <div>
-          <p class="font-bold text-n-900">{{ listing.owner.display_name }}</p>
+          <p class="font-bold text-n-900">{{ listing.owner.public_name }}</p>
           <p class="mt-0.5 text-xs text-n-500">Responds via phone or WhatsApp</p>
         </div>
       </div>

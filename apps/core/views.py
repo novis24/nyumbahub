@@ -9,17 +9,17 @@ from apps.listings.views import provider_cards, with_distance
 
 
 def home(request):
-    listing_type = request.GET.get('type', 'rental')
+    listing_type = request.GET.get('type', '')
     if listing_type not in ListingType.values:
-        listing_type = ListingType.RENTAL
+        listing_type = ''
     property_filter = request.GET.get('property', '')
 
     qs = Listing.objects.filter(status=ListingStatus.ACTIVE)
 
-    if listing_type in ['rental', 'sme', 'auto']:
+    if listing_type in ListingType.values:
         qs = qs.filter(listing_type=listing_type)
 
-    if property_filter:
+    if property_filter and listing_type == ListingType.RENTAL:
         qs = qs.filter(property_type=property_filter)
     user_lat = request.GET.get('lat')
     user_lng = request.GET.get('lng')
@@ -28,7 +28,7 @@ def home(request):
     hero_groups = HeroGroup.objects.filter(is_active=True).prefetch_related('images').order_by('order', 'name')
     hero_listing = qs.filter(images__isnull=False).select_related('owner').prefetch_related('images').order_by('-is_featured', '-created_at').first()
     featured = qs.filter(is_featured=True).select_related('owner').prefetch_related('images', 'videos', 'reviews')[:6]
-    hero_content = {
+    hero_content_map = {
         ListingType.RENTAL: {
             'eyebrow': 'Trusted homes across Tanzania',
             'title_start': 'Find spaces that', 'title_emphasis': 'move',
@@ -50,7 +50,14 @@ def home(request):
             'description': 'Explore products, services, shops and growing businesses near you.',
             'placeholder': 'e.g. furniture or catering',
         },
-    }[listing_type]
+    }
+    hero_content = hero_content_map.get(listing_type, {
+        'eyebrow': 'Trusted marketplace across Tanzania',
+        'title_start': 'Find spaces that', 'title_emphasis': 'move',
+        'title_end': 'your life forward.',
+        'description': 'Explore homes, vehicles, rooms, hostels and SME shops from accountable local providers.',
+        'placeholder': 'e.g. apartment, Toyota, groceries',
+    })
     popular_providers = provider_cards(nearby_qs, limit=8, order='popular' if not user_lat else 'nearby')
     recent_providers = provider_cards(qs, limit=12, order='recent')
     paginator = Paginator(recent_providers, 12)
