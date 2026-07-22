@@ -95,7 +95,11 @@ class ProfileUpdateForm(forms.ModelForm):
     """
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'phone', 'bio', 'avatar', 'location']
+        fields = [
+            'first_name', 'last_name', 'phone', 'bio', 'avatar', 'location',
+            'shop_name', 'shop_location', 'nearby_names', 'public_phone',
+            'whatsapp_phone', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url',
+        ]
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 3, 'maxlength': 500}),
         }

@@ -86,7 +86,7 @@
 
   .adaptive-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(9.25rem, 1fr));
     gap: 0.75rem;
   }
 
@@ -129,6 +129,40 @@
     color: #64748b;
   }
 
+  .profile-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: dense;
+    gap: 0.75rem;
+  }
+
+  .profile-gallery-item {
+    position: relative;
+    display: block;
+    min-height: 10rem;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    background: #f1f5f9;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .profile-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 300ms ease;
+  }
+
+  .profile-gallery-item:hover img {
+    transform: scale(1.04);
+  }
+
+  .profile-gallery-featured {
+    grid-column: span 2;
+    min-height: 14rem;
+  }
+
   @media (min-width: 1024px) {
     .home-hero-grid {
       grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
@@ -140,7 +174,27 @@
   }
 
   @media (min-width: 640px) {
+    .adaptive-card-grid { grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); }
+  }
+
+  @media (min-width: 768px) {
     .adaptive-card-grid { grid-template-columns: repeat(auto-fill, minmax(14.25rem, 1fr)); }
+
+    .profile-gallery-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .profile-gallery-featured {
+      grid-column: span 2;
+      grid-row: span 2;
+      min-height: 22rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .profile-gallery-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   @media (min-width: 1024px) {

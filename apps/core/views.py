@@ -4,8 +4,8 @@ from django.conf import settings
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator
 from django.db.models import Avg, Case, Count, IntegerField, When
-from apps.listings.models import HeroGroup, Listing, ListingStatus, ListingType, PropertyType, SavedListing, SMEDetails, VehicleDetails
-from apps.listings.views import provider_cards
+from apps.listings.models import HeroGroup, Listing, ListingStatus, ListingType, ProductCategory, PropertyType, SavedListing, SMEDetails, VehicleDetails
+from apps.listings.views import provider_cards, with_distance
 
 
 def home(request):
@@ -21,6 +21,9 @@ def home(request):
 
     if property_filter:
         qs = qs.filter(property_type=property_filter)
+    user_lat = request.GET.get('lat')
+    user_lng = request.GET.get('lng')
+    nearby_qs = with_distance(qs, user_lat, user_lng)
 
     hero_groups = HeroGroup.objects.filter(is_active=True).prefetch_related('images').order_by('order', 'name')
     hero_listing = qs.filter(images__isnull=False).select_related('owner').prefetch_related('images').order_by('-is_featured', '-created_at').first()
@@ -48,7 +51,7 @@ def home(request):
             'placeholder': 'e.g. furniture or catering',
         },
     }[listing_type]
-    popular_providers = provider_cards(qs, limit=8, order='popular')
+    popular_providers = provider_cards(nearby_qs, limit=8, order='popular' if not user_lat else 'nearby')
     recent_providers = provider_cards(qs, limit=12, order='recent')
     paginator = Paginator(recent_providers, 12)
     page_number = request.GET.get('page', 1)
@@ -73,6 +76,9 @@ def home(request):
     return render(request, 'core/home.html', {
         'listings': page_obj,
         'popular_providers': popular_providers,
+        'has_user_location': bool(user_lat and user_lng),
+        'user_lat': user_lat or '',
+        'user_lng': user_lng or '',
         'featured_listings': featured,
         'active_type': listing_type,
         'property_filter': property_filter,
@@ -86,6 +92,7 @@ def home(request):
         'vehicle_category_choices': VehicleDetails._meta.get_field('category').choices,
         'sme_kind_choices': SMEDetails._meta.get_field('kind').choices,
         'price_type_choices': SMEDetails._meta.get_field('price_type').choices,
+        'product_categories': ProductCategory.objects.filter(parent__isnull=True, is_active=True).prefetch_related('subcategories'),
         'active_filters_count': len([value for value in [property_filter, request.GET.get('city'), request.GET.get('min_price'), request.GET.get('max_price'), request.GET.get('vehicle_make'), request.GET.get('vehicle_category'), request.GET.get('sme_kind'), request.GET.get('business_category')] if value]),
         'popular_cities': Listing.objects.filter(status=ListingStatus.ACTIVE).values('city').annotate(total=Count('id')).order_by('-total')[:5],
         'show_sme_cart': listing_type == ListingType.SME,

@@ -40,6 +40,39 @@ class LocationPrecision(models.TextChoices):
     APPROXIMATE = 'approximate', 'Show approximate area'
 
 
+class ProductCategory(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subcategories')
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = 'SME product category'
+        verbose_name_plural = 'SME product categories'
+
+    def __str__(self):
+        return f'{self.parent.name} / {self.name}' if self.parent else self.name
+
+
+class ProductAttribute(models.Model):
+    category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE, related_name='attributes')
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=100)
+    input_type = models.CharField(max_length=20, choices=[('text', 'Text'), ('number', 'Number'), ('choice', 'Choice')], default='text')
+    choices = models.CharField(max_length=500, blank=True, help_text='Comma-separated choices for choice fields.')
+    is_filterable = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'name']
+        unique_together = ('category', 'slug')
+
+    def __str__(self):
+        return f'{self.category}: {self.name}'
+
+
 class Listing(models.Model):
     """
     Single unified listing model.
@@ -94,6 +127,9 @@ class Listing(models.Model):
 
     # ── SME-specific ───────────────────────────────────
     business_category = models.CharField(max_length=80, blank=True)
+    product_category = models.ForeignKey(ProductCategory, null=True, blank=True, on_delete=models.PROTECT, related_name='listings')
+    product_subcategory = models.ForeignKey(ProductCategory, null=True, blank=True, on_delete=models.PROTECT, related_name='subcategory_listings')
+    product_attributes = models.JSONField(default=dict, blank=True)
     is_for_sale = models.BooleanField(default=False)  # sale vs rent for commercial
 
     # ── Auto-specific ──────────────────────────────────

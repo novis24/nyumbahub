@@ -111,8 +111,34 @@
           {% elif listing.listing_type == 'sme' %}
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
               <div class="sm:col-span-2"><label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Product or service</label><select name="sme_kind" class="field">{% for value,label in form.sme_kind.field.choices %}<option value="{{ value }}" {% if form.sme_kind.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Product category</label>
+                <select name="product_category" class="field" data-product-category>
+                  <option value="">Choose category…</option>
+                  {% for category in form.product_category.field.queryset %}
+                    <option value="{{ category.id }}" {% if listing.product_category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Subcategory</label>
+                <select name="product_subcategory" class="field" data-product-subcategory>
+                  <option value="">Optional subcategory…</option>
+                  {% for subcategory in form.product_subcategory.field.queryset %}
+                    <option value="{{ subcategory.id }}" data-parent="{{ subcategory.parent_id }}" {% if listing.product_subcategory_id == subcategory.id %}selected{% endif %}>{{ subcategory.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% for category in product_categories %}
+                {% for attribute in category.attributes.all %}
+                  <div data-product-attribute data-parent="{{ category.id }}">
+                    <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">{{ attribute.name }}</label>
+                    <input name="attr_{{ attribute.slug }}" {% if attribute.input_type == 'number' %}type="number"{% endif %} class="field" placeholder="{{ attribute.name }}">
+                  </div>
+                {% endfor %}
+              {% endfor %}
               <div class="sm:col-span-2">
-                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Business category</label>
+                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-n-700">Business label</label>
                 <input type="text" name="business_category" value="{{ form.business_category.value|default:listing.business_category }}" class="field">
               </div>
               <label class="sm:col-span-2 flex items-center gap-3 rounded-2xl border border-n-200 bg-n-50 p-3">

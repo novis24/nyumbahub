@@ -9,7 +9,7 @@ from apps.accounts.models import AccountRole, CustomUser, VerificationStatus
 from apps.subscriptions.models import Plan, Subscription, VideoPlanEntitlement
 from apps.listings.services.video_quota import complete_reservation, reserve_video_capacity
 from .forms import ListingForm
-from .models import GlobalVideoStoragePolicy, Listing, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision
+from .models import GlobalVideoStoragePolicy, Listing, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision, ProductCategory
 
 
 def form_data(**overrides):
@@ -70,6 +70,7 @@ class CategoryValidationTests(TestCase):
 class ListingWorkflowTests(TestCase):
     def setUp(self):
         self.sme = CustomUser.objects.create_user(username='shop', email='shop@example.com', password='secret', role=AccountRole.SME)
+        self.category = ProductCategory.objects.get(slug='groceries-food')
         self.client.force_login(self.sme)
 
     def test_sme_form_does_not_offer_other_account_categories(self):
@@ -82,7 +83,7 @@ class ListingWorkflowTests(TestCase):
     def test_publish_status_and_role_category_make_listing_public(self):
         response = self.client.post(reverse('listings:create'), form_data(
             listing_type='auto', sme_kind='product', price_type='fixed',
-            status='active', business_category='Food',
+            status='active', business_category='Food', product_category=self.category.id,
         ))
         listing = Listing.objects.get(owner=self.sme)
         self.assertEqual(listing.listing_type, ListingType.SME)

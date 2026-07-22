@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 
-from .models import Listing, ListingReview, ListingType, SMEDetails, VehicleDetails
+from .models import Listing, ListingReview, ListingType, ProductCategory, SMEDetails, VehicleDetails
 
 
 TANZANIA_BOUNDS = {'lat_min': Decimal('-12'), 'lat_max': Decimal('-0.5'), 'lng_min': Decimal('28.5'), 'lng_max': Decimal('41.5')}
@@ -19,12 +19,14 @@ class ListingForm(forms.ModelForm):
 
     class Meta:
         model = Listing
-        fields = ['title','description','price','location','city','latitude','longitude','nearby_landmark','location_precision','property_type','bedrooms','bathrooms','floor_number','is_furnished','allows_students','business_category','is_for_sale','vehicle_make','vehicle_model','vehicle_year','mileage_km']
+        fields = ['title','description','price','location','city','latitude','longitude','nearby_landmark','location_precision','property_type','bedrooms','bathrooms','floor_number','is_furnished','allows_students','business_category','product_category','product_subcategory','product_attributes','is_for_sale','vehicle_make','vehicle_model','vehicle_year','mileage_km']
         widgets = {'description': forms.Textarea(attrs={'rows': 5}), 'latitude': forms.HiddenInput(), 'longitude': forms.HiddenInput()}
 
     def __init__(self, *args, listing_type=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.listing_type = listing_type or getattr(self.instance, 'listing_type', None) or ListingType.RENTAL
+        self.fields['product_category'].queryset = ProductCategory.objects.filter(parent__isnull=True, is_active=True)
+        self.fields['product_subcategory'].queryset = ProductCategory.objects.filter(parent__isnull=False, is_active=True).select_related('parent')
         self.fields['location_precision'].required = False
         for name in ('title','description','price','location'):
             self.fields[name].required = True
@@ -62,8 +64,15 @@ class ListingForm(forms.ModelForm):
                 raise forms.ValidationError('Vehicle make and model are required.')
             if not cleaned.get('auto_category') or not cleaned.get('auto_condition'):
                 raise forms.ValidationError('Vehicle category and condition are required.')
-        if self.listing_type == ListingType.SME and not cleaned.get('sme_kind'):
-            self.add_error('sme_kind', 'Choose whether this is a product or service.')
+        if self.listing_type == ListingType.SME:
+            if not cleaned.get('sme_kind'):
+                self.add_error('sme_kind', 'Choose whether this is a product or service.')
+            category = cleaned.get('product_category')
+            subcategory = cleaned.get('product_subcategory')
+            if not category:
+                self.add_error('product_category', 'Choose a product category.')
+            if subcategory and subcategory.parent_id != category.id:
+                self.add_error('product_subcategory', 'Choose a subcategory that belongs to the selected category.')
         return cleaned
 
     def save_details(self, listing):

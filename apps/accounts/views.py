@@ -198,6 +198,14 @@ def _render_profile(request, profile_user):
         .prefetch_related('images', 'videos', 'reviews')
         .order_by('-is_featured', '-created_at')
     )
+    listing_list = list(listings)
+    profile_background_images = []
+    for listing in listing_list:
+        cover = listing.cover_image
+        if cover:
+            profile_background_images.append(cover)
+        if len(profile_background_images) >= 8:
+            break
     review_stats = ListingReview.objects.filter(listing__owner=profile_user).aggregate(
         average_rating=Avg('rating'),
         total_reviews=Count('id'),
@@ -213,9 +221,17 @@ def _render_profile(request, profile_user):
         saved_ids = set(
             SavedListing.objects.filter(user=request.user).values_list('listing_id', flat=True)
         )
+    whatsapp_link = ''
+    if profile_user.whatsapp_phone:
+        whatsapp_digits = ''.join(ch for ch in str(profile_user.whatsapp_phone) if ch.isdigit())
+        whatsapp_link = f'https://wa.me/{whatsapp_digits}' if whatsapp_digits else ''
     return render(request, 'accounts/profile.html', {
         'profile_user': profile_user,
-        'profile_listings': listings,
+        'profile_listings': listing_list,
+        'profile_background_images': profile_background_images,
+        'active_listing_count': len(listing_list),
+        'profile_contact_phone': profile_user.public_phone or profile_user.phone,
+        'whatsapp_link': whatsapp_link,
         'owner_review_stats': {
             'average_rating': review_stats['average_rating'] or 0,
             'total_reviews': review_stats['total_reviews'] or 0,

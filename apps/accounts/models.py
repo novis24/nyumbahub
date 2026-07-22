@@ -33,6 +33,15 @@ class CustomUser(AbstractUser):
     bio = models.TextField(blank=True, max_length=500)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     location = models.CharField(max_length=120, blank=True)  # city / district
+    shop_name = models.CharField(max_length=120, blank=True)
+    shop_location = models.CharField(max_length=160, blank=True)
+    nearby_names = models.CharField(max_length=240, blank=True)
+    public_phone = PhoneNumberField(region='TZ', blank=True, null=True)
+    whatsapp_phone = PhoneNumberField(region='TZ', blank=True, null=True)
+    website_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    tiktok_url = models.URLField(blank=True)
 
     # Verification
     verification_status = models.CharField(

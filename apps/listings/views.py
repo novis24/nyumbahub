@@ -8,7 +8,8 @@ from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Avg, Count, F, Q
+from django.db.models import Avg, Count, F, FloatField, Q
+from django.db.models.functions import ACos, Cos, Radians, Sin
 from datetime import timedelta
 from .models import (
     Listing,
@@ -22,6 +23,7 @@ from .models import (
     SavedListing,
     Cart,
     CartItem,
+    ProductCategory,
     SMEOrder,
     SMEOrderItem,
 )
@@ -55,8 +57,26 @@ def active_public_listings():
     return Listing.objects.filter(status=ListingStatus.ACTIVE, owner__is_active=True).select_related('owner').prefetch_related('images', 'videos', 'reviews')
 
 
+def with_distance(qs, lat, lng):
+    try:
+        lat = float(lat)
+        lng = float(lng)
+    except (TypeError, ValueError):
+        return qs
+    return qs.exclude(latitude__isnull=True).exclude(longitude__isnull=True).annotate(
+        distance_km=6371 * ACos(
+            Cos(Radians(lat)) * Cos(Radians('latitude')) * Cos(Radians('longitude') - Radians(lng)) +
+            Sin(Radians(lat)) * Sin(Radians('latitude')),
+            output_field=FloatField(),
+        )
+    )
+
+
 def provider_cards(qs, limit=12, order='recent'):
-    ordered = qs.order_by('-views_count' if order == 'popular' else '-created_at')
+    if order == 'nearby':
+        ordered = qs.order_by('distance_km', '-is_featured', '-created_at')
+    else:
+        ordered = qs.order_by('-views_count' if order == 'popular' else '-created_at')
     seen = set()
     cards = []
     for prefer_images in (True, False):
@@ -119,6 +139,14 @@ def _get_saved_ids_for_user(user):
     return set(
         SavedListing.objects.filter(user=user).values_list('listing_id', flat=True)
     )
+
+
+def _product_attributes_from_post(request):
+    attrs = {}
+    for key, value in request.POST.items():
+        if key.startswith('attr_') and value.strip():
+            attrs[key[5:]] = value.strip()
+    return attrs
 
 
 def _owner_review_stats(owner):
@@ -368,6 +396,8 @@ def create_listing(request):
                 requested_status = request.POST.get('status', ListingStatus.DRAFT)
                 listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
                 listing.amenities = ','.join(request.POST.getlist('amenities'))
+                if default_type == ListingType.SME:
+                    listing.product_attributes = _product_attributes_from_post(request)
 
                 sub = request.user.active_subscription
                 if sub:
@@ -418,6 +448,7 @@ def create_listing(request):
         'amenity_choices': AMENITY_CHOICES,
         'video_policy': get_video_upload_policy(request.user).as_dict(),
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
+        'product_categories': ProductCategory.objects.filter(parent__isnull=True, is_active=True).prefetch_related('subcategories', 'attributes'),
     })
 
 
@@ -432,6 +463,8 @@ def edit_listing(request, slug):
         lst.status = request.POST.get('status', listing.status)
         amenities = request.POST.getlist('amenities')
         lst.amenities = ','.join(amenities)
+        if lst.listing_type == ListingType.SME:
+            lst.product_attributes = _product_attributes_from_post(request)
         lst.save()
         form.save_details(lst)
         if request.POST.get('cover_image'):
@@ -495,6 +528,7 @@ def edit_listing(request, slug):
         'video_policy': get_video_upload_policy(request.user, listing).as_dict(),
         'listing_type': listing.listing_type,
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
+        'product_categories': ProductCategory.objects.filter(parent__isnull=True, is_active=True).prefetch_related('subcategories', 'attributes'),
     })
 
 

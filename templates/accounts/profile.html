@@ -1,136 +1,141 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block page_title %}Profile{% endblock %}
 {% block title %}{{ profile_user.display_name }}{% endblock %}
 {% block content %}
-<div class="pb-[calc(7rem+env(safe-area-inset-bottom))] pt-3 lg:pb-10 lg:pt-6">
-  <div class="app-page">
-    <div class="overflow-hidden border-y border-n-100 bg-white lg:rounded-2xl lg:border-x">
-      <div class="relative h-24 border-b border-n-100 bg-gradient-to-br from-white to-n-50 lg:h-28">
-        {% if request.user == profile_user %}
-          <a href="{% url 'accounts:settings' %}" class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-n-100 text-n-600 transition-colors hover:bg-n-200">
-            <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </a>
-        {% endif %}
-        <div class="absolute -bottom-8 left-4">
-          {% if profile_user.avatar %}
-            <img src="{{ profile_user.avatar.url }}" alt="" class="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-sm">
-          {% else %}
-            <div class="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-n-900 shadow-sm">
-              <span class="text-2xl font-bold text-white">{{ profile_user.first_name.0|upper }}{{ profile_user.last_name.0|upper }}</span>
-            </div>
-          {% endif %}
-        </div>
-      </div>
+<div class="pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-10">
+  <div class="app-page-wide lg:pt-6">
+    <section class="overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-n-100 lg:shadow-sm">
+      <div class="relative h-72 overflow-hidden rounded-b-[2rem] bg-n-100 lg:h-80 lg:rounded-3xl" data-profile-hero>
+        {% for image in profile_background_images %}
+          <img src="{{ image.image.url }}" alt="" class="profile-hero-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+        {% empty %}
+          <div class="absolute inset-0 bg-gradient-to-br from-p-50 via-white to-n-100"></div>
+        {% endfor %}
+        <div class="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-white/25"></div>
 
-      <div class="profile-layout-grid grid gap-5 px-4 pb-5 pt-12 lg:gap-8 lg:px-6 lg:pb-6">
-        <div>
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h1 class="break-words text-2xl font-bold leading-tight text-n-900 lg:text-3xl">{{ profile_user.display_name }}</h1>
+        <div class="absolute left-4 right-4 top-4 flex items-center justify-between">
+          <a href="{% url 'core:home' %}" class="flex items-center gap-2">
+            <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-10 w-10 rounded-xl shadow-sm">
+            <span class="text-2xl font-black text-n-900">iSell</span>
+          </a>
+          <div class="flex items-center gap-3 text-n-500">
+            <a href="{% url 'notifications:list' %}" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm backdrop-blur">
+              <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"/></svg>
+            </a>
+            {% if request.user == profile_user %}
+              <a href="{% url 'accounts:settings' %}" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm backdrop-blur">
+                <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6v.2h-2.8v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1-2-2 .1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H5.6v-2.8h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9L7 8.2l2-2 .1.1a1.7 1.7 0 001.9.3 1.7 1.7 0 001-1.6v-.2h2.8V5a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 00-.3 1.9 1.7 1.7 0 001.6 1h.2V14h-.2a1.7 1.7 0 00-1.6 1z"/></svg>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="absolute inset-x-0 bottom-0 px-5 pb-8 lg:px-8">
+          <div class="flex items-end gap-4">
+            <div class="relative flex-shrink-0">
+              {% if profile_user.avatar %}
+                <img src="{{ profile_user.avatar.url }}" alt="" class="h-28 w-28 rounded-full border-[6px] border-white object-cover shadow-xl lg:h-32 lg:w-32">
+              {% else %}
+                <div class="flex h-28 w-28 items-center justify-center rounded-full border-[6px] border-white bg-n-900 shadow-xl lg:h-32 lg:w-32">
+                  <span class="text-4xl font-black text-white">{{ profile_user.first_name.0|upper }}{{ profile_user.last_name.0|upper }}</span>
+                </div>
+              {% endif %}
+              {% if profile_user.is_verified %}<span class="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-p-600 text-white"><svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>{% endif %}
+            </div>
+            <div class="min-w-0 flex-1 pb-2">
+              <h1 class="truncate text-3xl font-black text-n-900 lg:text-5xl">{{ profile_user.shop_name|default:profile_user.display_name }}</h1>
               <div class="mt-2 flex flex-wrap items-center gap-2">
-                <span class="badge text-[11px] {% if profile_user.role == 'landlord' %}bg-p-100 text-p-800{% elif profile_user.role == 'sme' %}bg-amber-100 text-amber-800{% elif profile_user.role == 'auto' %}bg-orange-100 text-orange-800{% else %}bg-blue-100 text-blue-800{% endif %}">{{ profile_user.get_role_display }}</span>
-                {% if profile_user.is_verified %}<span class="badge bg-p-100 text-[11px] text-p-800">Verified</span>{% endif %}
-                {% if profile_user.location %}<span class="text-xs text-n-400">{{ profile_user.location }}</span>{% endif %}
+                <span class="rounded-full border border-p-200 bg-p-50 px-4 py-1.5 text-sm font-bold text-p-700">{{ profile_user.get_role_display }}</span>
+                {% if profile_user.shop_location or profile_user.location %}<span class="inline-flex items-center gap-1 text-sm font-semibold text-n-500"><svg class="h-4 w-4 stroke-current" viewBox="0 0 24 24"><path d="M12 21s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>{{ profile_user.shop_location|default:profile_user.location }}</span>{% endif %}
               </div>
             </div>
             {% if request.user == profile_user %}
-              <a href="{% url 'accounts:profile_edit' %}" class="rounded-full border border-n-200 bg-white px-4 py-2 text-xs font-semibold text-n-700 transition-colors hover:bg-n-50">Edit profile</a>
+              <a href="{% url 'accounts:profile_edit' %}" class="mb-3 hidden rounded-2xl bg-p-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-p-700/20 sm:inline-flex">Edit profile</a>
             {% endif %}
           </div>
-
-          {% if profile_user.bio %}
-            <p class="mt-4 max-w-3xl text-sm leading-relaxed text-n-600">{{ profile_user.bio }}</p>
-          {% endif %}
-
-          {% if profile_user.is_provider %}
-            <div class="mt-5 rounded-2xl border border-n-100 bg-n-50 p-4">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p class="text-sm font-bold text-n-900">Active listings</p>
-                  <p class="mt-1 text-xs text-n-500">{{ profile_listings|length }} live listing{{ profile_listings|length|pluralize }}</p>
-                </div>
-                {% if request.user == profile_user %}
-                  <a href="{% url 'listings:my_listings' %}" class="text-xs font-semibold text-p-600">Manage listings</a>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
         </div>
-
-        <aside class="space-y-4 lg:self-start">
-          <div class="rounded-2xl border border-n-200 bg-white p-4">
-            <p class="text-xs font-bold uppercase tracking-wide text-n-500">Trust signals</p>
-            <div class="mt-3 grid grid-cols-2 gap-3">
-              <div class="rounded-xl bg-n-50 p-3">
-                <p class="text-2xl font-bold text-n-900">{{ owner_review_stats.average_rating|floatformat:1 }}</p>
-                <p class="mt-1 text-xs text-n-500">Average rating</p>
-              </div>
-              <div class="rounded-xl bg-n-50 p-3">
-                <p class="text-2xl font-bold text-n-900">{{ owner_review_stats.total_reviews }}</p>
-                <p class="mt-1 text-xs text-n-500">Customer reviews</p>
-              </div>
-            </div>
-          </div>
-
-          {% if profile_user.phone %}
-            <div class="rounded-2xl border border-n-100 bg-white p-4">
-              <p class="text-xs font-bold uppercase tracking-wide text-n-500">Contact</p>
-              <a href="tel:{{ profile_user.phone }}" class="mt-3 flex items-center justify-between rounded-2xl border border-n-100 bg-n-50 px-4 py-3 text-sm font-semibold text-n-800 transition-colors hover:bg-n-100">
-                <span>{{ profile_user.phone }}</span>
-                <span class="text-p-600">Call</span>
-              </a>
-            </div>
-          {% endif %}
-        </aside>
       </div>
-    </div>
+
+      <div class="-mt-6 px-4 lg:px-8">
+        <div class="relative z-10 grid grid-cols-4 divide-x divide-n-100 rounded-3xl bg-white p-4 text-center shadow-xl shadow-n-900/10 ring-1 ring-n-100">
+          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8v8H3z"/></svg></div><p class="text-xl font-black text-n-900">{{ active_listing_count }}</p><p class="text-xs font-semibold text-n-500">Active Listings</p></div>
+          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></div><p class="text-xl font-black text-n-900">{{ owner_review_stats.average_rating|floatformat:1 }}</p><p class="text-xs font-semibold text-n-500">Rating</p></div>
+          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg></div><p class="text-xl font-black text-n-900">{{ owner_review_stats.total_reviews }}</p><p class="text-xs font-semibold text-n-500">Reviews</p></div>
+          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div><p class="text-xl font-black text-n-900">{{ saved_ids|length }}</p><p class="text-xs font-semibold text-n-500">Saved</p></div>
+        </div>
+      </div>
+
+      <div class="px-4 py-5 lg:px-8">
+        {% if profile_user.bio or profile_user.nearby_names %}
+          <div class="mb-4 rounded-3xl border border-n-100 bg-n-50 p-4 text-sm leading-6 text-n-600">
+            {% if profile_user.bio %}<p>{{ profile_user.bio }}</p>{% endif %}
+            {% if profile_user.nearby_names %}<p class="mt-2 font-semibold text-n-700">Near: {{ profile_user.nearby_names }}</p>{% endif %}
+          </div>
+        {% endif %}
+
+        {% if profile_contact_phone %}
+        <div class="rounded-3xl border border-n-100 bg-white p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.7.6 2.5a2 2 0 01-.4 2.1L8.1 9.5a16 16 0 006.4 6.4l1.2-1.2a2 2 0 012.1-.4c.8.3 1.6.5 2.5.6a2 2 0 011.7 2z"/></svg></span>
+            <div class="min-w-0 flex-1"><p class="text-xs font-bold text-n-500">Phone</p><p class="truncate text-lg font-black text-n-900">{{ profile_contact_phone }}</p></div>
+            {% if whatsapp_link %}<a href="{{ whatsapp_link }}" class="hidden rounded-2xl border border-p-200 px-5 py-3 text-sm font-bold text-p-700 sm:inline-flex">Message</a>{% endif %}
+            <a href="tel:{{ profile_contact_phone }}" class="rounded-2xl bg-p-700 px-5 py-3 text-sm font-bold text-white">Call</a>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if profile_user.website_url or profile_user.facebook_url or profile_user.instagram_url or profile_user.tiktok_url %}
+          <div class="mt-4 flex flex-wrap gap-2">
+            {% if profile_user.website_url %}<a href="{{ profile_user.website_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Website</a>{% endif %}
+            {% if profile_user.facebook_url %}<a href="{{ profile_user.facebook_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Facebook</a>{% endif %}
+            {% if profile_user.instagram_url %}<a href="{{ profile_user.instagram_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Instagram</a>{% endif %}
+            {% if profile_user.tiktok_url %}<a href="{{ profile_user.tiktok_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">TikTok</a>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
 
     {% if profile_user.is_provider %}
-      <div class="profile-layout-grid mt-5 grid gap-5 px-3 sm:px-4 lg:px-0">
-        <section class="min-w-0">
-          <div class="mb-3 flex items-center justify-between">
-            <p class="text-sm font-bold text-n-900">Listings by {{ profile_user.first_name|default:profile_user.username }}</p>
-            {% if request.user == profile_user %}<a href="{% url 'listings:create' %}" class="text-xs font-semibold text-p-600">Post new listing</a>{% endif %}
-          </div>
-
-          {% if profile_listings %}
-            <div class="profile-listings-grid grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {% for listing in profile_listings %}
-                {% include 'components/listing_card.html' with listing=listing %}
-              {% endfor %}
-            </div>
-          {% else %}
-            <div class="rounded-2xl border border-n-100 bg-n-50 p-8 text-center text-sm text-n-500">No active listings yet.</div>
-          {% endif %}
-        </section>
-
-        <section class="min-w-0">
-          <div class="mb-3 flex items-center justify-between">
-            <p class="text-sm font-bold text-n-900">Recent customer feedback</p>
-          </div>
-          <div class="space-y-3">
-            {% for review in recent_reviews %}
-              <div class="rounded-2xl border border-n-100 bg-white p-4 shadow-sm">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="text-sm font-bold text-n-900">{{ review.reviewer.display_name }}</p>
-                    <p class="mt-1 text-xs text-n-500">{{ review.rating }}/5 stars on {{ review.listing.title }}</p>
-                  </div>
-                  <span class="badge bg-amber-100 text-amber-800">{{ review.rating }}★</span>
-                </div>
-                {% if review.comment %}
-                  <p class="mt-3 text-sm leading-relaxed text-n-600">{{ review.comment|linebreaksbr }}</p>
+      <section class="px-4 pt-2 lg:px-0 lg:pt-6">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-2xl font-black text-n-900">My Listings</h2>
+          {% if request.user == profile_user %}<a href="{% url 'listings:create' %}" class="text-sm font-bold text-p-700">+ Post new listing</a>{% endif %}
+        </div>
+        {% if profile_listings %}
+          <div class="profile-gallery-grid">
+            {% for listing in profile_listings %}
+              <a href="{{ listing.get_absolute_url }}" class="profile-gallery-item {% if forloop.counter == 1 or forloop.counter == 8 %}profile-gallery-featured{% endif %}">
+                {% if listing.cover_image %}
+                  <img src="{{ listing.cover_image.image.url }}" alt="{{ listing.title }}" loading="lazy">
                 {% else %}
-                  <p class="mt-3 text-sm italic text-n-400">No written feedback provided.</p>
+                  <div class="flex h-full w-full items-center justify-center bg-n-100 text-n-400">No image</div>
                 {% endif %}
-              </div>
-            {% empty %}
-              <div class="rounded-2xl border border-n-100 bg-n-50 p-4 text-sm text-n-500">No customer reviews yet.</div>
+                <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
+                  <b class="block truncate text-sm">{{ listing.title }}</b>
+                  <span class="block truncate text-xs opacity-90">{{ listing.price_per_month }}</span>
+                </span>
+              </a>
             {% endfor %}
           </div>
-        </section>
-      </div>
+          <a href="{% url 'listings:provider_gallery' profile_user.id %}" class="mt-4 flex items-center justify-center rounded-2xl border border-p-100 bg-p-50 py-3 text-sm font-bold text-p-700">View all listings</a>
+        {% else %}
+          <div class="rounded-3xl border border-n-100 bg-n-50 p-8 text-center text-sm text-n-500">No active listings yet.</div>
+        {% endif %}
+      </section>
     {% endif %}
   </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.profile-hero-slide')];
+  if (!slides.length) return;
+  let index = 0;
+  const show = () => slides.forEach((slide, i) => slide.style.opacity = i === index ? '1' : '0');
+  show();
+  window.setInterval(() => { index = (index + 1) % slides.length; show(); }, 5000);
+})();
+</script>
 {% endblock %}

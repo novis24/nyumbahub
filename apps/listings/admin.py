@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Cart, CartItem, HeroGroup, HeroImage, ListingReview, SMEOrder, SMEOrderItem
+from .models import Cart, CartItem, HeroGroup, HeroImage, ListingReview, ProductAttribute, ProductCategory, SMEOrder, SMEOrderItem
 
 
 class HeroImageInline(admin.TabularInline):
@@ -10,11 +10,35 @@ class HeroImageInline(admin.TabularInline):
     fields = ('image', 'alt_text', 'order')
 
 
+class ProductSubcategoryInline(admin.TabularInline):
+    model = ProductCategory
+    fk_name = 'parent'
+    extra = 1
+    fields = ('name', 'slug', 'is_active', 'order')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+class ProductAttributeInline(admin.TabularInline):
+    model = ProductAttribute
+    extra = 1
+    fields = ('name', 'slug', 'input_type', 'choices', 'is_filterable', 'order')
+    prepopulated_fields = {'slug': ('name',)}
+
+
 @admin.register(HeroGroup)
 class HeroGroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_active', 'order', 'rotation_seconds', 'group_duration_seconds')
     list_editable = ('is_active', 'order', 'rotation_seconds', 'group_duration_seconds')
     inlines = [HeroImageInline]
+
+
+@admin.register(ProductCategory)
+class ProductCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'parent', 'is_active', 'order')
+    list_filter = ('is_active', 'parent')
+    search_fields = ('name', 'slug', 'parent__name')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [ProductSubcategoryInline, ProductAttributeInline]
 
 
 @admin.register(SMEOrder)

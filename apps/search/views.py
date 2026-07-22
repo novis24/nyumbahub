@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.db.models import Q
 from apps.listings.models import (
     Listing, ListingStatus, ListingType, PropertyType, SavedListing,
-    SMEDetails, VehicleDetails,
+    ProductCategory, SMEDetails, VehicleDetails,
 )
+from apps.listings.views import with_distance
 
 
 def search_results(request):
@@ -24,6 +25,15 @@ def search_results(request):
     sme_kind = request.GET.get('sme_kind', '')
     business_category = request.GET.get('business_category', '').strip()
     price_type = request.GET.get('price_type', '')
+    product_category = request.GET.get('product_category', '')
+    product_subcategory = request.GET.get('product_subcategory', '')
+    lat = request.GET.get('lat', '')
+    lng = request.GET.get('lng', '')
+    attribute_filters = {
+        key[5:]: value.strip()
+        for key, value in request.GET.items()
+        if key.startswith('attr_') and value.strip()
+    }
 
     qs = Listing.objects.filter(status=ListingStatus.ACTIVE).select_related('owner').prefetch_related('images', 'videos', 'reviews')
 
@@ -76,10 +86,18 @@ def search_results(request):
     if listing_type == ListingType.SME:
         if sme_kind:
             qs = qs.filter(sme_details__kind=sme_kind)
+        if product_category:
+            qs = qs.filter(product_category__slug=product_category)
+        if product_subcategory:
+            qs = qs.filter(product_subcategory__slug=product_subcategory)
         if business_category:
             qs = qs.filter(business_category__icontains=business_category)
         if price_type:
             qs = qs.filter(sme_details__price_type=price_type)
+        for slug, value in attribute_filters.items():
+            qs = qs.filter(**{f'product_attributes__{slug}': value})
+    if lat and lng:
+        qs = with_distance(qs, lat, lng).order_by('distance_km', '-is_featured', '-created_at')
 
     count = qs.count()
     saved_ids = set()
@@ -95,6 +113,8 @@ def search_results(request):
             'count': count,
             'saved_ids': saved_ids,
         })
+
+    selected_product_category = ProductCategory.objects.filter(slug=product_category, is_active=True).prefetch_related('attributes').first() if product_category else None
 
     return render(request, 'search/results.html', {
         'listings': qs[:24],
@@ -119,6 +139,11 @@ def search_results(request):
         'sme_kind': sme_kind,
         'business_category': business_category,
         'price_type': price_type,
+        'product_category': product_category,
+        'product_subcategory': product_subcategory,
+        'product_categories': ProductCategory.objects.filter(parent__isnull=True, is_active=True).prefetch_related('subcategories'),
+        'selected_product_category': selected_product_category,
+        'attribute_filters': attribute_filters,
         'sme_kind_choices': SMEDetails._meta.get_field('kind').choices,
         'price_type_choices': SMEDetails._meta.get_field('price_type').choices,
         'saved_ids': saved_ids,

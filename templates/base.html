@@ -211,6 +211,29 @@
   };
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(()=>{}));
   document.body.addEventListener('htmx:configRequest',e=>{e.detail.headers['X-CSRFToken']='{{ csrf_token }}';});
+  function syncProductSubcategories(scope=document) {
+    scope.querySelectorAll('[data-product-category]').forEach(category => {
+      const form = category.closest('form') || scope;
+      const subcategory = form.querySelector('[data-product-subcategory]');
+      const attrs = form.querySelectorAll('[data-product-attribute]');
+      if (!subcategory) return;
+      const update = () => {
+        [...subcategory.options].forEach(option => {
+          const parent = option.dataset.parent;
+          option.hidden = Boolean(parent) && parent !== category.value;
+        });
+        if (subcategory.selectedOptions[0]?.hidden) subcategory.value = '';
+        attrs.forEach(attr => {
+          const visible = attr.dataset.parent === category.value;
+          attr.hidden = !visible;
+          attr.querySelectorAll('input,select,textarea').forEach(input => { input.disabled = !visible; });
+        });
+      };
+      category.addEventListener('change', update);
+      update();
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => syncProductSubcategories());
   const cart = {
     async state(){ const r = await fetch("{% url 'listings:cart_state' %}"); return r.json(); },
     async add(id){ const r = await fetch(`/listings/cart/add/${id}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}, body:'{}'}); const data = await r.json(); if(!r.ok) alert(data.error || 'Cart update failed.'); cart.render(data); },
