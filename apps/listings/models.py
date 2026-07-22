@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Avg
+from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from collections import Counter
 import uuid
@@ -9,35 +10,35 @@ from decimal import Decimal
 
 
 class ListingType(models.TextChoices):
-    RENTAL = 'rental', 'Rental Property'
-    SME = 'sme', 'SME / Business'
-    AUTO = 'auto', 'Automotive'
+    RENTAL = 'rental', _('Rental Property')
+    SME = 'sme', _('SME / Business')
+    AUTO = 'auto', _('Automotive')
 
 
 class ListingStatus(models.TextChoices):
-    DRAFT = 'draft', 'Draft'
-    ACTIVE = 'active', 'Active'
-    PAUSED = 'paused', 'Paused'
-    EXPIRED = 'expired', 'Expired'
-    SOLD = 'sold', 'Sold / Rented'
+    DRAFT = 'draft', _('Draft')
+    ACTIVE = 'active', _('Active')
+    PAUSED = 'paused', _('Paused')
+    EXPIRED = 'expired', _('Expired')
+    SOLD = 'sold', _('Sold / Rented')
 
 
 class PropertyType(models.TextChoices):
-    SINGLE_ROOM = 'single_room', 'Single Room'
-    SELF_CONTAINED = 'self_contained', 'Self Contained'
-    BEDSITTER = 'bedsitter', 'Bedsitter'
-    ONE_BEDROOM = '1_bedroom', '1 Bedroom'
-    TWO_BEDROOM = '2_bedroom', '2 Bedrooms'
-    THREE_BEDROOM = '3_bedroom', '3 Bedrooms'
-    FOUR_PLUS = '4_plus', '4+ Bedrooms'
-    STUDIO = 'studio', 'Studio'
-    SHARED = 'shared', 'Shared House'
-    HOSTEL = 'hostel', 'Hostel / Student'
+    SINGLE_ROOM = 'single_room', _('Single Room')
+    SELF_CONTAINED = 'self_contained', _('Self Contained')
+    BEDSITTER = 'bedsitter', _('Bedsitter')
+    ONE_BEDROOM = '1_bedroom', _('1 Bedroom')
+    TWO_BEDROOM = '2_bedroom', _('2 Bedrooms')
+    THREE_BEDROOM = '3_bedroom', _('3 Bedrooms')
+    FOUR_PLUS = '4_plus', _('4+ Bedrooms')
+    STUDIO = 'studio', _('Studio')
+    SHARED = 'shared', _('Shared House')
+    HOSTEL = 'hostel', _('Hostel / Student')
 
 
 class LocationPrecision(models.TextChoices):
-    EXACT = 'exact', 'Show exact location'
-    APPROXIMATE = 'approximate', 'Show approximate area'
+    EXACT = 'exact', _('Show exact location')
+    APPROXIMATE = 'approximate', _('Show approximate area')
 
 
 class ProductCategory(models.Model):
@@ -49,8 +50,8 @@ class ProductCategory(models.Model):
 
     class Meta:
         ordering = ['order', 'name']
-        verbose_name = 'SME product category'
-        verbose_name_plural = 'SME product categories'
+        verbose_name = _('SME product category')
+        verbose_name_plural = _('SME product categories')
 
     def __str__(self):
         return f'{self.parent.name} / {self.name}' if self.parent else self.name
@@ -60,8 +61,8 @@ class ProductAttribute(models.Model):
     category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE, related_name='attributes')
     name = models.CharField(max_length=80)
     slug = models.SlugField(max_length=100)
-    input_type = models.CharField(max_length=20, choices=[('text', 'Text'), ('number', 'Number'), ('choice', 'Choice')], default='text')
-    choices = models.CharField(max_length=500, blank=True, help_text='Comma-separated choices for choice fields.')
+    input_type = models.CharField(max_length=20, choices=[('text', _('Text')), ('number', _('Number')), ('choice', _('Choice'))], default='text')
+    choices = models.CharField(max_length=500, blank=True, help_text=_('Comma-separated choices for choice fields.'))
     is_filterable = models.BooleanField(default=True)
     order = models.PositiveSmallIntegerField(default=0)
 
@@ -310,7 +311,7 @@ class HeroImage(models.Model):
         if self.pk:
             siblings = siblings.exclude(pk=self.pk)
         if self.group_id and siblings.count() >= 5:
-            raise ValidationError('A hero group can contain a maximum of five images.')
+            raise ValidationError(_('A hero group can contain a maximum of five images.'))
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -347,16 +348,16 @@ class CartItem(models.Model):
 
 class SMEOrder(models.Model):
     class Status(models.TextChoices):
-        REQUESTED = 'requested', 'Requested'
-        CONFIRMED = 'confirmed', 'Confirmed'
-        CANCELLED = 'cancelled', 'Cancelled'
+        REQUESTED = 'requested', _('Requested')
+        CONFIRMED = 'confirmed', _('Confirmed')
+        CANCELLED = 'cancelled', _('Cancelled')
 
     buyer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='sme_orders')
     access_key = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
     customer_name = models.CharField(max_length=120)
     customer_phone = models.CharField(max_length=40)
     customer_email = models.EmailField(blank=True)
-    fulfillment_method = models.CharField(max_length=20, choices=[('delivery', 'Delivery'), ('pickup', 'Collection')], default='delivery')
+    fulfillment_method = models.CharField(max_length=20, choices=[('delivery', _('Delivery')), ('pickup', _('Collection'))], default='delivery')
     delivery_location = models.CharField(max_length=180, blank=True)
     notes = models.TextField(blank=True, max_length=1000)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
@@ -379,26 +380,26 @@ class SMEOrderItem(models.Model):
 
 
 class ListingVideoStatus(models.TextChoices):
-    PENDING = 'pending', 'Pending'
-    UPLOADING = 'uploading', 'Uploading'
-    PROCESSING = 'processing', 'Processing'
-    READY = 'ready', 'Ready'
-    FAILED = 'failed', 'Failed'
-    DELETED = 'deleted', 'Deleted'
+    PENDING = 'pending', _('Pending')
+    UPLOADING = 'uploading', _('Uploading')
+    PROCESSING = 'processing', _('Processing')
+    READY = 'ready', _('Ready')
+    FAILED = 'failed', _('Failed')
+    DELETED = 'deleted', _('Deleted')
 
 
 class VideoReservationStatus(models.TextChoices):
-    RESERVED = 'reserved', 'Reserved'
-    UPLOADING = 'uploading', 'Uploading'
-    UPLOADED_TEMPORARILY = 'uploaded_temporarily', 'Uploaded temporarily'
-    QUEUED = 'queued', 'Queued'
-    PROCESSING = 'processing', 'Processing'
-    COMPLETED = 'completed', 'Completed'
-    EXPIRED = 'expired', 'Expired'
-    REJECTED = 'rejected', 'Rejected'
-    FAILED = 'failed', 'Failed'
-    DELETING = 'deleting', 'Deleting'
-    DELETED = 'deleted', 'Deleted'
+    RESERVED = 'reserved', _('Reserved')
+    UPLOADING = 'uploading', _('Uploading')
+    UPLOADED_TEMPORARILY = 'uploaded_temporarily', _('Uploaded temporarily')
+    QUEUED = 'queued', _('Queued')
+    PROCESSING = 'processing', _('Processing')
+    COMPLETED = 'completed', _('Completed')
+    EXPIRED = 'expired', _('Expired')
+    REJECTED = 'rejected', _('Rejected')
+    FAILED = 'failed', _('Failed')
+    DELETING = 'deleting', _('Deleting')
+    DELETED = 'deleted', _('Deleted')
 
 
 class GlobalVideoStoragePolicy(models.Model):
@@ -426,8 +427,8 @@ class GlobalVideoStoragePolicy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Video Storage & Processing'
-        verbose_name_plural = 'Video Storage & Processing'
+        verbose_name = _('Video Storage & Processing')
+        verbose_name_plural = _('Video Storage & Processing')
 
     def save(self, *args, **kwargs):
         self.pk = 1
@@ -456,7 +457,7 @@ class GlobalVideoStoragePolicy(models.Model):
         return round((self.consumed_bytes / self.global_storage_cap_bytes) * 100, 2)
 
     def __str__(self):
-        return 'Video Storage & Processing'
+        return _('Video Storage & Processing')
 
 
 class ListingVideo(models.Model):
@@ -560,9 +561,9 @@ class GlobalVideoStorageAudit(models.Model):
 
 class VehicleDetails(models.Model):
     listing = models.OneToOneField(Listing, on_delete=models.CASCADE, related_name='vehicle_details')
-    category = models.CharField(max_length=30, choices=[('car','Car'),('motorcycle','Motorcycle'),('van','Van'),('truck','Truck'),('bus','Bus'),('other','Other')])
+    category = models.CharField(max_length=30, choices=[('car', _('Car')),('motorcycle', _('Motorcycle')),('van', _('Van')),('truck', _('Truck')),('bus', _('Bus')),('other', _('Other'))])
     trim = models.CharField(max_length=60, blank=True)
-    condition = models.CharField(max_length=20, choices=[('new','New'),('foreign_used','Foreign used'),('locally_used','Locally used')])
+    condition = models.CharField(max_length=20, choices=[('new', _('New')),('foreign_used', _('Foreign used')),('locally_used', _('Locally used'))])
     body_type = models.CharField(max_length=40, blank=True)
     exterior_colour = models.CharField(max_length=40, blank=True)
     fuel_type = models.CharField(max_length=20, blank=True)
@@ -589,11 +590,11 @@ class VehicleDetails(models.Model):
 
 class SMEDetails(models.Model):
     listing = models.OneToOneField(Listing, on_delete=models.CASCADE, related_name='sme_details')
-    kind = models.CharField(max_length=10, choices=[('product','Product'),('service','Service')])
+    kind = models.CharField(max_length=10, choices=[('product', _('Product')),('service', _('Service'))])
     subcategory = models.CharField(max_length=80, blank=True)
     brand = models.CharField(max_length=80, blank=True)
     condition = models.CharField(max_length=30, blank=True)
-    price_type = models.CharField(max_length=20, choices=[('fixed','Fixed price'),('starting','Starting from'),('negotiable','Negotiable'),('contact','Contact for price')], default='fixed')
+    price_type = models.CharField(max_length=20, choices=[('fixed', _('Fixed price')),('starting', _('Starting from')),('negotiable', _('Negotiable')),('contact', _('Contact for price'))], default='fixed')
     stock_available = models.BooleanField(default=False)
     selling_unit = models.CharField(max_length=40, blank=True)
     minimum_order = models.PositiveIntegerField(null=True, blank=True)

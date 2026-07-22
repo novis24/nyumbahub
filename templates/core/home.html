@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n static %}
-{% block title %}Find spaces that move you forward{% endblock %}
+{% block title %}{% trans "Find spaces that move you forward" %}{% endblock %}
 {% block desktop_sidebar %}{% endblock %}
 {% block main_shell_classes %}min-h-screen mb-nav lg:mb-0 bg-white{% endblock %}
 {% block topbar %}
@@ -8,18 +8,12 @@
   <div class="flex h-14 w-full items-center gap-2 px-3 sm:px-4 lg:h-[74px] lg:gap-4 lg:px-5">
     <a href="/" class="flex min-w-0 items-center gap-2.5">
       <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-8 w-8 rounded-xl object-cover lg:h-10 lg:w-10">
-      <span class="leading-tight"><strong class="block text-base text-p-800 lg:text-lg">iSellTZ</strong><span class="hidden text-[10px] text-n-500 sm:block">Tanzania’s trusted marketplace</span></span>
+      <span class="leading-tight"><strong class="block text-base text-p-800 lg:text-lg">iSellTZ</strong><span class="hidden text-[10px] text-n-500 sm:block">{% trans "Tanzania's trusted marketplace" %}</span></span>
     </a>
     <nav class="mx-auto hidden items-center gap-7 text-sm font-semibold text-n-700 lg:flex">
-      <a class="text-p-700" href="/">Home</a><a href="?type=rental">Rentals</a><a href="?type=sme">SME Shops</a><a href="?type=auto">Autos</a><a href="{% url 'search:results' %}">Explore</a>
+      <a class="text-p-700" href="/">{% trans "Home" %}</a><a href="?type=rental">{% trans "Rentals" %}</a><a href="?type=sme">{% trans "SME Shops" %}</a><a href="?type=auto">{% trans "Autos" %}</a><a href="{% url 'search:results' %}">{% trans "Explore" %}</a>
     </nav>
-    <form action="{% url 'set_language' %}" method="post" class="ml-auto lg:ml-0">
-      {% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}">
-      <select name="language" onchange="this.form.submit()" class="h-9 rounded-xl border border-n-200 bg-white px-2 text-[11px] font-bold text-n-700 lg:h-10 lg:text-xs">
-        <option value="en" {% if LANGUAGE_CODE|slice:':2' == 'en' %}selected{% endif %}>EN</option>
-        <option value="sw" {% if LANGUAGE_CODE|slice:':2' == 'sw' %}selected{% endif %}>SW</option>
-      </select>
-    </form>
+    <div class="ml-auto lg:ml-0">{% include "partials/language_toggle.html" %}</div>
     {% if show_sme_cart %}
       <a href="{% url 'listings:cart' %}" class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-p-100 bg-p-50 text-p-700 lg:h-10 lg:w-10">
         <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
@@ -27,19 +21,20 @@
       </a>
     {% endif %}
     <div class="hidden min-w-0 items-center gap-1.5 sm:flex lg:gap-2">
-      <button data-install-app onclick="installISellApp()" class="inline-flex shrink-0 items-center gap-1 rounded-xl border border-p-200 bg-p-50 px-2.5 py-2 text-[11px] font-bold text-p-700 sm:px-3 sm:text-xs"><span aria-hidden="true">↓</span><span>Install</span><span class="hidden sm:inline"> app</span></button>
+      <button data-install-app onclick="installISellApp()" class="inline-flex shrink-0 items-center gap-1 rounded-xl border border-p-200 bg-p-50 px-2.5 py-2 text-[11px] font-bold text-p-700 sm:px-3 sm:text-xs"><span aria-hidden="true">↓</span><span>{% trans "Install" %}</span><span class="hidden sm:inline"> {% trans "app" %}</span></button>
       {% if user.is_authenticated %}
-        {% if user.is_provider %}<a href="{% url 'listings:create' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">List your property +</a>{% endif %}
-        <a href="{% url 'accounts:profile' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">My account</a>
+        {% if user.is_provider %}<a href="{% url 'listings:create' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">{% trans "List your property" %} +</a>{% endif %}
+        <a href="{% url 'accounts:profile' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">{% trans "My account" %}</a>
       {% else %}
-        <a href="{% url 'accounts:signup_role' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">List your property +</a>
-        <a href="{% url 'accounts:login' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Sign in</a>
+        <a href="{% url 'accounts:signup_role' %}" class="hidden rounded-xl bg-p-700 px-4 py-2.5 text-xs font-bold text-white sm:block">{% trans "List your property" %} +</a>
+        <a href="{% url 'accounts:login' %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700">{% trans "Sign in" %}</a>
       {% endif %}
     </div>
-    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700 sm:hidden">{% if user.is_authenticated %}Me{% else %}Sign in{% endif %}</a>
+    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="rounded-xl border border-n-200 px-3 py-2 text-xs font-bold text-n-700 sm:hidden">{% if user.is_authenticated %}{% trans "Me" %}{% else %}{% trans "Sign in" %}{% endif %}</a>
   </div>
 </header>
 {% endblock %}
+{% block global_language_toggle %}{% endblock %}
 
 {% block content %}
 <section class="px-3 pb-6 pt-3 lg:hidden" x-data="{filters:false}">
@@ -64,18 +59,18 @@
       <div class="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-white/25"></div>
       <div class="absolute inset-0 bg-gradient-to-br from-p-50/70 via-transparent to-p-900/10"></div>
       <div class="absolute inset-x-0 bottom-0 px-5 pb-5 pt-16 transition-opacity duration-500 ease-out" data-hero-copy-wrap>
-        <span class="inline-flex rounded-full border border-p-100 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-p-800 shadow-sm backdrop-blur-md">✓ <span data-hero-type-label>Trusted listings</span></span>
-        <h1 class="mt-3 max-w-sm text-[1.85rem] font-black leading-tight text-n-900" data-hero-type-title>Find what moves your life forward.</h1>
-        <p class="mt-2 max-w-sm text-sm leading-6 text-n-600" data-hero-type-copy>Rentals, cars, rooms, hostels and SME shops from accountable local providers.</p>
+        <span class="inline-flex rounded-full border border-p-100 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-p-800 shadow-sm backdrop-blur-md">✓ <span data-hero-type-label>{% trans "Trusted listings" %}</span></span>
+        <h1 class="mt-3 max-w-sm text-[1.85rem] font-black leading-tight text-n-900" data-hero-type-title>{% trans "Find what moves your life forward." %}</h1>
+        <p class="mt-2 max-w-sm text-sm leading-6 text-n-600" data-hero-type-copy>{% trans "Rentals, cars, rooms, hostels and SME shops from accountable local providers." %}</p>
         <nav class="mt-4 grid grid-cols-3 gap-2">
-          <a href="?type=rental" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Rentals</a>
-          <a href="?type=auto" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Autos</a>
-          <a href="?type=sme" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">SME Shops</a>
-          <a href="?type=rental&property=hostel" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Hostels</a>
-          <a href="?type=rental&property=single_room" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">Rooms</a>
-          <a href="{% url 'search:results' %}" class="rounded-2xl bg-p-700/90 px-2 py-2.5 text-center text-[11px] font-bold text-white shadow-sm">Explore</a>
+          <a href="?type=rental" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Rentals" %}</a>
+          <a href="?type=auto" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Autos" %}</a>
+          <a href="?type=sme" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "SME Shops" %}</a>
+          <a href="?type=rental&property=hostel" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Hostels" %}</a>
+          <a href="?type=rental&property=single_room" class="rounded-2xl border border-white/70 bg-white/55 px-2 py-2.5 text-center text-[11px] font-bold text-n-800 shadow-sm backdrop-blur-md">{% trans "Rooms" %}</a>
+          <a href="{% url 'search:results' %}" class="rounded-2xl bg-p-700/90 px-2 py-2.5 text-center text-[11px] font-bold text-white shadow-sm">{% trans "Explore" %}</a>
         </nav>
-        <div class="mt-3 flex items-center justify-between text-[11px] font-semibold text-n-500"><span data-hero-type-cta>Explore every category</span><span>Curated by iSellTZ</span></div>
+        <div class="mt-3 flex items-center justify-between text-[11px] font-semibold text-n-500"><span data-hero-type-cta>{% trans "Explore every category" %}</span><span>{% trans "Curated by iSellTZ" %}</span></div>
       </div>
     </div>
   </div>
@@ -85,39 +80,39 @@
     {% for category in product_categories|slice:':6' %}
       <a href="{% url 'search:results' %}?type=sme&product_category={{ category.slug }}" class="flex-shrink-0 rounded-full border border-n-200 bg-white px-3 py-2 text-xs font-bold text-n-700">{{ category.name }}</a>
     {% endfor %}
-    <a href="{% url 'search:results' %}?type=sme" class="flex-shrink-0 rounded-full bg-n-900 px-3 py-2 text-xs font-bold text-white">All categories</a>
+    <a href="{% url 'search:results' %}?type=sme" class="flex-shrink-0 rounded-full bg-n-900 px-3 py-2 text-xs font-bold text-white">{% trans "All categories" %}</a>
   </div>
   {% endif %}
 
   <div x-show="filters" x-cloak class="fixed inset-0 z-[80] bg-black/40" @click.self="filters=false">
     <form action="{% url 'search:results' %}" class="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl">
-      <div class="mb-4 flex items-center justify-between"><b>Filters</b><a href="{% url 'core:home' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">Reset</a></div>
+      <div class="mb-4 flex items-center justify-between"><b>{% trans "Filters" %}</b><a href="{% url 'core:home' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">{% trans "Reset" %}</a></div>
       <input type="hidden" name="type" value="{{ active_type }}">
       {% if user_lat and user_lng %}<input type="hidden" name="lat" value="{{ user_lat }}"><input type="hidden" name="lng" value="{{ user_lng }}">{% endif %}
-      <div class="grid grid-cols-2 gap-3"><input name="min_price" class="field" placeholder="Min price"><input name="max_price" class="field" placeholder="Max price"></div>
+      <div class="grid grid-cols-2 gap-3"><input name="min_price" class="field" placeholder="{% trans 'Min price' %}"><input name="max_price" class="field" placeholder="{% trans 'Max price' %}"></div>
       {% if active_type == 'rental' %}
-        <select name="property" class="field mt-3"><option value="">Any property type</option>{% for val,label in property_choices %}<option value="{{ val }}" {% if property_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+        <select name="property" class="field mt-3"><option value="">{% trans "Any property type" %}</option>{% for val,label in property_choices %}<option value="{{ val }}" {% if property_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
       {% elif active_type == 'auto' %}
-        <input name="vehicle_make" class="field mt-3" placeholder="Vehicle make"><select name="vehicle_category" class="field mt-3"><option value="">Any vehicle type</option>{% for val,label in vehicle_category_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+        <input name="vehicle_make" class="field mt-3" placeholder="{% trans 'Vehicle make' %}"><select name="vehicle_category" class="field mt-3"><option value="">{% trans "Any vehicle type" %}</option>{% for val,label in vehicle_category_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
       {% elif active_type == 'sme' %}
-        <select name="sme_kind" class="field mt-3"><option value="">Products and services</option>{% for val,label in sme_kind_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select><input name="business_category" class="field mt-3" placeholder="Business category">
+        <select name="sme_kind" class="field mt-3"><option value="">{% trans "Products and services" %}</option>{% for val,label in sme_kind_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select><input name="business_category" class="field mt-3" placeholder="{% trans 'Business category' %}">
       {% endif %}
-      <input name="city" class="field mt-3" placeholder="City">
-      <button class="mt-4 w-full rounded-xl bg-p-700 py-3 text-sm font-bold text-white">Apply filters</button>
+      <input name="city" class="field mt-3" placeholder="{% trans 'City' %}">
+      <button class="mt-4 w-full rounded-xl bg-p-700 py-3 text-sm font-bold text-white">{% trans "Apply filters" %}</button>
     </form>
   </div>
 
   <section class="mt-7">
-    <div class="mb-3 flex items-end justify-between"><div><p class="text-xs font-bold uppercase text-p-700">{% if has_user_location %}Popular near you{% else %}Popular providers{% endif %}</p><h2 class="text-xl font-black text-n-900">Local providers</h2></div><button type="button" class="text-xs font-bold text-p-700" data-use-location>{% if has_user_location %}Using location{% else %}Use current location{% endif %}</button></div>
-    <div class="adaptive-card-grid">{% for listing in popular_providers %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">No providers found yet.</div>{% endfor %}</div>
+    <div class="mb-3 flex items-end justify-between"><div><p class="text-xs font-bold uppercase text-p-700">{% if has_user_location %}{% trans "Popular near you" %}{% else %}{% trans "Popular providers" %}{% endif %}</p><h2 class="text-xl font-black text-n-900">{% trans "Local providers" %}</h2></div></div>
+    <div class="adaptive-card-grid">{% for listing in popular_providers %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">{% trans "No providers found yet." %}</div>{% endfor %}</div>
   </section>
 
   <section class="mt-7">
-    <div class="mb-3"><p class="text-xs font-bold uppercase text-p-700">Recent listings</p><h2 class="text-xl font-black text-n-900">Fresh provider updates</h2></div>
-    <div class="adaptive-card-grid">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">No recent providers in this category.</div>{% endfor %}</div>
+    <div class="mb-3"><p class="text-xs font-bold uppercase text-p-700">{% trans "Recent listings" %}</p><h2 class="text-xl font-black text-n-900">{% trans "Fresh provider updates" %}</h2></div>
+    <div class="adaptive-card-grid">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="is-empty">{% trans "No recent providers in this category." %}</div>{% endfor %}</div>
   </section>
 
-  <section class="mt-7 grid gap-3 rounded-3xl bg-p-50 p-5 text-sm"><b class="text-p-800">Verified profiles</b><b class="text-p-800">Curated hero images</b><b class="text-p-800">Local support</b></section>
+  <section class="mt-7 grid gap-3 rounded-3xl bg-p-50 p-5 text-sm"><b class="text-p-800">{% trans "Verified profiles" %}</b><b class="text-p-800">{% trans "Curated hero images" %}</b><b class="text-p-800">{% trans "Local support" %}</b></section>
 </section>
 
 <div class="hidden lg:block">
@@ -138,41 +133,41 @@
         <h1 class="mt-6 max-w-xl font-serif text-6xl font-medium leading-[1.03] text-p-900">{{ hero_content.title_start }} <em class="font-light text-p-700">{{ hero_content.title_emphasis }}</em> {{ hero_content.title_end }}</h1>
         <p class="mt-5 max-w-lg text-base leading-6 text-n-600">{{ hero_content.description }}</p>
         <form action="{% url 'search:results' %}" class="mt-7 grid gap-2 rounded-2xl bg-white p-3 shadow-xl shadow-p-900/10 ring-1 ring-n-100 sm:grid-cols-[1.5fr_1fr_auto] sm:items-center">
-          <label class="min-w-0 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">What are you looking for?</span><input name="q" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none" placeholder="{{ hero_content.placeholder }}"></label>
+          <label class="min-w-0 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">{% trans "What are you looking for?" %}</span><input name="q" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none" placeholder="{{ hero_content.placeholder }}"></label>
           {% if user_lat and user_lng %}<input type="hidden" name="lat" value="{{ user_lat }}"><input type="hidden" name="lng" value="{{ user_lng }}">{% endif %}
-          <label class="min-w-0 border-l border-n-100 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">Category</span><select name="type" onchange="window.location.href='/?type='+encodeURIComponent(this.value)" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none"><option value="rental" {% if active_type == 'rental' %}selected{% endif %}>Rentals</option><option value="auto" {% if active_type == 'auto' %}selected{% endif %}>Autos</option><option value="sme" {% if active_type == 'sme' %}selected{% endif %}>SME Shops</option></select></label>
-          <button class="rounded-xl bg-p-700 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-p-700/20">Search</button>
+          <label class="min-w-0 border-l border-n-100 px-3 py-2"><span class="block text-[10px] font-bold text-n-500">{% trans "Category" %}</span><select name="type" onchange="window.location.href='/?type='+encodeURIComponent(this.value)" class="mt-1 w-full min-w-0 bg-transparent text-sm outline-none"><option value="rental" {% if active_type == 'rental' %}selected{% endif %}>{% trans "Rentals" %}</option><option value="auto" {% if active_type == 'auto' %}selected{% endif %}>{% trans "Autos" %}</option><option value="sme" {% if active_type == 'sme' %}selected{% endif %}>{% trans "SME Shops" %}</option></select></label>
+          <button class="rounded-xl bg-p-700 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-p-700/20">{% trans "Search" %}</button>
         </form>
-        <div class="mt-6 grid max-w-xl grid-cols-4 gap-3 text-[11px] font-semibold text-n-600"><span>✓ Verified listings</span><span>✓ Trusted agents</span><span>✓ Local support</span><span>✓ Secure experience</span></div>
+        <div class="mt-6 grid max-w-xl grid-cols-4 gap-3 text-[11px] font-semibold text-n-600"><span>✓ {% trans "Verified listings" %}</span><span>✓ {% trans "Trusted agents" %}</span><span>✓ {% trans "Local support" %}</span><span>✓ {% trans "Secure experience" %}</span></div>
       </div>
     </div>
   </section>
 
   <main class="w-full px-5 py-10">
     <nav class="grid grid-cols-6 gap-2 rounded-2xl border border-n-100 bg-white p-2 shadow-sm">
-      <a href="?type=rental" class="rounded-xl bg-p-50 p-3 text-center text-xs font-bold text-p-800">⌂<span class="mt-1 block">Rentals</span></a>
-      <a href="?type=rental&property=1_bedroom" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌂<span class="mt-1 block">Estates</span></a>
-      <a href="?type=auto" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▱<span class="mt-1 block">Autos</span></a>
-      <a href="?type=sme" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▣<span class="mt-1 block">SME Shops</span></a>
-      <a href="?type=rental&property=hostel" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌁<span class="mt-1 block">Hostels</span></a>
-      <a href="?type=rental&property=single_room" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">□<span class="mt-1 block">Single Rooms</span></a>
+      <a href="?type=rental" class="rounded-xl bg-p-50 p-3 text-center text-xs font-bold text-p-800">⌂<span class="mt-1 block">{% trans "Rentals" %}</span></a>
+      <a href="?type=rental&property=1_bedroom" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌂<span class="mt-1 block">{% trans "Estates" %}</span></a>
+      <a href="?type=auto" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▱<span class="mt-1 block">{% trans "Autos" %}</span></a>
+      <a href="?type=sme" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">▣<span class="mt-1 block">{% trans "SME Shops" %}</span></a>
+      <a href="?type=rental&property=hostel" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">⌁<span class="mt-1 block">{% trans "Hostels" %}</span></a>
+      <a href="?type=rental&property=single_room" class="rounded-xl p-3 text-center text-xs font-bold text-n-700 hover:bg-n-50">□<span class="mt-1 block">{% trans "Single Rooms" %}</span></a>
     </nav>
 
     <section class="mt-9">
-      <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-bold text-n-900"><span class="mr-2 text-p-600">—</span>Popular near you</h2><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">View all →</a></div>
-      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in popular_providers|slice:':8' %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">No providers in this category yet.</div>{% endfor %}</div>
+      <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-bold text-n-900"><span class="mr-2 text-p-600">-</span>{% trans "Popular near you" %}</h2><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">{% trans "View all" %} -></a></div>
+      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in popular_providers|slice:':8' %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">{% trans "No providers in this category yet." %}</div>{% endfor %}</div>
     </section>
 
     <section class="mt-10">
-      <div class="mb-4 flex items-end justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-p-600">Fresh opportunities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Recent listings</h2></div><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">See all →</a></div>
-      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">No listings in this category yet.</div>{% endfor %}</div>
+      <div class="mb-4 flex items-end justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-p-600">{% trans "Fresh opportunities" %}</p><h2 class="mt-1 text-2xl font-bold text-n-900">{% trans "Recent listings" %}</h2></div><a href="{% url 'search:results' %}?type={{ active_type }}" class="text-xs font-bold text-p-700">{% trans "See all" %} -></a></div>
+      <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">{% for listing in listings %}{% include 'components/provider_card.html' with listing=listing %}{% empty %}<div class="rounded-2xl bg-n-50 py-16 text-center text-sm text-n-500">{% trans "No listings in this category yet." %}</div>{% endfor %}</div>
     </section>
 
     {% if popular_cities %}
-    <section class="mt-10"><div class="mb-4"><p class="text-xs font-bold uppercase tracking-widest text-p-600">Popular cities</p><h2 class="mt-1 text-2xl font-bold text-n-900">Explore by location</h2></div><div class="grid grid-cols-5 gap-3">{% for city in popular_cities %}<a href="{% url 'search:results' %}?city={{ city.city|urlencode }}" class="group rounded-2xl border border-n-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-p-200 hover:shadow-md"><span class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-p-50 text-p-700">⌖</span><strong class="block truncate text-sm text-n-900">{{ city.city }}</strong><span class="mt-1 block text-xs text-n-500">{{ city.total }} listing{{ city.total|pluralize }}</span></a>{% endfor %}</div></section>
+    <section class="mt-10"><div class="mb-4"><p class="text-xs font-bold uppercase tracking-widest text-p-600">{% trans "Popular cities" %}</p><h2 class="mt-1 text-2xl font-bold text-n-900">{% trans "Explore by location" %}</h2></div><div class="grid grid-cols-5 gap-3">{% for city in popular_cities %}<a href="{% url 'search:results' %}?city={{ city.city|urlencode }}" class="group rounded-2xl border border-n-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-p-200 hover:shadow-md"><span class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-p-50 text-p-700">⌖</span><strong class="block truncate text-sm text-n-900">{{ city.city }}</strong><span class="mt-1 block text-xs text-n-500">{% blocktrans count total=city.total %}{{ total }} listing{% plural %}{{ total }} listings{% endblocktrans %}</span></a>{% endfor %}</div></section>
     {% endif %}
 
-    <section class="mt-8 grid gap-4 rounded-3xl bg-[#f3faf5] p-8 text-center lg:grid-cols-4"><div><b class="text-p-700">✓ Quality verified</b><p class="mt-1 text-xs text-n-500">Listings from accountable providers</p></div><div><b class="text-p-700">◇ Safe interactions</b><p class="mt-1 text-xs text-n-500">Clear details and trusted profiles</p></div><div><b class="text-p-700">● Trusted community</b><p class="mt-1 text-xs text-n-500">Real reviews from real people</p></div><div><b class="text-p-700">◉ Local support</b><p class="mt-1 text-xs text-n-500">Help when you need it</p></div></section>
+    <section class="mt-8 grid gap-4 rounded-3xl bg-[#f3faf5] p-8 text-center lg:grid-cols-4"><div><b class="text-p-700">✓ {% trans "Quality verified" %}</b><p class="mt-1 text-xs text-n-500">{% trans "Listings from accountable providers" %}</p></div><div><b class="text-p-700">◇ {% trans "Safe interactions" %}</b><p class="mt-1 text-xs text-n-500">{% trans "Clear details and trusted profiles" %}</p></div><div><b class="text-p-700">● {% trans "Trusted community" %}</b><p class="mt-1 text-xs text-n-500">{% trans "Real reviews from real people" %}</p></div><div><b class="text-p-700">◉ {% trans "Local support" %}</b><p class="mt-1 text-xs text-n-500">{% trans "Help when you need it" %}</p></div></section>
   </main>
 </div>
 {% endblock %}
@@ -202,11 +197,11 @@
   const wrap = document.querySelector('[data-hero-copy-wrap]');
   if (!label || !title || !copy || !cta || !wrap) return;
   const types = [
-    ['Rentals', 'Find spaces that move your life forward.', 'Explore rentals, estates and family homes from accountable local providers.', 'Homes and rentals'],
-    ['Autos', 'Find vehicles that move you forward.', 'Find vehicles and dealers with clear details, images and contact paths.', 'Cars and dealers'],
-    ['SME Shops', 'Find local shops that keep life moving.', 'Discover local products from Tanzanian shops with cart and checkout support.', 'Products and shops'],
-    ['Hostels', 'Find student spaces that fit your rhythm.', 'Compare hostels and student-friendly spaces near key areas.', 'Student housing'],
-    ['Single Rooms', 'Find compact rooms that work for you.', 'Browse compact rooms and affordable spaces without losing context.', 'Rooms near you']
+    ['{% trans "Rentals" %}', '{% trans "Find spaces that move your life forward." %}', '{% trans "Explore rentals, estates and family homes from accountable local providers." %}', '{% trans "Homes and rentals" %}'],
+    ['{% trans "Autos" %}', '{% trans "Find vehicles that move you forward." %}', '{% trans "Find vehicles and dealers with clear details, images and contact paths." %}', '{% trans "Cars and dealers" %}'],
+    ['{% trans "SME Shops" %}', '{% trans "Find local shops that keep life moving." %}', '{% trans "Discover local products from Tanzanian shops with cart and checkout support." %}', '{% trans "Products and shops" %}'],
+    ['{% trans "Hostels" %}', '{% trans "Find student spaces that fit your rhythm." %}', '{% trans "Compare hostels and student-friendly spaces near key areas." %}', '{% trans "Student housing" %}'],
+    ['{% trans "Single Rooms" %}', '{% trans "Find compact rooms that work for you." %}', '{% trans "Browse compact rooms and affordable spaces without losing context." %}', '{% trans "Rooms near you" %}']
   ];
   let i = 0;
   window.setInterval(() => {
@@ -221,22 +216,5 @@
     }, 220);
   }, 4500);
 })();
-document.querySelectorAll('[data-use-location]').forEach(button => {
-  button.addEventListener('click', () => {
-    if (!navigator.geolocation) {
-      button.textContent = 'Location unavailable';
-      return;
-    }
-    button.textContent = 'Checking location...';
-    navigator.geolocation.getCurrentPosition(position => {
-      const url = new URL(window.location.href);
-      url.searchParams.set('lat', position.coords.latitude.toFixed(6));
-      url.searchParams.set('lng', position.coords.longitude.toFixed(6));
-      window.location.href = url.toString();
-    }, () => {
-      button.textContent = 'Allow location to sort nearby';
-    }, {enableHighAccuracy: false, timeout: 9000, maximumAge: 600000});
-  });
-});
 </script>
 {% endblock %}

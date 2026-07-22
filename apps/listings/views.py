@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_GET, require_POST
 from django.http import Http404, JsonResponse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Avg, Count, F, FloatField, Q
@@ -192,7 +193,7 @@ def listing_detail(request, slug):
         slug=slug,
     )
     if listing.status != ListingStatus.ACTIVE and listing.owner != request.user:
-        raise Http404('Listing not found.')
+        raise Http404(_('Listing not found.'))
 
     _track_listing_view(request, listing)
 
@@ -228,7 +229,7 @@ def provider_gallery(request, owner_id):
     provider_listing_qs = active_public_listings().filter(owner_id=owner_id)
     representative = provider_listing_qs.order_by('-is_featured', '-created_at').first()
     if not representative:
-        raise Http404('Provider not found.')
+        raise Http404(_('Provider not found.'))
     category = request.GET.get('category', '')
     available_categories = list(provider_listing_qs.values_list('listing_type', flat=True).distinct())
     if category not in available_categories:
@@ -257,10 +258,10 @@ def cart_state(request):
 def add_to_cart(request, listing_id):
     listing = get_object_or_404(Listing, id=listing_id, status=ListingStatus.ACTIVE, owner__is_active=True)
     if listing.listing_type != ListingType.SME:
-        return JsonResponse({'error': 'Only SME products can be added to cart.'}, status=400)
+        return JsonResponse({'error': _('Only SME products can be added to cart.')}, status=400)
     details = getattr(listing, 'sme_details', None)
     if details and not details.stock_available and details.kind == 'product':
-        return JsonResponse({'error': 'This product is currently unavailable.'}, status=400)
+        return JsonResponse({'error': _('This product is currently unavailable.')}, status=400)
     cart = cart_for_request(request)
     try:
         payload = json.loads(request.body.decode('utf-8')) if request.body else {}
@@ -282,7 +283,7 @@ def update_cart_item(request, item_id):
         payload = json.loads(request.body.decode('utf-8'))
         quantity = int(payload.get('quantity', 1))
     except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
-        return JsonResponse({'error': 'Invalid quantity.'}, status=400)
+        return JsonResponse({'error': _('Invalid quantity.')}, status=400)
     if item.listing.listing_type != ListingType.SME:
         item.delete()
         return JsonResponse(cart_payload(cart), status=400)
@@ -310,19 +311,19 @@ def checkout(request):
     cart = cart_for_request(request)
     payload = cart_payload(cart)
     if not payload['items']:
-        messages.error(request, 'Your SME cart is empty.')
+        messages.error(request, _('Your SME cart is empty.'))
         return redirect('listings:cart')
     if request.method == 'POST':
         customer_name = request.POST.get('customer_name', '').strip()
         customer_phone = request.POST.get('customer_phone', '').strip()
         if not customer_name or not customer_phone:
-            messages.error(request, 'Add your name and phone number to request the order.')
+            messages.error(request, _('Add your name and phone number to request the order.'))
             return render(request, 'listings/checkout.html', {'cart_state': payload, 'show_sme_cart': True})
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(pk=cart.pk)
             payload = cart_payload(cart)
             if not payload['items']:
-                messages.error(request, 'Your SME cart is empty.')
+                messages.error(request, _('Your SME cart is empty.'))
                 return redirect('listings:cart')
             order = SMEOrder.objects.create(
                 buyer=request.user if request.user.is_authenticated else None,
@@ -357,7 +358,7 @@ def order_detail(request, order_id, access_key):
         request.user.is_authenticated
         and (order.buyer_id == request.user.id or order.items.filter(seller=request.user).exists() or request.user.is_staff)
     ):
-        raise Http404('Order not found.')
+        raise Http404(_('Order not found.'))
     visible_items = order.items.all()
     if request.user.is_authenticated and order.buyer_id != request.user.id and not request.user.is_staff:
         visible_items = visible_items.filter(seller=request.user)
@@ -377,13 +378,13 @@ def my_listings(request):
 @login_required
 def create_listing(request):
     if not request.user.is_provider:
-        messages.error(request, 'Only provider accounts can post listings.')
+        messages.error(request, _('Only provider accounts can post listings.'))
         return redirect('core:home')
 
     # Role determines default listing type
     default_type = ROLE_LISTING_TYPES.get(request.user.role)
     if not default_type:
-        messages.error(request, 'Your account cannot create listings.')
+        messages.error(request, _('Your account cannot create listings.'))
         return redirect('core:home')
 
     if request.method == 'POST':
@@ -432,7 +433,7 @@ def create_listing(request):
 
             messages.success(
                 request,
-                'Listing published!' if listing.status == 'active' else 'Draft saved.'
+                _('Listing published!') if listing.status == 'active' else _('Draft saved.')
             )
             if listing.status == ListingStatus.ACTIVE:
                 from apps.notifications.services import notify_marketplace_subscribers
@@ -510,7 +511,7 @@ def edit_listing(request, slug):
         for order, video_id in enumerate(request.POST.getlist('video_order')):
             lst.videos.filter(id=video_id, owner=request.user).update(order=order)
 
-        messages.success(request, 'Listing updated.')
+        messages.success(request, _('Listing updated.'))
         if lst.status == ListingStatus.ACTIVE:
             if not was_active:
                 from apps.notifications.services import notify_marketplace_subscribers
@@ -538,10 +539,10 @@ def delete_listing(request, slug):
     listing = get_object_or_404(Listing, slug=slug, owner=request.user)
     for video in listing.videos.exclude(upload_status=ListingVideoStatus.DELETED):
         if not _mark_video_deleted(video):
-            messages.error(request, 'A listing video could not be removed from storage. Please try deleting again.')
+            messages.error(request, _('A listing video could not be removed from storage. Please try deleting again.'))
             return redirect('listings:edit', slug=listing.slug)
     listing.delete()
-    messages.success(request, 'Listing deleted.')
+    messages.success(request, _('Listing deleted.'))
     return redirect('listings:my_listings')
 
 
@@ -551,7 +552,7 @@ def create_video_upload(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return JsonResponse({'error': 'Invalid upload request.'}, status=400)
+        return JsonResponse({'error': _('Invalid upload request.')}, status=400)
 
     listing = None
     listing_id = payload.get('listing_id')
@@ -614,7 +615,7 @@ def complete_video_upload(request, video_id):
     reservation = getattr(video, 'reservation', None)
     if video.is_expired_pending:
         video.upload_status = ListingVideoStatus.FAILED
-        video.error_message = 'Upload session expired.'
+        video.error_message = _('Upload session expired.')
         video.save(update_fields=['upload_status', 'error_message', 'updated_at'])
         if reservation:
             release_reservation(reservation, VideoReservationStatus.EXPIRED, video.error_message)
@@ -622,7 +623,7 @@ def complete_video_upload(request, video_id):
     ok, metadata = verify_uploaded_object(video)
     if not ok:
         video.upload_status = ListingVideoStatus.FAILED
-        video.error_message = 'Uploaded object could not be verified.'
+        video.error_message = _('Uploaded object could not be verified.')
         video.verification_metadata = metadata
         video.save(update_fields=['upload_status', 'error_message', 'verification_metadata', 'updated_at'])
         if reservation:
@@ -646,7 +647,7 @@ def video_playback_url(request, video_id):
     if video.listing and video.listing.status == ListingStatus.ACTIVE:
         pass
     elif not request.user.is_authenticated or (video.owner != request.user and not request.user.is_staff):
-        raise Http404('Video not found.')
+        raise Http404(_('Video not found.'))
     return JsonResponse({'url': create_presigned_playback_url(video), 'expires_in': settings.R2_SIGNED_URL_EXPIRY_SECONDS})
 
 
@@ -669,7 +670,7 @@ def _mark_video_deleted(video):
     if was_committed:
         release_committed_video(video)
     elif reservation:
-        release_reservation(reservation, VideoReservationStatus.DELETED, 'Video deleted before completion.')
+        release_reservation(reservation, VideoReservationStatus.DELETED, _('Video deleted before completion.'))
     return deleted
 
 
@@ -700,7 +701,7 @@ def saved_listings(request):
 def submit_review(request, slug):
     listing = get_object_or_404(Listing, slug=slug, status=ListingStatus.ACTIVE)
     if listing.owner == request.user:
-        messages.error(request, 'You cannot review your own listing.')
+        messages.error(request, _('You cannot review your own listing.'))
         return redirect('listings:detail', slug=listing.slug)
 
     instance = ListingReview.objects.filter(listing=listing, reviewer=request.user).first()
@@ -710,8 +711,8 @@ def submit_review(request, slug):
         review.listing = listing
         review.reviewer = request.user
         review.save()
-        messages.success(request, 'Your review has been saved.')
+        messages.success(request, _('Your review has been saved.'))
     else:
-        messages.error(request, 'Please add a valid star rating before submitting your review.')
+        messages.error(request, _('Please add a valid star rating before submitting your review.'))
 
     return redirect('listings:detail', slug=listing.slug)

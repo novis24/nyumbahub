@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Count, Max, Q
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
 from apps.accounts.models import CustomUser
 from apps.listings.models import ListingType, ListingView
@@ -60,9 +61,13 @@ def notify_marketplace_subscribers(listing, request=None):
         .prefetch_related('push_devices')
     )
     preferences = _preferred_listing_types([user.pk for user in subscribers])
-    type_label = dict(ListingType.choices).get(listing.listing_type, 'Marketplace')
-    title = f'New {type_label.lower()} listing'
-    body = f'{listing.title} in {listing.location} — {listing.price_per_month}'
+    type_label = dict(ListingType.choices).get(listing.listing_type, _('Marketplace'))
+    title = _('New %(type)s listing') % {'type': str(type_label).lower()}
+    body = _('%(title)s in %(location)s - %(price)s') % {
+        'title': listing.title,
+        'location': listing.location,
+        'price': listing.price_per_month,
+    }
     protocol = 'https' if request and request.is_secure() else 'http'
     domain = request.get_host() if request else settings.SITE_URL.rstrip('/').split('://')[-1]
 
@@ -76,7 +81,7 @@ def notify_marketplace_subscribers(listing, request=None):
         try:
             if user.receives_notifications and settings.EMAIL_DELIVERY_ENABLED:
                 message = EmailMultiAlternatives(
-                    subject=f'New on {settings.SITE_NAME}: {listing.title}',
+                    subject=_('New on %(site)s: %(title)s') % {'site': settings.SITE_NAME, 'title': listing.title},
                     body=render_to_string('notifications/email/new_listing.txt', context),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[user.email],

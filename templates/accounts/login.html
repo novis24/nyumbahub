@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load i18n static %}
 {% block topbar %}{% endblock %}
 {% block desktop_sidebar %}{% endblock %}
 {% block mobile_nav %}{% endblock %}
 {% block main_shell_classes %}min-h-screen{% endblock %}
-{% block title %}Sign in{% endblock %}
+{% block title %}{% trans "Sign in" %}{% endblock %}
 {% block content %}
 <div class="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eefbf3_100%)] px-5 py-10 lg:px-8">
   <div class="mx-auto max-w-md">
@@ -12,20 +12,20 @@
       <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-10 w-10 rounded-lg flex-shrink-0">
       <div>
         <p class="font-serif text-2xl text-n-900">iSell</p>
-        <p class="text-xs text-n-400">Trusted listings across Tanzania</p>
+        <p class="text-xs text-n-400">{% trans "Trusted listings across Tanzania" %}</p>
       </div>
     </a>
 
     <div class="border border-n-100 bg-white p-6 shadow-sm lg:p-8">
-      <h1 class="text-3xl font-bold text-n-900">Sign in</h1>
-      <p class="mt-2 text-sm text-n-500">Access your account, listings, likes, and reviews.</p>
+      <h1 class="text-3xl font-bold text-n-900">{% trans "Sign in" %}</h1>
+      <p class="mt-2 text-sm text-n-500">{% trans "Access your account, listings, likes, and reviews." %}</p>
 
       {% if form.errors %}
         <div class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {% if form.non_field_errors %}
             {{ form.non_field_errors.0 }}
           {% else %}
-            Please correct the highlighted sign-in details and try again.
+            {% trans "Please correct the highlighted sign-in details and try again." %}
           {% endif %}
         </div>
       {% endif %}
@@ -33,15 +33,15 @@
       <form method="post" class="mt-6 space-y-4" novalidate>
         {% csrf_token %}
         <div>
-          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-n-700">Email address</label>
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-n-700">{% trans "Email address" %}</label>
           <input type="email" name="username" value="{{ form.username.value|default:'' }}" placeholder="you@email.com" autocomplete="email" autofocus class="field {% if form.username.errors %}field-error{% endif %}">
           {% if form.username.errors %}<p class="mt-1.5 text-xs text-red-500">{{ form.username.errors.0 }}</p>{% endif %}
         </div>
 
         <div x-data="{ show: false }">
           <div class="mb-1.5 flex items-center justify-between">
-            <label class="text-xs font-semibold uppercase tracking-wide text-n-700">Password</label>
-            <a href="{% url 'accounts:forgot_password' %}" class="text-xs font-semibold text-p-600 hover:text-p-700">Forgot password?</a>
+            <label class="text-xs font-semibold uppercase tracking-wide text-n-700">{% trans "Password" %}</label>
+            <a href="{% url 'accounts:forgot_password' %}" class="text-xs font-semibold text-p-600 hover:text-p-700">{% trans "Forgot password?" %}</a>
           </div>
           <div class="relative">
             <input :type="show ? 'text' : 'password'" name="password" placeholder="••••••••" autocomplete="current-password" class="field pr-12 {% if form.password.errors %}field-error{% endif %}">
@@ -53,11 +53,11 @@
           {% if form.password.errors %}<p class="mt-1.5 text-xs text-red-500">{{ form.password.errors.0 }}</p>{% endif %}
         </div>
 
-        <button type="submit" class="btn-g btn-primary mt-2">Sign in</button>
-        <p class="text-xs leading-relaxed text-n-400">By signing in, you continue under iSell's account terms and privacy practices. Email preferences can be managed any time from Settings.</p>
+        <button type="submit" class="btn-g btn-primary mt-2">{% trans "Sign in" %}</button>
+        <p class="text-xs leading-relaxed text-n-400">{% trans "By signing in, you continue under iSell's account terms and privacy practices. Email preferences can be managed any time from Settings." %}</p>
       </form>
 
-      <p class="mt-6 text-center text-sm text-n-500">Don’t have an account? <a href="{% url 'accounts:signup_role' %}" class="font-semibold text-p-600 hover:text-p-700">Create one free</a></p>
+      <p class="mt-6 text-center text-sm text-n-500">{% trans "Don't have an account?" %} <a href="{% url 'accounts:signup_role' %}" class="font-semibold text-p-600 hover:text-p-700">{% trans "Create one free" %}</a></p>
     </div>
   </div>
 </div>

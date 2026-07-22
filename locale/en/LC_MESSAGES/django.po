@@ -1,0 +1,1363 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-22 12:04+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/accounts/forms.py:15
+msgid "I am looking for a house"
+msgstr ""
+
+#: apps/accounts/forms.py:16
+msgid "I want to list my property for rent"
+msgstr ""
+
+#: apps/accounts/forms.py:17
+msgid "I run a small business / shop"
+msgstr ""
+
+#: apps/accounts/forms.py:18
+msgid "I sell vehicles"
+msgstr ""
+
+#: apps/accounts/forms.py:37
+msgid "e.g. +255 712 345 678"
+msgstr ""
+
+#: apps/accounts/forms.py:42
+msgid "City or district"
+msgstr ""
+
+#: apps/accounts/forms.py:58
+msgid "An account with this email already exists."
+msgstr ""
+
+#: apps/accounts/forms.py:64 apps/accounts/forms.py:111
+msgid "An account with this phone number already exists."
+msgstr ""
+
+#: apps/accounts/forms.py:80
+msgid ""
+"We could not sign you in with that email and password. Please check both and "
+"try again."
+msgstr ""
+
+#: apps/accounts/forms.py:81
+msgid ""
+"This account has been disabled. Please contact support if you need help."
+msgstr ""
+
+#: apps/accounts/forms.py:84 templates/accounts/login.html:36
+msgid "Email address"
+msgstr ""
+
+#: apps/accounts/forms.py:88 templates/accounts/login.html:43
+msgid "Password"
+msgstr ""
+
+#: apps/accounts/forms.py:126
+msgid "New passwords do not match."
+msgstr ""
+
+#: apps/accounts/models.py:8
+msgid "Seeker"
+msgstr ""
+
+#: apps/accounts/models.py:9
+msgid "Landlord"
+msgstr ""
+
+#: apps/accounts/models.py:10
+msgid "SME Seller"
+msgstr ""
+
+#: apps/accounts/models.py:11
+msgid "Auto Dealer"
+msgstr ""
+
+#: apps/accounts/models.py:12
+msgid "Administrator"
+msgstr ""
+
+#: apps/accounts/models.py:16
+msgid "Unverified"
+msgstr ""
+
+#: apps/accounts/models.py:17
+msgid "Pending Review"
+msgstr ""
+
+#: apps/accounts/models.py:18
+msgid "Verified"
+msgstr ""
+
+#: apps/accounts/models.py:19 apps/listings/models.py:399
+msgid "Rejected"
+msgstr ""
+
+#: apps/accounts/models.py:69
+msgid "User"
+msgstr ""
+
+#: apps/accounts/models.py:70
+msgid "Users"
+msgstr ""
+
+#: apps/accounts/models.py:102
+msgid "Verified Business"
+msgstr ""
+
+#: apps/accounts/models.py:103
+msgid "Verified Property Lister"
+msgstr ""
+
+#: apps/accounts/models.py:104
+msgid "Verified Dealer"
+msgstr ""
+
+#: apps/accounts/models.py:128
+msgid "National ID"
+msgstr ""
+
+#: apps/accounts/models.py:129
+msgid "Passport"
+msgstr ""
+
+#: apps/accounts/models.py:130
+msgid "Driver's License"
+msgstr ""
+
+#: apps/accounts/models.py:131
+msgid "Utility Bill"
+msgstr ""
+
+#: apps/accounts/models.py:153
+msgid "KYC Document"
+msgstr ""
+
+#: apps/accounts/models.py:154
+msgid "KYC Documents"
+msgstr ""
+
+#: apps/accounts/views.py:90
+msgid ""
+"Your account was created, but we could not send the welcome email right now."
+msgstr ""
+
+#: apps/accounts/views.py:93
+#, python-format
+msgid "Welcome to iSell, %(name)s!"
+msgstr ""
+
+#: apps/accounts/views.py:102
+msgid ""
+"We could not create your account yet. Please correct the highlighted fields "
+"and try again."
+msgstr ""
+
+#: apps/accounts/views.py:124 templates/accounts/login.html:28
+msgid "Please correct the highlighted sign-in details and try again."
+msgstr ""
+
+#: apps/accounts/views.py:143
+msgid ""
+"Email delivery is not configured on this server yet. Please update the mail "
+"settings and try again."
+msgstr ""
+
+#: apps/accounts/views.py:160
+msgid ""
+"Password reset email could not be sent right now. Please verify the SMTP "
+"settings and try again."
+msgstr ""
+
+#: apps/accounts/views.py:190
+msgid "Profile updated."
+msgstr ""
+
+#: apps/accounts/views.py:264
+msgid "Current password is incorrect."
+msgstr ""
+
+#: apps/accounts/views.py:269
+msgid "Password changed."
+msgstr ""
+
+#: apps/accounts/views.py:282
+msgid "Notification preferences updated."
+msgstr ""
+
+#: apps/accounts/views.py:309
+msgid "Documents submitted. We will review within 24 hours."
+msgstr ""
+
+#: apps/core/views.py:34
+msgid "Trusted homes across Tanzania"
+msgstr ""
+
+#: apps/core/views.py:35 apps/core/views.py:57
+msgid "Find spaces that"
+msgstr ""
+
+#: apps/core/views.py:35 apps/core/views.py:57
+msgid "move"
+msgstr ""
+
+#: apps/core/views.py:36 apps/core/views.py:58
+msgid "your life forward."
+msgstr ""
+
+#: apps/core/views.py:37
+msgid ""
+"Explore rentals, estates, hostels and single rooms in neighbourhoods that "
+"fit your life."
+msgstr ""
+
+#: apps/core/views.py:38
+msgid "e.g. 3 bedroom apartment"
+msgstr ""
+
+#: apps/core/views.py:41
+msgid "Trusted vehicles across Tanzania"
+msgstr ""
+
+#: apps/core/views.py:42
+msgid "Find the vehicle that"
+msgstr ""
+
+#: apps/core/views.py:42
+msgid "moves"
+msgstr ""
+
+#: apps/core/views.py:43
+msgid "you forward."
+msgstr ""
+
+#: apps/core/views.py:44
+msgid ""
+"Explore cars, vans, motorcycles and commercial vehicles from accountable "
+"sellers."
+msgstr ""
+
+#: apps/core/views.py:45
+msgid "e.g. Toyota Harrier 2020"
+msgstr ""
+
+#: apps/core/views.py:48
+msgid "Discover Tanzanian businesses"
+msgstr ""
+
+#: apps/core/views.py:49
+msgid "Find local businesses that"
+msgstr ""
+
+#: apps/core/views.py:49
+msgid "help"
+msgstr ""
+
+#: apps/core/views.py:50
+msgid "you move forward."
+msgstr ""
+
+#: apps/core/views.py:51
+msgid "Explore products, services, shops and growing businesses near you."
+msgstr ""
+
+#: apps/core/views.py:52
+msgid "e.g. furniture or catering"
+msgstr ""
+
+#: apps/core/views.py:56
+msgid "Trusted marketplace across Tanzania"
+msgstr ""
+
+#: apps/core/views.py:59
+msgid ""
+"Explore homes, vehicles, rooms, hostels and SME shops from accountable local "
+"providers."
+msgstr ""
+
+#: apps/core/views.py:60
+msgid "e.g. apartment, Toyota, groceries"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Air conditioning"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "ABS"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Airbags"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Power steering"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Power windows"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Central locking"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Reverse camera"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Parking sensors"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Bluetooth"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Navigation system"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Leather seats"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Sunroof"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Alloy wheels"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Four-wheel drive"
+msgstr ""
+
+#: apps/listings/forms.py:11
+msgid "Keyless entry"
+msgstr ""
+
+#: apps/listings/forms.py:54
+msgid "Please select a complete location on the map."
+msgstr ""
+
+#: apps/listings/forms.py:57
+msgid "The selected map coordinates are invalid."
+msgstr ""
+
+#: apps/listings/forms.py:59
+msgid "Please select a location within Tanzania."
+msgstr ""
+
+#: apps/listings/forms.py:63
+msgid "Enter a realistic manufacturing year."
+msgstr ""
+
+#: apps/listings/forms.py:65
+msgid "Vehicle make and model are required."
+msgstr ""
+
+#: apps/listings/forms.py:67
+msgid "Vehicle category and condition are required."
+msgstr ""
+
+#: apps/listings/forms.py:70
+msgid "Choose whether this is a product or service."
+msgstr ""
+
+#: apps/listings/forms.py:74
+msgid "Choose a product category."
+msgstr ""
+
+#: apps/listings/forms.py:76
+msgid "Choose a subcategory that belongs to the selected category."
+msgstr ""
+
+#: apps/listings/forms.py:90
+msgid "5 stars"
+msgstr ""
+
+#: apps/listings/forms.py:90
+msgid "4 stars"
+msgstr ""
+
+#: apps/listings/forms.py:90
+msgid "3 stars"
+msgstr ""
+
+#: apps/listings/forms.py:90
+msgid "2 stars"
+msgstr ""
+
+#: apps/listings/forms.py:90
+msgid "1 star"
+msgstr ""
+
+#: apps/listings/models.py:13
+msgid "Rental Property"
+msgstr ""
+
+#: apps/listings/models.py:14
+msgid "SME / Business"
+msgstr ""
+
+#: apps/listings/models.py:15
+msgid "Automotive"
+msgstr ""
+
+#: apps/listings/models.py:19
+msgid "Draft"
+msgstr ""
+
+#: apps/listings/models.py:20
+msgid "Active"
+msgstr ""
+
+#: apps/listings/models.py:21
+msgid "Paused"
+msgstr ""
+
+#: apps/listings/models.py:22 apps/listings/models.py:398
+msgid "Expired"
+msgstr ""
+
+#: apps/listings/models.py:23
+msgid "Sold / Rented"
+msgstr ""
+
+#: apps/listings/models.py:27
+msgid "Single Room"
+msgstr ""
+
+#: apps/listings/models.py:28
+msgid "Self Contained"
+msgstr ""
+
+#: apps/listings/models.py:29
+msgid "Bedsitter"
+msgstr ""
+
+#: apps/listings/models.py:30
+msgid "1 Bedroom"
+msgstr ""
+
+#: apps/listings/models.py:31
+msgid "2 Bedrooms"
+msgstr ""
+
+#: apps/listings/models.py:32
+msgid "3 Bedrooms"
+msgstr ""
+
+#: apps/listings/models.py:33
+msgid "4+ Bedrooms"
+msgstr ""
+
+#: apps/listings/models.py:34
+msgid "Studio"
+msgstr ""
+
+#: apps/listings/models.py:35
+msgid "Shared House"
+msgstr ""
+
+#: apps/listings/models.py:36
+msgid "Hostel / Student"
+msgstr ""
+
+#: apps/listings/models.py:40
+msgid "Show exact location"
+msgstr ""
+
+#: apps/listings/models.py:41
+msgid "Show approximate area"
+msgstr ""
+
+#: apps/listings/models.py:53
+msgid "SME product category"
+msgstr ""
+
+#: apps/listings/models.py:54
+msgid "SME product categories"
+msgstr ""
+
+#: apps/listings/models.py:64
+msgid "Text"
+msgstr ""
+
+#: apps/listings/models.py:64
+msgid "Number"
+msgstr ""
+
+#: apps/listings/models.py:64
+msgid "Choice"
+msgstr ""
+
+#: apps/listings/models.py:65
+msgid "Comma-separated choices for choice fields."
+msgstr ""
+
+#: apps/listings/models.py:314
+msgid "A hero group can contain a maximum of five images."
+msgstr ""
+
+#: apps/listings/models.py:351
+msgid "Requested"
+msgstr ""
+
+#: apps/listings/models.py:352
+msgid "Confirmed"
+msgstr ""
+
+#: apps/listings/models.py:353
+msgid "Cancelled"
+msgstr ""
+
+#: apps/listings/models.py:360 templates/listings/checkout.html:14
+msgid "Delivery"
+msgstr ""
+
+#: apps/listings/models.py:360 templates/listings/checkout.html:14
+msgid "Collection"
+msgstr ""
+
+#: apps/listings/models.py:383
+msgid "Pending"
+msgstr ""
+
+#: apps/listings/models.py:384 apps/listings/models.py:393
+msgid "Uploading"
+msgstr ""
+
+#: apps/listings/models.py:385 apps/listings/models.py:396
+msgid "Processing"
+msgstr ""
+
+#: apps/listings/models.py:386
+msgid "Ready"
+msgstr ""
+
+#: apps/listings/models.py:387 apps/listings/models.py:400
+msgid "Failed"
+msgstr ""
+
+#: apps/listings/models.py:388 apps/listings/models.py:402
+msgid "Deleted"
+msgstr ""
+
+#: apps/listings/models.py:392
+msgid "Reserved"
+msgstr ""
+
+#: apps/listings/models.py:394
+msgid "Uploaded temporarily"
+msgstr ""
+
+#: apps/listings/models.py:395
+msgid "Queued"
+msgstr ""
+
+#: apps/listings/models.py:397
+msgid "Completed"
+msgstr ""
+
+#: apps/listings/models.py:401
+msgid "Deleting"
+msgstr ""
+
+#: apps/listings/models.py:430 apps/listings/models.py:431
+#: apps/listings/models.py:460
+msgid "Video Storage & Processing"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Car"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Motorcycle"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Van"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Truck"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Bus"
+msgstr ""
+
+#: apps/listings/models.py:564
+msgid "Other"
+msgstr ""
+
+#: apps/listings/models.py:566
+msgid "New"
+msgstr ""
+
+#: apps/listings/models.py:566
+msgid "Foreign used"
+msgstr ""
+
+#: apps/listings/models.py:566
+msgid "Locally used"
+msgstr ""
+
+#: apps/listings/models.py:593
+msgid "Product"
+msgstr ""
+
+#: apps/listings/models.py:593
+msgid "Service"
+msgstr ""
+
+#: apps/listings/models.py:597
+msgid "Fixed price"
+msgstr ""
+
+#: apps/listings/models.py:597
+msgid "Starting from"
+msgstr ""
+
+#: apps/listings/models.py:597
+msgid "Negotiable"
+msgstr ""
+
+#: apps/listings/models.py:597
+msgid "Contact for price"
+msgstr ""
+
+#: apps/listings/views.py:196
+msgid "Listing not found."
+msgstr ""
+
+#: apps/listings/views.py:232
+msgid "Provider not found."
+msgstr ""
+
+#: apps/listings/views.py:261
+msgid "Only SME products can be added to cart."
+msgstr ""
+
+#: apps/listings/views.py:264
+msgid "This product is currently unavailable."
+msgstr ""
+
+#: apps/listings/views.py:286
+msgid "Invalid quantity."
+msgstr ""
+
+#: apps/listings/views.py:314 apps/listings/views.py:326
+#: templates/base.html:254
+msgid "Your SME cart is empty."
+msgstr ""
+
+#: apps/listings/views.py:320
+msgid "Add your name and phone number to request the order."
+msgstr ""
+
+#: apps/listings/views.py:361
+msgid "Order not found."
+msgstr ""
+
+#: apps/listings/views.py:381
+msgid "Only provider accounts can post listings."
+msgstr ""
+
+#: apps/listings/views.py:387
+msgid "Your account cannot create listings."
+msgstr ""
+
+#: apps/listings/views.py:436
+msgid "Listing published!"
+msgstr ""
+
+#: apps/listings/views.py:436
+msgid "Draft saved."
+msgstr ""
+
+#: apps/listings/views.py:514
+msgid "Listing updated."
+msgstr ""
+
+#: apps/listings/views.py:542
+msgid ""
+"A listing video could not be removed from storage. Please try deleting again."
+msgstr ""
+
+#: apps/listings/views.py:545
+msgid "Listing deleted."
+msgstr ""
+
+#: apps/listings/views.py:555
+msgid "Invalid upload request."
+msgstr ""
+
+#: apps/listings/views.py:618
+msgid "Upload session expired."
+msgstr ""
+
+#: apps/listings/views.py:626
+msgid "Uploaded object could not be verified."
+msgstr ""
+
+#: apps/listings/views.py:650
+msgid "Video not found."
+msgstr ""
+
+#: apps/listings/views.py:673
+msgid "Video deleted before completion."
+msgstr ""
+
+#: apps/listings/views.py:704
+msgid "You cannot review your own listing."
+msgstr ""
+
+#: apps/listings/views.py:714
+msgid "Your review has been saved."
+msgstr ""
+
+#: apps/listings/views.py:716
+msgid "Please add a valid star rating before submitting your review."
+msgstr ""
+
+#: apps/notifications/models.py:7
+msgid "Listing Approved"
+msgstr ""
+
+#: apps/notifications/models.py:8
+msgid "Listing Expired"
+msgstr ""
+
+#: apps/notifications/models.py:9
+msgid "Subscription Expiring"
+msgstr ""
+
+#: apps/notifications/models.py:10
+msgid "Subscription Renewed"
+msgstr ""
+
+#: apps/notifications/models.py:11
+msgid "Verification Approved"
+msgstr ""
+
+#: apps/notifications/models.py:12
+msgid "Verification Rejected"
+msgstr ""
+
+#: apps/notifications/models.py:13
+msgid "New Inquiry"
+msgstr ""
+
+#: apps/notifications/models.py:14
+msgid "System Message"
+msgstr ""
+
+#: apps/notifications/models.py:15
+msgid "New Marketplace Listing"
+msgstr ""
+
+#: apps/notifications/services.py:64
+msgid "Marketplace"
+msgstr ""
+
+#: apps/notifications/services.py:65
+#, python-format
+msgid "New %(type)s listing"
+msgstr ""
+
+#: apps/notifications/services.py:66
+#, python-format
+msgid "%(title)s in %(location)s - %(price)s"
+msgstr ""
+
+#: apps/notifications/services.py:84
+#, python-format
+msgid "New on %(site)s: %(title)s"
+msgstr ""
+
+#: apps/subscriptions/models.py:10
+msgid "Basic"
+msgstr ""
+
+#: apps/subscriptions/models.py:11
+msgid "Standard"
+msgstr ""
+
+#: apps/subscriptions/models.py:12
+msgid "Premium"
+msgstr ""
+
+#: apps/subscriptions/models.py:98
+#, python-format
+msgid "Maximum size cannot exceed %(limit)s MB."
+msgstr ""
+
+#: apps/subscriptions/models.py:102
+msgid "Allow at least one video or disable video uploads."
+msgstr ""
+
+#: apps/subscriptions/models.py:104
+msgid "Set a positive per-video size."
+msgstr ""
+
+#: apps/subscriptions/models.py:106
+msgid "Aggregate listing storage must be at least the per-video size."
+msgstr ""
+
+#: apps/subscriptions/views.py:17
+msgid ""
+"Live subscription billing is temporarily unavailable while we finish the "
+"payment rollout."
+msgstr ""
+
+#: apps/subscriptions/views.py:51
+msgid "The payment flow is hidden until live billing is ready."
+msgstr ""
+
+#: apps/subscriptions/views.py:78
+#, python-format
+msgid "Payment confirmed. Your %(plan)s plan is now active!"
+msgstr ""
+
+#: apps/subscriptions/views.py:81
+msgid "Subscription not found."
+msgstr ""
+
+#: templates/accounts/login.html:7 templates/accounts/login.html:20
+#: templates/accounts/login.html:56 templates/base.html:69
+#: templates/base.html:120 templates/base.html:174 templates/core/home.html:30
+#: templates/core/home.html:33
+msgid "Sign in"
+msgstr ""
+
+#: templates/accounts/login.html:15
+msgid "Trusted listings across Tanzania"
+msgstr ""
+
+#: templates/accounts/login.html:21
+msgid "Access your account, listings, likes, and reviews."
+msgstr ""
+
+#: templates/accounts/login.html:44
+msgid "Forgot password?"
+msgstr ""
+
+#: templates/accounts/login.html:57
+msgid ""
+"By signing in, you continue under iSell's account terms and privacy "
+"practices. Email preferences can be managed any time from Settings."
+msgstr ""
+
+#: templates/accounts/login.html:60
+msgid "Don't have an account?"
+msgstr ""
+
+#: templates/accounts/login.html:60
+msgid "Create one free"
+msgstr ""
+
+#: templates/base.html:15
+msgid "Trusted Rentals & Estate platform Tanzania"
+msgstr ""
+
+#: templates/base.html:88
+msgid "Trusted rentals & Estate platform"
+msgstr ""
+
+#: templates/base.html:93 templates/base.html:148 templates/core/home.html:14
+msgid "Home"
+msgstr ""
+
+#: templates/base.html:95 templates/base.html:152 templates/core/home.html:139
+msgid "Search"
+msgstr ""
+
+#: templates/base.html:99
+msgid "My Listings"
+msgstr ""
+
+#: templates/base.html:102 templates/base.html:163
+msgid "Likes"
+msgstr ""
+
+#: templates/base.html:106 templates/base.html:169
+msgid "Alerts"
+msgstr ""
+
+#: templates/base.html:110
+msgid "Profile"
+msgstr ""
+
+#: templates/base.html:112
+msgid "Settings"
+msgstr ""
+
+#: templates/base.html:118
+msgid "Post a listing"
+msgstr ""
+
+#: templates/base.html:121
+msgid "Create account"
+msgstr ""
+
+#: templates/base.html:174 templates/core/home.html:33
+msgid "Me"
+msgstr ""
+
+#: templates/base.html:184
+msgid "Privacy Policy"
+msgstr ""
+
+#: templates/base.html:185
+msgid "Terms of Service"
+msgstr ""
+
+#: templates/base.html:202
+msgid "Close"
+msgstr ""
+
+#: templates/base.html:209
+msgid "iSellTZ is already installed on this device."
+msgstr ""
+
+#: templates/base.html:216
+msgid ""
+"On iPhone or iPad: tap the Share button in Safari, then choose Add to Home "
+"Screen. Open the installed app to enable push notifications."
+msgstr ""
+
+#: templates/base.html:217
+msgid ""
+"Open your browser menu and choose Install app or Add to Home screen. If it "
+"is unavailable, reload the page over HTTPS."
+msgstr ""
+
+#: templates/base.html:246
+msgid "Cart update failed."
+msgstr ""
+
+#: templates/components/provider_card.html:24
+msgid "Public provider"
+msgstr ""
+
+#: templates/components/provider_card.html:25
+msgid "View shop"
+msgstr ""
+
+#: templates/core/home.html:3
+msgid "Find spaces that move you forward"
+msgstr ""
+
+#: templates/core/home.html:11
+msgid "Tanzania's trusted marketplace"
+msgstr ""
+
+#: templates/core/home.html:14 templates/core/home.html:66
+#: templates/core/home.html:138 templates/core/home.html:148
+#: templates/core/home.html:200
+msgid "Rentals"
+msgstr ""
+
+#: templates/core/home.html:14 templates/core/home.html:68
+#: templates/core/home.html:138 templates/core/home.html:151
+#: templates/core/home.html:202
+msgid "SME Shops"
+msgstr ""
+
+#: templates/core/home.html:14 templates/core/home.html:67
+#: templates/core/home.html:138 templates/core/home.html:150
+#: templates/core/home.html:201
+msgid "Autos"
+msgstr ""
+
+#: templates/core/home.html:14 templates/core/home.html:71
+msgid "Explore"
+msgstr ""
+
+#: templates/core/home.html:24
+msgid "Install"
+msgstr ""
+
+#: templates/core/home.html:24
+msgid "app"
+msgstr ""
+
+#: templates/core/home.html:26 templates/core/home.html:29
+msgid "List your property"
+msgstr ""
+
+#: templates/core/home.html:27
+msgid "My account"
+msgstr ""
+
+#: templates/core/home.html:44
+msgid "Search homes, cars, shops..."
+msgstr ""
+
+#: templates/core/home.html:62
+msgid "Trusted listings"
+msgstr ""
+
+#: templates/core/home.html:63
+msgid "Find what moves your life forward."
+msgstr ""
+
+#: templates/core/home.html:64
+msgid ""
+"Rentals, cars, rooms, hostels and SME shops from accountable local providers."
+msgstr ""
+
+#: templates/core/home.html:69 templates/core/home.html:152
+#: templates/core/home.html:203
+msgid "Hostels"
+msgstr ""
+
+#: templates/core/home.html:70
+msgid "Rooms"
+msgstr ""
+
+#: templates/core/home.html:73
+msgid "Explore every category"
+msgstr ""
+
+#: templates/core/home.html:73
+msgid "Curated by iSellTZ"
+msgstr ""
+
+#: templates/core/home.html:83
+msgid "All categories"
+msgstr ""
+
+#: templates/core/home.html:89
+msgid "Filters"
+msgstr ""
+
+#: templates/core/home.html:89
+msgid "Reset"
+msgstr ""
+
+#: templates/core/home.html:92
+msgid "Min price"
+msgstr ""
+
+#: templates/core/home.html:92
+msgid "Max price"
+msgstr ""
+
+#: templates/core/home.html:94
+msgid "Any property type"
+msgstr ""
+
+#: templates/core/home.html:96
+msgid "Vehicle make"
+msgstr ""
+
+#: templates/core/home.html:96
+msgid "Any vehicle type"
+msgstr ""
+
+#: templates/core/home.html:98
+msgid "Products and services"
+msgstr ""
+
+#: templates/core/home.html:98
+msgid "Business category"
+msgstr ""
+
+#: templates/core/home.html:100
+msgid "City"
+msgstr ""
+
+#: templates/core/home.html:101
+msgid "Apply filters"
+msgstr ""
+
+#: templates/core/home.html:106 templates/core/home.html:157
+msgid "Popular near you"
+msgstr ""
+
+#: templates/core/home.html:106
+msgid "Popular providers"
+msgstr ""
+
+#: templates/core/home.html:106
+msgid "Local providers"
+msgstr ""
+
+#: templates/core/home.html:107
+msgid "No providers found yet."
+msgstr ""
+
+#: templates/core/home.html:111 templates/core/home.html:162
+msgid "Recent listings"
+msgstr ""
+
+#: templates/core/home.html:111
+msgid "Fresh provider updates"
+msgstr ""
+
+#: templates/core/home.html:112
+msgid "No recent providers in this category."
+msgstr ""
+
+#: templates/core/home.html:115
+msgid "Verified profiles"
+msgstr ""
+
+#: templates/core/home.html:115
+msgid "Curated hero images"
+msgstr ""
+
+#: templates/core/home.html:115 templates/core/home.html:141
+#: templates/core/home.html:170
+msgid "Local support"
+msgstr ""
+
+#: templates/core/home.html:136
+msgid "What are you looking for?"
+msgstr ""
+
+#: templates/core/home.html:138
+msgid "Category"
+msgstr ""
+
+#: templates/core/home.html:141
+msgid "Verified listings"
+msgstr ""
+
+#: templates/core/home.html:141
+msgid "Trusted agents"
+msgstr ""
+
+#: templates/core/home.html:141
+msgid "Secure experience"
+msgstr ""
+
+#: templates/core/home.html:149
+msgid "Estates"
+msgstr ""
+
+#: templates/core/home.html:153 templates/core/home.html:204
+msgid "Single Rooms"
+msgstr ""
+
+#: templates/core/home.html:157
+msgid "View all"
+msgstr ""
+
+#: templates/core/home.html:158
+msgid "No providers in this category yet."
+msgstr ""
+
+#: templates/core/home.html:162
+msgid "Fresh opportunities"
+msgstr ""
+
+#: templates/core/home.html:162
+msgid "See all"
+msgstr ""
+
+#: templates/core/home.html:163
+msgid "No listings in this category yet."
+msgstr ""
+
+#: templates/core/home.html:167
+msgid "Popular cities"
+msgstr ""
+
+#: templates/core/home.html:167
+msgid "Explore by location"
+msgstr ""
+
+#: templates/core/home.html:167
+#, python-format
+msgid "%(total)s listing"
+msgid_plural "%(total)s listings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/core/home.html:170
+msgid "Quality verified"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Listings from accountable providers"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Safe interactions"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Clear details and trusted profiles"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Trusted community"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Real reviews from real people"
+msgstr ""
+
+#: templates/core/home.html:170
+msgid "Help when you need it"
+msgstr ""
+
+#: templates/core/home.html:200
+msgid "Find spaces that move your life forward."
+msgstr ""
+
+#: templates/core/home.html:200
+msgid ""
+"Explore rentals, estates and family homes from accountable local providers."
+msgstr ""
+
+#: templates/core/home.html:200
+msgid "Homes and rentals"
+msgstr ""
+
+#: templates/core/home.html:201
+msgid "Find vehicles that move you forward."
+msgstr ""
+
+#: templates/core/home.html:201
+msgid "Find vehicles and dealers with clear details, images and contact paths."
+msgstr ""
+
+#: templates/core/home.html:201
+msgid "Cars and dealers"
+msgstr ""
+
+#: templates/core/home.html:202
+msgid "Find local shops that keep life moving."
+msgstr ""
+
+#: templates/core/home.html:202
+msgid ""
+"Discover local products from Tanzanian shops with cart and checkout support."
+msgstr ""
+
+#: templates/core/home.html:202
+msgid "Products and shops"
+msgstr ""
+
+#: templates/core/home.html:203
+msgid "Find student spaces that fit your rhythm."
+msgstr ""
+
+#: templates/core/home.html:203
+msgid "Compare hostels and student-friendly spaces near key areas."
+msgstr ""
+
+#: templates/core/home.html:203
+msgid "Student housing"
+msgstr ""
+
+#: templates/core/home.html:204
+msgid "Find compact rooms that work for you."
+msgstr ""
+
+#: templates/core/home.html:204
+msgid "Browse compact rooms and affordable spaces without losing context."
+msgstr ""
+
+#: templates/core/home.html:204
+msgid "Rooms near you"
+msgstr ""
+
+#: templates/listings/cart.html:3 templates/listings/cart.html:6
+msgid "SME cart"
+msgstr ""
+
+#: templates/listings/cart.html:6
+msgid "Clear"
+msgstr ""
+
+#: templates/listings/cart.html:9 templates/listings/checkout.html:22
+#: templates/listings/order_detail.html:11
+msgid "Total"
+msgstr ""
+
+#: templates/listings/cart.html:10 templates/listings/checkout.html:3
+#: templates/listings/checkout.html:7
+msgid "Checkout"
+msgstr ""
+
+#: templates/listings/checkout.html:11
+msgid "Full name"
+msgstr ""
+
+#: templates/listings/checkout.html:12
+msgid "Phone number"
+msgstr ""
+
+#: templates/listings/checkout.html:13
+msgid "Email optional"
+msgstr ""
+
+#: templates/listings/checkout.html:15
+msgid "Delivery or collection details"
+msgstr ""
+
+#: templates/listings/checkout.html:16
+msgid "Notes for seller"
+msgstr ""
+
+#: templates/listings/checkout.html:20 templates/listings/order_detail.html:7
+msgid "Order request"
+msgstr ""
+
+#: templates/listings/checkout.html:23
+msgid "This creates an order request. No online payment is taken here."
+msgstr ""
+
+#: templates/listings/checkout.html:24
+msgid "Place order request"
+msgstr ""
+
+#: templates/listings/order_detail.html:3
+msgid "Order"
+msgstr ""
+
+#: templates/listings/provider_gallery.html:13
+msgid "Cart"
+msgstr ""
+
+#: templates/listings/provider_gallery.html:17
+msgid "All"
+msgstr ""
+
+#: templates/listings/provider_gallery.html:30
+msgid "No image"
+msgstr ""
+
+#: templates/listings/provider_gallery.html:39
+msgid "No public listings in this category."
+msgstr ""
+
+#: templates/partials/language_toggle.html:3
+msgid "Language selector"
+msgstr ""

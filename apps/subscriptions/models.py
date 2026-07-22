@@ -2,13 +2,14 @@ from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 import uuid
 
 
 class Plan(models.TextChoices):
-    BASIC = 'basic', 'Basic'
-    STANDARD = 'standard', 'Standard'
-    PREMIUM = 'premium', 'Premium'
+    BASIC = 'basic', _('Basic')
+    STANDARD = 'standard', _('Standard')
+    PREMIUM = 'premium', _('Premium')
 
 
 class Subscription(models.Model):
@@ -94,15 +95,15 @@ class VideoPlanEntitlement(models.Model):
     def clean(self):
         hard_limit = getattr(settings, 'R2_VIDEO_MAX_SIZE_HARD_LIMIT_MB', 500)
         if self.max_video_size_mb > hard_limit:
-            raise ValidationError({'max_video_size_mb': f'Maximum size cannot exceed {hard_limit} MB.'})
+            raise ValidationError({'max_video_size_mb': _('Maximum size cannot exceed %(limit)s MB.') % {'limit': hard_limit}})
         if not self.video_uploads_allowed:
             return
         if self.max_videos_per_listing < 1:
-            raise ValidationError({'max_videos_per_listing': 'Allow at least one video or disable video uploads.'})
+            raise ValidationError({'max_videos_per_listing': _('Allow at least one video or disable video uploads.')})
         if self.max_video_size_mb < 1:
-            raise ValidationError({'max_video_size_mb': 'Set a positive per-video size.'})
+            raise ValidationError({'max_video_size_mb': _('Set a positive per-video size.')})
         if self.max_aggregate_video_storage_mb and self.max_aggregate_video_storage_mb < self.max_video_size_mb:
-            raise ValidationError({'max_aggregate_video_storage_mb': 'Aggregate listing storage must be at least the per-video size.'})
+            raise ValidationError({'max_aggregate_video_storage_mb': _('Aggregate listing storage must be at least the per-video size.')})
 
     def save(self, *args, **kwargs):
         self.allowed_video_extensions = _normalize_csv(self.allowed_video_extensions, strip_dot=True)

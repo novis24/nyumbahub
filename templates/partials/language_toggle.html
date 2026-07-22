@@ -1,0 +1,10 @@
+{% load i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+<form action="{% url 'set_language' %}" method="post" class="flex items-center" aria-label="{% trans 'Language selector' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <select name="language" onchange="this.form.submit()" class="h-9 rounded-xl border border-n-200 bg-white px-2 text-[11px] font-bold text-n-700 shadow-sm lg:h-10 lg:text-xs">
+    <option value="en" {% if CURRENT_LANGUAGE == 'en' %}selected{% endif %}>EN</option>
+    <option value="sw" {% if CURRENT_LANGUAGE == 'sw' %}selected{% endif %}>SW</option>
+  </select>
+</form>

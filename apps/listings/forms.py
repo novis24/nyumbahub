@@ -2,12 +2,13 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import Listing, ListingReview, ListingType, ProductCategory, SMEDetails, VehicleDetails
 
 
 TANZANIA_BOUNDS = {'lat_min': Decimal('-12'), 'lat_max': Decimal('-0.5'), 'lng_min': Decimal('28.5'), 'lng_max': Decimal('41.5')}
-AUTO_FEATURES = [('air_conditioning','Air conditioning'),('abs','ABS'),('airbags','Airbags'),('power_steering','Power steering'),('power_windows','Power windows'),('central_locking','Central locking'),('reverse_camera','Reverse camera'),('parking_sensors','Parking sensors'),('bluetooth','Bluetooth'),('navigation','Navigation system'),('leather_seats','Leather seats'),('sunroof','Sunroof'),('alloy_wheels','Alloy wheels'),('four_wheel_drive','Four-wheel drive'),('keyless_entry','Keyless entry')]
+AUTO_FEATURES = [('air_conditioning', _('Air conditioning')),('abs', _('ABS')),('airbags', _('Airbags')),('power_steering', _('Power steering')),('power_windows', _('Power windows')),('central_locking', _('Central locking')),('reverse_camera', _('Reverse camera')),('parking_sensors', _('Parking sensors')),('bluetooth', _('Bluetooth')),('navigation', _('Navigation system')),('leather_seats', _('Leather seats')),('sunroof', _('Sunroof')),('alloy_wheels', _('Alloy wheels')),('four_wheel_drive', _('Four-wheel drive')),('keyless_entry', _('Keyless entry'))]
 
 
 class ListingForm(forms.ModelForm):
@@ -50,29 +51,29 @@ class ListingForm(forms.ModelForm):
                 cleaned['latitude'], cleaned['longitude'] = lat, lng
             # Blank coordinates remain supported for legacy listings; if one is supplied both are required.
             if (lat is None) != (lng is None):
-                raise forms.ValidationError('Please select a complete location on the map.')
+                raise forms.ValidationError(_('Please select a complete location on the map.'))
             if lat is not None:
                 if not (-90 <= lat <= 90 and -180 <= lng <= 180):
-                    raise forms.ValidationError('The selected map coordinates are invalid.')
+                    raise forms.ValidationError(_('The selected map coordinates are invalid.'))
                 if not (TANZANIA_BOUNDS['lat_min'] <= lat <= TANZANIA_BOUNDS['lat_max'] and TANZANIA_BOUNDS['lng_min'] <= lng <= TANZANIA_BOUNDS['lng_max']):
-                    raise forms.ValidationError('Please select a location within Tanzania.')
+                    raise forms.ValidationError(_('Please select a location within Tanzania.'))
         if self.listing_type == ListingType.AUTO:
             year = cleaned.get('vehicle_year')
             if year and not 1886 <= year <= date.today().year + 1:
-                self.add_error('vehicle_year', 'Enter a realistic manufacturing year.')
+                self.add_error('vehicle_year', _('Enter a realistic manufacturing year.'))
             if not cleaned.get('vehicle_make') or not cleaned.get('vehicle_model'):
-                raise forms.ValidationError('Vehicle make and model are required.')
+                raise forms.ValidationError(_('Vehicle make and model are required.'))
             if not cleaned.get('auto_category') or not cleaned.get('auto_condition'):
-                raise forms.ValidationError('Vehicle category and condition are required.')
+                raise forms.ValidationError(_('Vehicle category and condition are required.'))
         if self.listing_type == ListingType.SME:
             if not cleaned.get('sme_kind'):
-                self.add_error('sme_kind', 'Choose whether this is a product or service.')
+                self.add_error('sme_kind', _('Choose whether this is a product or service.'))
             category = cleaned.get('product_category')
             subcategory = cleaned.get('product_subcategory')
             if not category:
-                self.add_error('product_category', 'Choose a product category.')
+                self.add_error('product_category', _('Choose a product category.'))
             if subcategory and subcategory.parent_id != category.id:
-                self.add_error('product_subcategory', 'Choose a subcategory that belongs to the selected category.')
+                self.add_error('product_subcategory', _('Choose a subcategory that belongs to the selected category.'))
         return cleaned
 
     def save_details(self, listing):
@@ -86,4 +87,4 @@ class ListingReviewForm(forms.ModelForm):
     class Meta:
         model = ListingReview
         fields = ['rating', 'comment']
-        widgets = {'rating': forms.Select(choices=[(5,'5 stars'),(4,'4 stars'),(3,'3 stars'),(2,'2 stars'),(1,'1 star')]), 'comment': forms.Textarea(attrs={'rows':4})}
+        widgets = {'rating': forms.Select(choices=[(5, _('5 stars')),(4, _('4 stars')),(3, _('3 stars')),(2, _('2 stars')),(1, _('1 star'))]), 'comment': forms.Textarea(attrs={'rows':4})}

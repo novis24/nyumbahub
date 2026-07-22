@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from datetime import timedelta
 from .models import Subscription, Plan, PaymentLog
 
@@ -13,7 +14,7 @@ def choose_plan(request):
         return redirect('core:home')
 
     if not settings.PAYMENTS_ENABLED:
-        messages.info(request, 'Live subscription billing is temporarily unavailable while we finish the payment rollout.')
+        messages.info(request, _('Live subscription billing is temporarily unavailable while we finish the payment rollout.'))
         return redirect('listings:my_listings')
 
     if request.method == 'POST':
@@ -47,7 +48,7 @@ def payment(request, plan):
     For now shows the UI + a manual confirmation flow for testing.
     """
     if not settings.PAYMENTS_ENABLED:
-        messages.info(request, 'The payment flow is hidden until live billing is ready.')
+        messages.info(request, _('The payment flow is hidden until live billing is ready.'))
         return redirect('listings:my_listings')
 
     plan_info = settings.PLAN_LIMITS.get(plan, {})
@@ -74,10 +75,10 @@ def payment(request, plan):
                 )
 
                 request.session.pop('pending_subscription_id', None)
-                messages.success(request, f'Payment confirmed. Your {sub.get_plan_display()} plan is now active!')
+                messages.success(request, _('Payment confirmed. Your %(plan)s plan is now active!') % {'plan': sub.get_plan_display()})
                 return redirect('listings:create')
             except Subscription.DoesNotExist:
-                messages.error(request, 'Subscription not found.')
+                messages.error(request, _('Subscription not found.'))
 
     return render(request, 'subscriptions/payment.html', {
         'plan': plan,

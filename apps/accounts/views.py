@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 from .forms import (
     RoleSelectForm, SignupForm, LoginForm,
     ProfileUpdateForm, PasswordChangeRequestForm, KYCSubmitForm
@@ -86,10 +87,10 @@ def signup(request):
             logger.exception('Welcome email could not be sent for %s.', user.email)
             messages.warning(
                 request,
-                'Your account was created, but we could not send the welcome email right now.',
+                _('Your account was created, but we could not send the welcome email right now.'),
             )
         login(request, user)
-        messages.success(request, f'Welcome to iSell, {user.first_name}!')
+        messages.success(request, _('Welcome to iSell, %(name)s!') % {'name': user.first_name})
         # Clear session key
         request.session.pop('signup_role', None)
         if user.is_provider and settings.PAYMENTS_ENABLED:
@@ -98,7 +99,7 @@ def signup(request):
     if request.method == 'POST' and form.errors:
         messages.error(
             request,
-            form.non_field_errors()[0] if form.non_field_errors() else 'We could not create your account yet. Please correct the highlighted fields and try again.',
+            form.non_field_errors()[0] if form.non_field_errors() else _('We could not create your account yet. Please correct the highlighted fields and try again.'),
         )
 
     return render(request, 'accounts/signup.html', {
@@ -120,7 +121,7 @@ def login_view(request):
     if request.method == 'POST' and form.errors:
         messages.error(
             request,
-            form.non_field_errors()[0] if form.non_field_errors() else 'Please correct the highlighted sign-in details and try again.',
+            form.non_field_errors()[0] if form.non_field_errors() else _('Please correct the highlighted sign-in details and try again.'),
         )
 
     return render(request, 'accounts/login.html', {'form': form})
@@ -139,7 +140,7 @@ def forgot_password(request):
         if not getattr(settings, 'EMAIL_DELIVERY_ENABLED', False):
             messages.error(
                 request,
-                'Email delivery is not configured on this server yet. Please update the mail settings and try again.',
+                _('Email delivery is not configured on this server yet. Please update the mail settings and try again.'),
             )
             return render(request, 'accounts/forgot_password.html', {'form': form})
         try:
@@ -156,7 +157,7 @@ def forgot_password(request):
             logger.exception('Password reset email could not be sent.')
             messages.error(
                 request,
-                'Password reset email could not be sent right now. Please verify the SMTP settings and try again.',
+                _('Password reset email could not be sent right now. Please verify the SMTP settings and try again.'),
             )
     return render(request, 'accounts/forgot_password.html', {'form': form})
 
@@ -185,8 +186,8 @@ def profile_edit(request):
     if request.method == 'POST' and form.is_valid():
         form.save()
         if request.htmx:
-            return HttpResponse('<span class="text-green-600 text-sm">Saved.</span>')
-        messages.success(request, 'Profile updated.')
+            return HttpResponse(f'<span class="text-green-600 text-sm">{_("Saved.")}</span>')
+        messages.success(request, _('Profile updated.'))
         return redirect('accounts:profile')
 
     return render(request, 'accounts/profile_edit.html', {'form': form})
@@ -260,12 +261,12 @@ def settings_security(request):
     if request.method == 'POST' and form.is_valid():
         user = request.user
         if not user.check_password(form.cleaned_data['current_password']):
-            form.add_error('current_password', 'Current password is incorrect.')
+            form.add_error('current_password', _('Current password is incorrect.'))
         else:
             user.set_password(form.cleaned_data['new_password'])
             user.save()
             update_session_auth_hash(request, user)
-            messages.success(request, 'Password changed.')
+            messages.success(request, _('Password changed.'))
             return redirect('accounts:settings')
     return render(request, 'accounts/settings_security.html', {'form': form})
 
@@ -277,8 +278,8 @@ def settings_notifications(request):
         request.user.receives_push_notifications = 'receives_push_notifications' in request.POST
         request.user.save(update_fields=['receives_notifications', 'receives_push_notifications'])
         if request.htmx:
-            return HttpResponse('<span class="text-green-600 text-sm">Saved.</span>')
-        messages.success(request, 'Notification preferences updated.')
+            return HttpResponse(f'<span class="text-green-600 text-sm">{_("Saved.")}</span>')
+        messages.success(request, _('Notification preferences updated.'))
     return render(request, 'accounts/settings_notifications.html')
 
 
@@ -305,7 +306,7 @@ def kyc_submit(request):
         kyc.save()
         request.user.verification_status = 'pending'
         request.user.save(update_fields=['verification_status'])
-        messages.success(request, 'Documents submitted. We will review within 24 hours.')
+        messages.success(request, _('Documents submitted. We will review within 24 hours.'))
         return redirect('accounts:settings')
 
     return render(request, 'accounts/kyc_submit.html', {'form': form})

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator
 from django.db.models import Avg, Case, Count, IntegerField, When
+from django.utils.translation import gettext as _
 from apps.listings.models import HeroGroup, Listing, ListingStatus, ListingType, ProductCategory, PropertyType, SavedListing, SMEDetails, VehicleDetails
 from apps.listings.views import provider_cards, with_distance
 
@@ -30,33 +31,33 @@ def home(request):
     featured = qs.filter(is_featured=True).select_related('owner').prefetch_related('images', 'videos', 'reviews')[:6]
     hero_content_map = {
         ListingType.RENTAL: {
-            'eyebrow': 'Trusted homes across Tanzania',
-            'title_start': 'Find spaces that', 'title_emphasis': 'move',
-            'title_end': 'your life forward.',
-            'description': 'Explore rentals, estates, hostels and single rooms in neighbourhoods that fit your life.',
-            'placeholder': 'e.g. 3 bedroom apartment',
+            'eyebrow': _('Trusted homes across Tanzania'),
+            'title_start': _('Find spaces that'), 'title_emphasis': _('move'),
+            'title_end': _('your life forward.'),
+            'description': _('Explore rentals, estates, hostels and single rooms in neighbourhoods that fit your life.'),
+            'placeholder': _('e.g. 3 bedroom apartment'),
         },
         ListingType.AUTO: {
-            'eyebrow': 'Trusted vehicles across Tanzania',
-            'title_start': 'Find the vehicle that', 'title_emphasis': 'moves',
-            'title_end': 'you forward.',
-            'description': 'Explore cars, vans, motorcycles and commercial vehicles from accountable sellers.',
-            'placeholder': 'e.g. Toyota Harrier 2020',
+            'eyebrow': _('Trusted vehicles across Tanzania'),
+            'title_start': _('Find the vehicle that'), 'title_emphasis': _('moves'),
+            'title_end': _('you forward.'),
+            'description': _('Explore cars, vans, motorcycles and commercial vehicles from accountable sellers.'),
+            'placeholder': _('e.g. Toyota Harrier 2020'),
         },
         ListingType.SME: {
-            'eyebrow': 'Discover Tanzanian businesses',
-            'title_start': 'Find local businesses that', 'title_emphasis': 'help',
-            'title_end': 'you move forward.',
-            'description': 'Explore products, services, shops and growing businesses near you.',
-            'placeholder': 'e.g. furniture or catering',
+            'eyebrow': _('Discover Tanzanian businesses'),
+            'title_start': _('Find local businesses that'), 'title_emphasis': _('help'),
+            'title_end': _('you move forward.'),
+            'description': _('Explore products, services, shops and growing businesses near you.'),
+            'placeholder': _('e.g. furniture or catering'),
         },
     }
     hero_content = hero_content_map.get(listing_type, {
-        'eyebrow': 'Trusted marketplace across Tanzania',
-        'title_start': 'Find spaces that', 'title_emphasis': 'move',
-        'title_end': 'your life forward.',
-        'description': 'Explore homes, vehicles, rooms, hostels and SME shops from accountable local providers.',
-        'placeholder': 'e.g. apartment, Toyota, groceries',
+        'eyebrow': _('Trusted marketplace across Tanzania'),
+        'title_start': _('Find spaces that'), 'title_emphasis': _('move'),
+        'title_end': _('your life forward.'),
+        'description': _('Explore homes, vehicles, rooms, hostels and SME shops from accountable local providers.'),
+        'placeholder': _('e.g. apartment, Toyota, groceries'),
     })
     popular_providers = provider_cards(nearby_qs, limit=8, order='popular' if not user_lat else 'nearby')
     recent_providers = provider_cards(qs, limit=12, order='recent')

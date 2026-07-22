@@ -1,17 +1,18 @@
 from django.db import models
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
 class NotificationType(models.TextChoices):
-    LISTING_APPROVED = 'listing_approved', 'Listing Approved'
-    LISTING_EXPIRED = 'listing_expired', 'Listing Expired'
-    SUBSCRIPTION_EXPIRING = 'sub_expiring', 'Subscription Expiring'
-    SUBSCRIPTION_RENEWED = 'sub_renewed', 'Subscription Renewed'
-    KYC_APPROVED = 'kyc_approved', 'Verification Approved'
-    KYC_REJECTED = 'kyc_rejected', 'Verification Rejected'
-    NEW_INQUIRY = 'new_inquiry', 'New Inquiry'
-    SYSTEM = 'system', 'System Message'
-    NEW_MARKET_LISTING = 'new_market_listing', 'New Marketplace Listing'
+    LISTING_APPROVED = 'listing_approved', _('Listing Approved')
+    LISTING_EXPIRED = 'listing_expired', _('Listing Expired')
+    SUBSCRIPTION_EXPIRING = 'sub_expiring', _('Subscription Expiring')
+    SUBSCRIPTION_RENEWED = 'sub_renewed', _('Subscription Renewed')
+    KYC_APPROVED = 'kyc_approved', _('Verification Approved')
+    KYC_REJECTED = 'kyc_rejected', _('Verification Rejected')
+    NEW_INQUIRY = 'new_inquiry', _('New Inquiry')
+    SYSTEM = 'system', _('System Message')
+    NEW_MARKET_LISTING = 'new_market_listing', _('New Marketplace Listing')
 
 
 class Notification(models.Model):

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.translation import gettext_lazy as _
 from .models import CustomUser, AccountRole, KYCDocument
 from phonenumber_field.formfields import PhoneNumberField
 
@@ -11,10 +12,10 @@ class RoleSelectForm(forms.Form):
     Progressive disclosure: the rest of the form depends on this choice.
     """
     ROLE_CHOICES = [
-        (AccountRole.SEEKER, 'I am looking for a house'),
-        (AccountRole.LANDLORD, 'I want to list my property for rent'),
-        (AccountRole.SME, 'I run a small business / shop'),
-        (AccountRole.AUTO, 'I sell vehicles'),
+        (AccountRole.SEEKER, _('I am looking for a house')),
+        (AccountRole.LANDLORD, _('I want to list my property for rent')),
+        (AccountRole.SME, _('I run a small business / shop')),
+        (AccountRole.AUTO, _('I sell vehicles')),
     ]
     role = forms.ChoiceField(
         choices=ROLE_CHOICES,
@@ -33,12 +34,12 @@ class SignupForm(UserCreationForm):
     phone = PhoneNumberField(
         region='TZ',
         required=False,
-        help_text='e.g. +255 712 345 678',
+        help_text=_('e.g. +255 712 345 678'),
     )
     location = forms.CharField(
         max_length=120,
         required=False,
-        help_text='City or district',
+        help_text=_('City or district'),
     )
     role = forms.CharField(widget=forms.HiddenInput)
     agree_terms = forms.BooleanField(required=True)
@@ -54,13 +55,13 @@ class SignupForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
-            raise forms.ValidationError('An account with this email already exists.')
+            raise forms.ValidationError(_('An account with this email already exists.'))
         return email
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
         if phone and CustomUser.objects.filter(phone=phone).exists():
-            raise forms.ValidationError('An account with this phone number already exists.')
+            raise forms.ValidationError(_('An account with this phone number already exists.'))
         return phone or None
 
     def save(self, commit=True):
@@ -76,15 +77,15 @@ class SignupForm(UserCreationForm):
 
 class LoginForm(AuthenticationForm):
     error_messages = {
-        'invalid_login': 'We could not sign you in with that email and password. Please check both and try again.',
-        'inactive': 'This account has been disabled. Please contact support if you need help.',
+        'invalid_login': _('We could not sign you in with that email and password. Please check both and try again.'),
+        'inactive': _('This account has been disabled. Please contact support if you need help.'),
     }
     username = forms.EmailField(
-        label='Email address',
+        label=_('Email address'),
         widget=forms.EmailInput(attrs={'autofocus': True, 'placeholder': 'you@email.com'}),
     )
     password = forms.CharField(
-        label='Password',
+        label=_('Password'),
         widget=forms.PasswordInput(attrs={'placeholder': '••••••••'}),
     )
 
@@ -107,7 +108,7 @@ class ProfileUpdateForm(forms.ModelForm):
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
         if phone and CustomUser.objects.filter(phone=phone).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('An account with this phone number already exists.')
+            raise forms.ValidationError(_('An account with this phone number already exists.'))
         return phone or None
 
 
@@ -122,7 +123,7 @@ class PasswordChangeRequestForm(forms.Form):
         p1 = cleaned.get('new_password')
         p2 = cleaned.get('confirm_password')
         if p1 and p2 and p1 != p2:
-            raise forms.ValidationError('New passwords do not match.')
+            raise forms.ValidationError(_('New passwords do not match.'))
         return cleaned
 
 

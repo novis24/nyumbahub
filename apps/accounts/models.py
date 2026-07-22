@@ -1,21 +1,22 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 class AccountRole(models.TextChoices):
-    SEEKER = 'seeker', 'Seeker'           # students / house hunters
-    LANDLORD = 'landlord', 'Landlord'     # rental property owners
-    SME = 'sme', 'SME Seller'            # small business sellers
-    AUTO = 'auto', 'Auto Dealer'          # automotive dealers
-    ADMIN = 'admin', 'Administrator'
+    SEEKER = 'seeker', _('Seeker')           # students / house hunters
+    LANDLORD = 'landlord', _('Landlord')     # rental property owners
+    SME = 'sme', _('SME Seller')            # small business sellers
+    AUTO = 'auto', _('Auto Dealer')          # automotive dealers
+    ADMIN = 'admin', _('Administrator')
 
 
 class VerificationStatus(models.TextChoices):
-    UNVERIFIED = 'unverified', 'Unverified'
-    PENDING = 'pending', 'Pending Review'
-    VERIFIED = 'verified', 'Verified'
-    REJECTED = 'rejected', 'Rejected'
+    UNVERIFIED = 'unverified', _('Unverified')
+    PENDING = 'pending', _('Pending Review')
+    VERIFIED = 'verified', _('Verified')
+    REJECTED = 'rejected', _('Rejected')
 
 
 class CustomUser(AbstractUser):
@@ -65,8 +66,8 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.email})"
@@ -98,9 +99,9 @@ class CustomUser(AbstractUser):
         if not self.is_verified:
             return ''
         return {
-            AccountRole.SME: 'Verified Business',
-            AccountRole.LANDLORD: 'Verified Property Lister',
-            AccountRole.AUTO: 'Verified Dealer',
+            AccountRole.SME: _('Verified Business'),
+            AccountRole.LANDLORD: _('Verified Property Lister'),
+            AccountRole.AUTO: _('Verified Dealer'),
         }.get(self.role, '')
 
     @property
@@ -124,10 +125,10 @@ class KYCDocument(models.Model):
     Scaffold is in place — enforcement can be activated in settings.
     """
     class DocType(models.TextChoices):
-        NATIONAL_ID = 'national_id', 'National ID'
-        PASSPORT = 'passport', 'Passport'
-        DRIVERS_LICENSE = 'drivers_license', "Driver's License"
-        UTILITY_BILL = 'utility_bill', 'Utility Bill'
+        NATIONAL_ID = 'national_id', _('National ID')
+        PASSPORT = 'passport', _('Passport')
+        DRIVERS_LICENSE = 'drivers_license', _("Driver's License")
+        UTILITY_BILL = 'utility_bill', _('Utility Bill')
 
     user = models.OneToOneField(
         CustomUser,
@@ -149,8 +150,8 @@ class KYCDocument(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'KYC Document'
-        verbose_name_plural = 'KYC Documents'
+        verbose_name = _('KYC Document')
+        verbose_name_plural = _('KYC Documents')
 
     def __str__(self):
         return f"KYC: {self.user.email} — {self.status}"
