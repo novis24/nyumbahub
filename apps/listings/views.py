@@ -1,8 +1,11 @@
 import json
+import logging
+import uuid
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_GET, require_POST
 from django.http import Http404, JsonResponse
 from django.utils import timezone
@@ -44,7 +47,10 @@ from .services.video_quota import (
     reserve_video_capacity,
     mark_uploaded_temporarily,
 )
+from .services.image_policy import validate_listing_images
 from .models import VideoReservationStatus
+
+logger = logging.getLogger(__name__)
 
 AMENITY_CHOICES = [
     'wifi', 'water', 'electricity', 'security', 'parking',
@@ -52,6 +58,10 @@ AMENITY_CHOICES = [
 ]
 
 ROLE_LISTING_TYPES = {'landlord': ListingType.RENTAL, 'sme': ListingType.SME, 'auto': ListingType.AUTO}
+
+
+class ListingImageStorageError(Exception):
+    pass
 
 
 def active_public_listings():
@@ -148,6 +158,27 @@ def _product_attributes_from_post(request):
         if key.startswith('attr_') and value.strip():
             attrs[key[5:]] = value.strip()
     return attrs
+
+
+def _uploaded_file_metadata(uploaded_file):
+    return {
+        'filename': getattr(uploaded_file, 'name', ''),
+        'content_type': getattr(uploaded_file, 'content_type', ''),
+        'size': getattr(uploaded_file, 'size', None),
+    }
+
+
+def _delete_uploaded_listing_images(storage_names):
+    for storage_name in storage_names:
+        try:
+            ListingImage._meta.get_field('image').storage.delete(storage_name)
+        except Exception:
+            logger.exception('listing_image_cleanup_failed', extra={'storage_name': storage_name})
+
+
+def _add_image_validation_error(form, exc):
+    messages = getattr(exc, 'messages', None) or [str(exc)]
+    form.add_error(None, messages[0])
 
 
 def _owner_review_stats(owner):
@@ -389,58 +420,103 @@ def create_listing(request):
 
     if request.method == 'POST':
         form = ListingForm(request.POST, request.FILES, listing_type=default_type)
+        submitted_token = request.POST.get('create_token', '')
+        session_token = request.session.get('listing_create_token', '')
+        if not submitted_token or submitted_token != session_token:
+            form.add_error(None, _('This listing submission has already been processed. Please review your listings before trying again.'))
         if form.is_valid():
-            with transaction.atomic():
-                listing = form.save(commit=False)
-                listing.owner = request.user
-                listing.listing_type = default_type
-                requested_status = request.POST.get('status', ListingStatus.DRAFT)
-                listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
-                listing.amenities = ','.join(request.POST.getlist('amenities'))
-                if default_type == ListingType.SME:
-                    listing.product_attributes = _product_attributes_from_post(request)
-
-                sub = request.user.active_subscription
-                if sub:
-                    listing.expires_at = timezone.now() + timedelta(days=30)
-
-                listing.save()
-                form.save_details(listing)
-
-                pending_video_ids = request.POST.getlist('pending_video_ids')
-                pending_videos = ListingVideo.objects.select_for_update().filter(
-                    id__in=pending_video_ids,
-                    owner=request.user,
-                    listing__isnull=True,
-                    upload_status=ListingVideoStatus.READY,
-                )
-                for order, video in enumerate(pending_videos):
-                    video.listing = listing
-                    video.order = order
-                    video.save(update_fields=['listing', 'order', 'updated_at'])
-
-            # Handle images
             images = request.FILES.getlist('images')
             sub = request.user.active_subscription
             max_images = sub.max_images if sub else 20
-            for i, img in enumerate(images[:max_images]):
-                ListingImage.objects.create(
-                    listing=listing,
-                    image=img,
-                    is_cover=(i == 0),
-                    order=i,
-                )
+            if len(images) > max_images:
+                form.add_error(None, _('Your plan allows up to %(count)s photos per listing.') % {'count': max_images})
+            else:
+                try:
+                    validate_listing_images(images)
+                except ValidationError as exc:
+                    first_image = images[0] if images else None
+                    logger.info(
+                        'listing_image_validation_failed',
+                        extra={
+                            'user_id': request.user.id,
+                            'image': _uploaded_file_metadata(first_image) if first_image else {},
+                            'exception_class': exc.__class__.__name__,
+                        },
+                    )
+                    _add_image_validation_error(form, exc)
 
-            messages.success(
-                request,
-                _('Listing published!') if listing.status == 'active' else _('Draft saved.')
-            )
-            if listing.status == ListingStatus.ACTIVE:
-                from apps.notifications.services import notify_marketplace_subscribers
-                notify_marketplace_subscribers(listing, request)
-                return redirect('listings:detail', slug=listing.slug)
-            return redirect('listings:my_listings')
+        if form.is_valid():
+            uploaded_storage_names = []
+            try:
+                with transaction.atomic():
+                    request.session.pop('listing_create_token', None)
+                    request.session.modified = True
+                    listing = form.save(commit=False)
+                    listing.owner = request.user
+                    listing.listing_type = default_type
+                    requested_status = request.POST.get('status', ListingStatus.DRAFT)
+                    listing.status = requested_status if requested_status in ListingStatus.values else ListingStatus.DRAFT
+                    listing.amenities = ','.join(request.POST.getlist('amenities'))
+                    if default_type == ListingType.SME:
+                        listing.product_attributes = _product_attributes_from_post(request)
+
+                    sub = request.user.active_subscription
+                    if sub:
+                        listing.expires_at = timezone.now() + timedelta(days=30)
+
+                    listing.save()
+                    form.save_details(listing)
+
+                    pending_video_ids = request.POST.getlist('pending_video_ids')
+                    pending_videos = ListingVideo.objects.select_for_update().filter(
+                        id__in=pending_video_ids,
+                        owner=request.user,
+                        listing__isnull=True,
+                        upload_status=ListingVideoStatus.READY,
+                    )
+                    for order, video in enumerate(pending_videos):
+                        video.listing = listing
+                        video.order = order
+                        video.save(update_fields=['listing', 'order', 'updated_at'])
+
+                    try:
+                        for i, img in enumerate(images):
+                            listing_image = ListingImage.objects.create(
+                                listing=listing,
+                                image=img,
+                                is_cover=(i == 0),
+                                order=i,
+                            )
+                            uploaded_storage_names.append(listing_image.image.name)
+                    except Exception as exc:
+                        logger.exception(
+                            'listing_image_storage_failed',
+                            extra={
+                                'user_id': request.user.id,
+                                'image': _uploaded_file_metadata(img),
+                                'exception_class': exc.__class__.__name__,
+                            },
+                        )
+                        _delete_uploaded_listing_images(uploaded_storage_names)
+                        form.add_error(None, _('We could not upload one of your photos. Please try again with JPEG, PNG, or WebP images.'))
+                        raise ListingImageStorageError from exc
+
+                    if listing.status == ListingStatus.ACTIVE:
+                        from apps.notifications.services import notify_marketplace_subscribers
+                        transaction.on_commit(lambda listing=listing, request=request: notify_marketplace_subscribers(listing, request))
+            except ListingImageStorageError:
+                request.session['listing_create_token'] = submitted_token or uuid.uuid4().hex
+                listing = None
+            else:
+                messages.success(
+                    request,
+                    _('Listing published!') if listing.status == 'active' else _('Draft saved.')
+                )
+                if listing.status == ListingStatus.ACTIVE:
+                    return redirect('listings:detail', slug=listing.slug)
+                return redirect('listings:my_listings')
     else:
+        request.session['listing_create_token'] = uuid.uuid4().hex
         form = ListingForm(listing_type=default_type)
 
     return render(request, 'listings/create.html', {
@@ -450,6 +526,7 @@ def create_listing(request):
         'video_policy': get_video_upload_policy(request.user).as_dict(),
         'geoapify_key': settings.GEOAPIFY_BROWSER_KEY,
         'product_categories': ProductCategory.objects.filter(parent__isnull=True, is_active=True).prefetch_related('subcategories', 'attributes'),
+        'create_token': request.session.get('listing_create_token', ''),
     })
 
 

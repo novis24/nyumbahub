@@ -1,21 +1,34 @@
 from decimal import Decimal
+from io import BytesIO
+import shutil
+import tempfile
+from unittest import mock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.test import override_settings
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
+from PIL import Image
 
 from apps.accounts.models import AccountRole, CustomUser, VerificationStatus
 from apps.subscriptions.models import Plan, Subscription, VideoPlanEntitlement
 from apps.listings.services.video_quota import complete_reservation, reserve_video_capacity
 from .forms import ListingForm
-from .models import GlobalVideoStoragePolicy, Listing, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision, ProductCategory
+from .models import GlobalVideoStoragePolicy, Listing, ListingImage, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision, ProductCategory
 
 
 def form_data(**overrides):
     data = {'title':'A listing','description':'Useful description','price':'100000','location':'Kinondoni','city':'Dar es Salaam'}
     data.update(overrides)
     return data
+
+
+def image_upload(name='photo.jpg', image_format='JPEG', content_type='image/jpeg', size=(20, 20)):
+    stream = BytesIO()
+    Image.new('RGB', size, 'white').save(stream, format=image_format)
+    return SimpleUploadedFile(name, stream.getvalue(), content_type=content_type)
 
 
 class LocationFormTests(TestCase):
@@ -81,9 +94,12 @@ class ListingWorkflowTests(TestCase):
         self.assertNotContains(response, 'Spacious 2-bedroom apartment')
 
     def test_publish_status_and_role_category_make_listing_public(self):
+        self.client.get(reverse('listings:create'))
+        token = self.client.session['listing_create_token']
         response = self.client.post(reverse('listings:create'), form_data(
             listing_type='auto', sme_kind='product', price_type='fixed',
             status='active', business_category='Food', product_category=self.category.id,
+            create_token=token,
         ))
         listing = Listing.objects.get(owner=self.sme)
         self.assertEqual(listing.listing_type, ListingType.SME)
@@ -91,6 +107,147 @@ class ListingWorkflowTests(TestCase):
         self.assertRedirects(response, listing.get_absolute_url())
         home = self.client.get(reverse('core:home') + '?type=sme')
         self.assertContains(home, listing.title)
+
+
+class ListingImageUploadTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.override = override_settings(
+            MEDIA_ROOT=self.media_root,
+            STORAGES={
+                'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+                'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+            },
+            LISTING_IMAGE_MAX_UPLOAD_BYTES=1024 * 1024,
+            LISTING_IMAGE_MAX_PIXELS=1_000_000,
+        )
+        self.override.enable()
+        self.owner = CustomUser.objects.create_user(username='landlord-images', email='images@example.com', password='secret', role=AccountRole.LANDLORD)
+        self.client.force_login(self.owner)
+
+    def tearDown(self):
+        self.override.disable()
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def post_listing(self, images, **overrides):
+        self.client.get(reverse('listings:create'))
+        token = self.client.session['listing_create_token']
+        return self.client.post(reverse('listings:create'), data={**form_data(status='active'), 'create_token': token, **overrides, 'images': images})
+
+    def test_valid_jpeg_upload_creates_listing_and_image(self):
+        response = self.post_listing([image_upload()])
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Listing.objects.count(), 1)
+        self.assertEqual(ListingImage.objects.count(), 1)
+        self.assertTrue(ListingImage.objects.get().is_cover)
+
+    def test_valid_png_and_webp_uploads_create_images(self):
+        response = self.post_listing([
+            image_upload('photo.png', 'PNG', 'image/png'),
+            image_upload('photo.webp', 'WEBP', 'image/webp'),
+        ])
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ListingImage.objects.count(), 2)
+
+    def test_unsupported_image_type_is_rejected_without_listing(self):
+        upload = SimpleUploadedFile('photo.heic', b'not-an-image', content_type='image/heic')
+
+        response = self.post_listing([upload])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'JPEG, PNG, or WebP')
+        self.assertEqual(Listing.objects.count(), 0)
+
+    def test_corrupt_image_is_rejected_without_listing(self):
+        upload = SimpleUploadedFile('photo.jpg', b'broken', content_type='image/jpeg')
+
+        response = self.post_listing([upload])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'could not be read')
+        self.assertEqual(Listing.objects.count(), 0)
+
+    def test_oversized_image_is_rejected_without_listing(self):
+        with override_settings(LISTING_IMAGE_MAX_UPLOAD_BYTES=20):
+            response = self.post_listing([image_upload()])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 MB or smaller', status_code=200)
+        self.assertEqual(Listing.objects.count(), 0)
+
+    def test_storage_exception_does_not_leave_listing_or_image(self):
+        storage = ListingImage._meta.get_field('image').storage
+        with mock.patch.object(storage, 'save', side_effect=RuntimeError('storage unavailable')):
+            response = self.post_listing([image_upload()])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'could not upload')
+        self.assertEqual(Listing.objects.count(), 0)
+        self.assertEqual(ListingImage.objects.count(), 0)
+
+    def test_partial_multi_image_failure_cleans_up_uploaded_file(self):
+        storage = ListingImage._meta.get_field('image').storage
+        original_save = storage.save
+        saved_names = []
+
+        def save_then_fail(name, content, max_length=None):
+            if saved_names:
+                raise RuntimeError('second save failed')
+            saved_name = original_save(name, content, max_length=max_length)
+            saved_names.append(saved_name)
+            return saved_name
+
+        with mock.patch.object(storage, 'save', side_effect=save_then_fail), mock.patch.object(storage, 'delete', wraps=storage.delete) as delete_mock:
+            response = self.post_listing([image_upload('one.jpg'), image_upload('two.jpg')])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Listing.objects.count(), 0)
+        self.assertEqual(ListingImage.objects.count(), 0)
+        delete_mock.assert_called_with(saved_names[0])
+
+    def test_subscription_max_image_count_is_enforced_before_save(self):
+        Subscription.objects.create(user=self.owner, plan=Plan.BASIC, is_active=True)
+        response = self.post_listing([
+            image_upload('one.jpg'),
+            image_upload('two.jpg'),
+            image_upload('three.jpg'),
+            image_upload('four.jpg'),
+        ])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'allows up to 3 photos')
+        self.assertEqual(Listing.objects.count(), 0)
+
+    def test_repeated_submission_token_does_not_create_duplicate_listing(self):
+        self.client.get(reverse('listings:create'))
+        token = self.client.session['listing_create_token']
+        payload = {**form_data(status='active'), 'create_token': token, 'images': [image_upload()]}
+
+        first_response = self.client.post(reverse('listings:create'), data=payload)
+        second_response = self.client.post(reverse('listings:create'), data={**form_data(status='active'), 'create_token': token, 'images': [image_upload('again.jpg')]})
+
+        self.assertEqual(first_response.status_code, 302)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertContains(second_response, 'already been processed')
+        self.assertEqual(Listing.objects.count(), 1)
+
+    def test_notification_runs_only_after_successful_commit(self):
+        with mock.patch('apps.notifications.services.notify_marketplace_subscribers') as notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.post_listing([image_upload()])
+            self.assertEqual(notify.call_count, 1)
+
+        with mock.patch('apps.notifications.services.notify_marketplace_subscribers') as notify, mock.patch.object(ListingImage._meta.get_field('image').storage, 'save', side_effect=RuntimeError('nope')):
+            self.post_listing([image_upload('second.jpg')])
+            self.assertEqual(notify.call_count, 0)
+
+    def test_video_upload_endpoint_still_rejects_bad_json_as_before(self):
+        response = self.client.post(reverse('listings:create_video_upload'), data=b'{', content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(ListingVideo.objects.count(), 0)
 
 
 class VideoQuotaTests(TestCase):

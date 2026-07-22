@@ -5,8 +5,8 @@ Mobile-first housing marketplace for Tanzania.
 
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 from decouple import config
-import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,13 +118,6 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     "default": dj_database_url.config( 
-#         default=os.getenv("DATABASE_URL"),
-#         conn_max_age=600,
-#     )
-# }
-
 # ─── Auth ─────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_URL = '/accounts/login/'
@@ -169,30 +162,45 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TASK_ALWAYS_EAGER = not bool(config('REDIS_URL', default=''))  # run tasks inline if no Redis
 
-# ─── Cloudinary ───────────────────────────────────────────
+# ─── Cloudinary / Media Storage ───────────────────────────
 import cloudinary
+MEDIA_STORAGE_BACKEND = config('MEDIA_STORAGE_BACKEND', default='').strip().lower()
+USE_CLOUDINARY = env_bool('USE_CLOUDINARY', default=False) or MEDIA_STORAGE_BACKEND == 'cloudinary'
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
+
+if USE_CLOUDINARY and not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
+    raise ImproperlyConfigured('Cloudinary media storage is enabled, but Cloudinary credentials are missing.')
+
 cloudinary.config(
-    cloud_name=config('CLOUDINARY_CLOUD_NAME', default=''),
-    api_key=config('CLOUDINARY_API_KEY', default=''),
-    api_secret=config('CLOUDINARY_API_SECRET', default=''),
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
 )
 
-# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-# Using local storage in development, switch to Cloudinary in production
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
-    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+    "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+    "API_KEY": CLOUDINARY_API_KEY,
+    "API_SECRET": CLOUDINARY_API_SECRET,
 }
 
 # ─── Static & Media ───────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage' if USE_CLOUDINARY else 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+LISTING_IMAGE_MAX_UPLOAD_BYTES = env_int('LISTING_IMAGE_MAX_UPLOAD_BYTES', 10 * 1024 * 1024)
+LISTING_IMAGE_MAX_PIXELS = env_int('LISTING_IMAGE_MAX_PIXELS', 25_000_000)
 
 # ─── Localisation ─────────────────────────────────────────
 LANGUAGE_CODE = 'en'
