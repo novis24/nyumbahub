@@ -1,129 +1,186 @@
 {% extends 'base.html' %}
-{% block page_title %}Profile{% endblock %}
+{% load humanize i18n static %}
+{% block page_title %}{% trans "Profile" %}{% endblock %}
 {% block title %}{{ profile_user.display_name }}{% endblock %}
+{% block topbar %}{% endblock %}
+{% block desktop_sidebar %}{% endblock %}
+{% block main_shell_classes %}min-h-screen bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] lg:pb-8{% endblock %}
 {% block content %}
-<div class="pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-10">
-  <div class="app-page-wide lg:pt-6">
-    <section class="overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-n-100 lg:shadow-sm">
-      <div class="relative h-36 overflow-hidden rounded-b-[2rem] bg-n-100 lg:h-48 lg:rounded-3xl" data-profile-hero>
-        {% for image in profile_background_images %}
-          <img src="{{ image.image.url }}" alt="" class="profile-hero-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
-        {% empty %}
-          <div class="absolute inset-0 bg-gradient-to-br from-p-50 via-white to-n-100"></div>
-        {% endfor %}
-        <div class="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-white/25"></div>
+<div class="mx-auto max-w-5xl px-3 pt-3 sm:px-4 lg:px-8 lg:pt-8">
+  <header class="flex items-center justify-between">
+    <a href="{% url 'core:home' %}" class="flex items-center gap-2">
+      <img src="{% static 'icons/icon-192.png' %}" alt="" class="h-8 w-8 rounded-xl">
+      <span class="font-serif text-xl font-semibold leading-none text-n-900">iSell</span>
+    </a>
+    <div class="flex items-center gap-2">
+      {% include "partials/language_toggle.html" %}
+      <a href="{% url 'notifications:list' %}" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-n-100 bg-white text-n-500 shadow-sm" aria-label="{% trans 'Notifications' %}">
+        <svg class="h-5 w-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"/></svg>
+        {% if unread_notifications_count %}<span class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-p-500 ring-2 ring-white"></span>{% endif %}
+      </a>
+    </div>
+  </header>
 
-        <div class="absolute left-4 right-4 top-4 flex items-center justify-end">
-          <div class="flex items-center gap-3 text-n-500">
-            <a href="{% url 'notifications:list' %}" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm backdrop-blur">
-              <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"/></svg>
-            </a>
-            {% if request.user == profile_user %}
-              <a href="{% url 'accounts:settings' %}" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm backdrop-blur">
-                <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6v.2h-2.8v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1-2-2 .1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H5.6v-2.8h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9L7 8.2l2-2 .1.1a1.7 1.7 0 001.9.3 1.7 1.7 0 001-1.6v-.2h2.8V5a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 00-.3 1.9 1.7 1.7 0 001.6 1h.2V14h-.2a1.7 1.7 0 00-1.6 1z"/></svg>
-              </a>
-            {% endif %}
+  <section class="mt-4">
+    <div class="flex items-center gap-3">
+      <div class="relative shrink-0">
+        {% if profile_user.avatar %}
+          <img src="{{ profile_user.avatar.url }}" alt="" class="h-20 w-20 rounded-full border border-p-100 object-cover shadow-sm">
+        {% else %}
+          <div class="flex h-20 w-20 items-center justify-center rounded-full border border-p-100 bg-p-50 shadow-sm">
+            <span class="text-3xl font-black text-p-700">{{ profile_user.first_name.0|default:profile_user.username.0|upper }}{{ profile_user.last_name.0|upper }}</span>
           </div>
+        {% endif %}
+        {% if profile_user.is_verified %}
+          <span class="absolute -right-1 bottom-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-p-600 text-white shadow-sm">
+            <svg class="h-4 w-4 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.8 8-7 10-4.2-2-7-5.6-7-10V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12l2.2 2.2 4.8-5"/></svg>
+          </span>
+        {% endif %}
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-start gap-2">
+          <div class="min-w-0 flex-1">
+            <h1 class="truncate text-xl font-black leading-tight text-n-900 sm:text-2xl">{{ profile_user.shop_name|default:profile_user.display_name }}</h1>
+            {% if profile_user.shop_location or profile_user.location %}
+              <p class="mt-1 flex items-center gap-1 truncate text-xs font-semibold text-n-500">
+                <svg class="h-3.5 w-3.5 shrink-0 fill-none stroke-p-600" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>
+                {{ profile_user.shop_location|default:profile_user.location }}
+              </p>
+            {% endif %}
+            <div class="mt-2 inline-flex items-center rounded-full bg-p-50 px-3 py-1 text-[11px] font-black text-p-700 ring-1 ring-p-100">{% trans "Verified Seller" %}</div>
+          </div>
+          {% if request.user == profile_user %}
+            <a href="{% url 'accounts:profile_edit' %}" class="shrink-0 rounded-full border border-n-200 bg-white px-3 py-2 text-xs font-black text-n-700 shadow-sm">{% trans "Edit" %}</a>
+          {% endif %}
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="absolute inset-x-0 bottom-0 px-5 pb-5 lg:px-8 lg:pb-7">
-          <div class="flex items-end gap-3 lg:gap-4">
-            <div class="relative flex-shrink-0">
-              {% if profile_user.avatar %}
-                <img src="{{ profile_user.avatar.url }}" alt="" class="h-16 w-16 rounded-full border-4 border-white object-cover shadow-xl lg:h-24 lg:w-24">
+  <section class="mt-5 grid grid-cols-3 divide-x divide-n-100 rounded-[18px] border border-n-100 bg-white py-3 shadow-[0_8px_24px_rgba(15,23,42,.06)]">
+    <div class="px-2 text-center">
+      <svg class="mx-auto h-5 w-5 fill-none stroke-p-600" viewBox="0 0 24 24" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+      <p class="mt-1 text-lg font-black text-n-900">{{ active_listing_count }}</p>
+      <p class="text-[11px] font-semibold text-n-400">{% trans "Listings" %}</p>
+    </div>
+    <div class="px-2 text-center">
+      <svg class="mx-auto h-5 w-5 fill-none stroke-p-600" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.3 6.3a4.5 4.5 0 000 6.4L12 20.4l7.7-7.7a4.5 4.5 0 00-6.4-6.4L12 7.6l-1.3-1.3a4.5 4.5 0 00-6.4 0z"/></svg>
+      <p class="mt-1 text-lg font-black text-n-900">{{ profile_favorites_total }}</p>
+      <p class="text-[11px] font-semibold text-n-400">{% trans "Favorites" %}</p>
+    </div>
+    <div class="px-2 text-center">
+      <svg class="mx-auto h-5 w-5 fill-none stroke-p-600" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p class="mt-1 text-lg font-black text-n-900">{{ profile_views_total }}</p>
+      <p class="text-[11px] font-semibold text-n-400">{% trans "Views" %}</p>
+    </div>
+  </section>
+
+  {% if profile_user.is_provider %}
+    <nav class="no-scrollbar -mx-3 mt-5 flex gap-2 overflow-x-auto px-3 pb-1 sm:-mx-4 sm:px-4" aria-label="{% trans 'Listing categories' %}">
+      <a href="{{ request.path }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black {% if not profile_listing_type %}bg-p-600 text-white{% else %}border border-n-200 bg-white text-n-600{% endif %}"><svg class="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>{% trans "All" %}</a>
+      <a href="?type=rental" class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black {% if profile_listing_type == 'rental' %}bg-p-600 text-white{% else %}border border-n-200 bg-white text-n-600{% endif %}"><svg class="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M3 11l9-7 9 7v9H5v-9"/></svg>{% trans "Rental" %}</a>
+      <a href="?type=rental&q=house" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-n-200 bg-white px-4 py-2 text-xs font-black text-n-600"><svg class="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M3 11l9-7 9 7v9H5v-9"/></svg>{% trans "Houses" %}</a>
+      <a href="?type=rental&q=apartment" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-n-200 bg-white px-4 py-2 text-xs font-black text-n-600"><svg class="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M5 21V4h14v17M9 8h2M13 8h2M9 12h2M13 12h2M9 16h2M13 16h2"/></svg>{% trans "Apartments" %}</a>
+      <a href="?type=rental&q=plot" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-n-200 bg-white px-4 py-2 text-xs font-black text-n-600"><svg class="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4zm0 5l8 4 8-4M4 17l8 4 8-4"/></svg>{% trans "Plots" %}</a>
+    </nav>
+
+    <form method="get" action="{{ request.path }}" class="mt-4 flex items-center gap-2">
+      {% if profile_listing_type %}<input type="hidden" name="type" value="{{ profile_listing_type }}">{% endif %}
+      <div class="relative min-w-0 flex-1">
+        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 fill-none stroke-n-400" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input name="q" value="{{ profile_search_query }}" class="h-11 w-full rounded-full border border-n-200 bg-white pl-9 pr-3 text-sm font-semibold text-n-800 shadow-sm outline-none focus:border-p-500 focus:ring-2 focus:ring-p-100" placeholder="{% trans 'Search listings' %}">
+      </div>
+      <select name="sort" onchange="this.form.submit()" class="h-11 rounded-full border border-n-200 bg-white px-3 text-xs font-black text-n-700 shadow-sm">
+        <option value="">{% trans "Sort" %}</option>
+        <option value="price" {% if profile_sort == 'price' %}selected{% endif %}>{% trans "Price" %}</option>
+        <option value="views" {% if profile_sort == 'views' %}selected{% endif %}>{% trans "Views" %}</option>
+      </select>
+      <button class="relative h-11 rounded-full border border-n-200 bg-white px-3 text-xs font-black text-n-700 shadow-sm" type="submit">
+        {% trans "Filter" %}
+        {% if profile_filters_active %}<span class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-p-500 ring-2 ring-white"></span>{% endif %}
+      </button>
+    </form>
+
+    <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {% for listing in profile_listings %}
+        <article class="overflow-hidden rounded-[18px] border border-n-100 bg-white shadow-[0_6px_20px_rgba(15,23,42,.06)]" x-data="{ saved: {% if listing.id in saved_ids %}true{% else %}false{% endif %}, busy: false }">
+          <div class="relative overflow-hidden">
+            <a href="{{ listing.get_absolute_url }}" class="block">
+              {% if listing.cover_image %}
+                <img src="{{ listing.cover_image.image.url }}" alt="{{ listing.title }}" class="aspect-[4/3] w-full object-cover" loading="lazy">
               {% else %}
-                <div class="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-n-900 shadow-xl lg:h-24 lg:w-24">
-                  <span class="text-2xl font-black text-white lg:text-3xl">{{ profile_user.first_name.0|upper }}{{ profile_user.last_name.0|upper }}</span>
+                <div class="flex aspect-[4/3] w-full items-center justify-center bg-n-100 text-n-300">
+                  <svg class="h-8 w-8 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.5-4.5a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 </div>
               {% endif %}
-              {% if profile_user.is_verified %}<span class="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-p-600 text-white lg:h-8 lg:w-8 lg:border-4"><svg class="h-3.5 w-3.5 stroke-current lg:h-4 lg:w-4" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>{% endif %}
-            </div>
-            <div class="min-w-0 flex-1 pb-2">
-              <h1 class="truncate text-2xl font-black text-n-900 lg:text-3xl">{{ profile_user.shop_name|default:profile_user.display_name }}</h1>
-              <div class="mt-1.5 flex flex-wrap items-center gap-2">
-                <span class="rounded-full border border-p-200 bg-p-50 px-3 py-1 text-xs font-bold text-p-700 lg:px-4 lg:py-1.5 lg:text-sm">{{ profile_user.get_role_display }}</span>
-                {% if profile_user.shop_location or profile_user.location %}<span class="inline-flex items-center gap-1 text-sm font-semibold text-n-500"><svg class="h-4 w-4 stroke-current" viewBox="0 0 24 24"><path d="M12 21s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>{{ profile_user.shop_location|default:profile_user.location }}</span>{% endif %}
-              </div>
-            </div>
-            {% if request.user == profile_user %}
-              <a href="{% url 'accounts:profile_edit' %}" class="mb-3 hidden rounded-2xl bg-p-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-p-700/20 sm:inline-flex">Edit profile</a>
+              <span class="absolute bottom-2 left-2 max-w-[calc(100%-3.5rem)] truncate rounded-full bg-n-950/80 px-2.5 py-1 text-[11px] font-black text-white backdrop-blur">{{ listing.price_per_month }}</span>
+            </a>
+            {% if user.is_authenticated %}
+              <button type="button" @click="if (busy) return; busy = true; fetch('{% url 'listings:toggle_save' listing.id %}', {method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}}).then(response => response.json()).then(data => { saved = data.saved }).finally(() => busy = false)" class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-n-600 shadow-md backdrop-blur" aria-label="{% trans 'Save listing' %}">
+                <svg class="h-4 w-4" :class="saved?'fill-red-500 stroke-red-500':'fill-none stroke-current'" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.3 6.3a4.5 4.5 0 000 6.4L12 20.4l7.7-7.7a4.5 4.5 0 00-6.4-6.4L12 7.6l-1.3-1.3a4.5 4.5 0 00-6.4 0z"/></svg>
+              </button>
             {% endif %}
           </div>
-        </div>
-      </div>
-
-      <div class="-mt-3 px-4 lg:px-8">
-        <div class="relative z-10 grid grid-cols-4 divide-x divide-n-100 rounded-2xl bg-white p-3 text-center shadow-lg shadow-n-900/10 ring-1 ring-n-100 lg:p-4">
-          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8v8H3z"/></svg></div><p class="text-xl font-black text-n-900">{{ active_listing_count }}</p><p class="text-xs font-semibold text-n-500">Active Listings</p></div>
-          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></div><p class="text-xl font-black text-n-900">{{ owner_review_stats.average_rating|floatformat:1 }}</p><p class="text-xs font-semibold text-n-500">Rating</p></div>
-          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg></div><p class="text-xl font-black text-n-900">{{ owner_review_stats.total_reviews }}</p><p class="text-xs font-semibold text-n-500">Reviews</p></div>
-          <div><div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div><p class="text-xl font-black text-n-900">{{ saved_ids|length }}</p><p class="text-xs font-semibold text-n-500">Saved</p></div>
-        </div>
-      </div>
-
-      <div class="px-4 py-5 lg:px-8">
-        {% if profile_user.bio or profile_user.nearby_names %}
-          <div class="mb-4 rounded-3xl border border-n-100 bg-n-50 p-4 text-sm leading-6 text-n-600">
-            {% if profile_user.bio %}<p>{{ profile_user.bio }}</p>{% endif %}
-            {% if profile_user.nearby_names %}<p class="mt-2 font-semibold text-n-700">Near: {{ profile_user.nearby_names }}</p>{% endif %}
+          <div class="relative px-2.5 pb-3 pt-2.5">
+            <div class="flex gap-1.5">
+              <a href="{{ listing.get_absolute_url }}" class="min-w-0 flex-1">
+                <h2 class="truncate text-sm font-black leading-snug text-n-900">{{ listing.title }}</h2>
+                <p class="mt-1 truncate text-[11px] font-semibold text-n-400">
+                  {% if listing.bedrooms %}{{ listing.bedrooms }} bd{% endif %}{% if listing.bathrooms %}{% if listing.bedrooms %} · {% endif %}{{ listing.bathrooms }} ba{% endif %}{% if listing.property_type %}{% if listing.bedrooms or listing.bathrooms %} · {% endif %}{{ listing.get_property_type_display }}{% endif %}
+                </p>
+                <p class="mt-1 flex items-center gap-1 truncate text-[11px] font-semibold text-n-500">
+                  <svg class="h-3.5 w-3.5 shrink-0 fill-none stroke-p-600" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>{{ listing.location }}
+                </p>
+              </a>
+              {% if request.user == profile_user %}
+                <a href="{% url 'listings:edit' listing.slug %}" class="flex h-8 w-7 shrink-0 items-center justify-center rounded-full text-n-400" aria-label="{% trans 'Edit listing' %}">
+                  <svg class="h-5 w-5 fill-current" viewBox="0 0 20 20"><circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+                </a>
+              {% endif %}
+            </div>
+            {% if listing.listing_type == 'sme' %}
+              <button type="button" data-add-to-cart="{{ listing.id }}" class="mt-2 w-full rounded-full bg-p-600 py-2 text-[11px] font-black text-white">{% trans "Add to cart" %}</button>
+            {% endif %}
           </div>
-        {% endif %}
-
-        {% if profile_contact_phone %}
-        <div class="rounded-3xl border border-n-100 bg-white p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-p-50 text-p-700"><svg class="h-6 w-6 stroke-current" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.7.6 2.5a2 2 0 01-.4 2.1L8.1 9.5a16 16 0 006.4 6.4l1.2-1.2a2 2 0 012.1-.4c.8.3 1.6.5 2.5.6a2 2 0 011.7 2z"/></svg></span>
-            <div class="min-w-0 flex-1"><p class="text-xs font-bold text-n-500">Phone</p><p class="truncate text-lg font-black text-n-900">{{ profile_contact_phone }}</p></div>
-            {% if whatsapp_link %}<a href="{{ whatsapp_link }}" class="hidden rounded-2xl border border-p-200 px-5 py-3 text-sm font-bold text-p-700 sm:inline-flex">Message</a>{% endif %}
-            <a href="tel:{{ profile_contact_phone }}" class="rounded-2xl bg-p-700 px-5 py-3 text-sm font-bold text-white">Call</a>
-          </div>
-        </div>
-        {% endif %}
-
-        {% if profile_user.website_url or profile_user.facebook_url or profile_user.instagram_url or profile_user.tiktok_url %}
-          <div class="mt-4 flex flex-wrap gap-2">
-            {% if profile_user.website_url %}<a href="{{ profile_user.website_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Website</a>{% endif %}
-            {% if profile_user.facebook_url %}<a href="{{ profile_user.facebook_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Facebook</a>{% endif %}
-            {% if profile_user.instagram_url %}<a href="{{ profile_user.instagram_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">Instagram</a>{% endif %}
-            {% if profile_user.tiktok_url %}<a href="{{ profile_user.tiktok_url }}" class="rounded-full border border-n-200 px-3 py-2 text-xs font-bold text-n-700">TikTok</a>{% endif %}
-          </div>
-        {% endif %}
-      </div>
+        </article>
+      {% empty %}
+        <div class="col-span-2 rounded-[18px] border border-dashed border-n-200 bg-n-50 p-6 text-center text-sm font-semibold text-n-500 sm:col-span-3 lg:col-span-4">{% trans "No active listings yet." %}</div>
+      {% endfor %}
     </section>
-
-    {% if profile_user.is_provider %}
-      <section class="px-4 pt-2 lg:px-0 lg:pt-6">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-2xl font-black text-n-900">My Listings</h2>
-          {% if request.user == profile_user %}<a href="{% url 'listings:create' %}" class="text-sm font-bold text-p-700">+ Post new listing</a>{% endif %}
-        </div>
-        {% if profile_listings %}
-          <a href="{% url 'listings:provider_gallery' profile_user.id %}" class="flex items-center justify-between rounded-2xl border border-n-100 bg-white p-4 shadow-sm transition hover:border-p-200 hover:bg-p-50/40">
-            <span>
-              <b class="block text-base text-n-900">View listings</b>
-              <span class="mt-1 block text-sm text-n-500">{{ active_listing_count }} active listing{{ active_listing_count|pluralize }} with photos and videos</span>
-            </span>
-            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-p-50 text-p-700">
-              <svg class="h-5 w-5 stroke-current" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-            </span>
-          </a>
-        {% else %}
-          <div class="rounded-3xl border border-n-100 bg-n-50 p-8 text-center text-sm text-n-500">No active listings yet.</div>
-        {% endif %}
-      </section>
-    {% endif %}
-  </div>
+  {% endif %}
 </div>
+
+{% if request.user == profile_user and profile_user.is_provider %}
+  <a href="{% url 'listings:create' %}" class="fixed bottom-[5.2rem] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-p-600 text-white shadow-[0_10px_24px_rgba(22,163,74,.35)] lg:bottom-8 lg:right-8" aria-label="{% trans 'Add Listing' %}">
+    <svg class="h-7 w-7 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
+  </a>
+{% endif %}
 {% endblock %}
-{% block extra_scripts %}
-<script>
-(() => {
-  const slides = [...document.querySelectorAll('.profile-hero-slide')];
-  if (!slides.length) return;
-  let index = 0;
-  const show = () => slides.forEach((slide, i) => slide.style.opacity = i === index ? '1' : '0');
-  show();
-  window.setInterval(() => { index = (index + 1) % slides.length; show(); }, 5000);
-})();
-</script>
+{% block mobile_nav %}
+<nav class="fixed bottom-0 inset-x-0 z-50 bg-white/96 backdrop-blur-xl border-t border-n-100 pb-safe">
+  <div class="grid h-[3.75rem] grid-cols-5">
+    <a href="{% url 'core:home' %}" class="flex flex-col items-center justify-center gap-0.5 text-n-400">
+      <svg class="h-[22px] w-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8v8H5v-8"/></svg>
+      <span class="text-[10px] font-medium">{% trans "Home" %}</span>
+    </a>
+    <a href="{% url 'search:results' %}" class="flex flex-col items-center justify-center gap-0.5 text-n-400">
+      <svg class="h-[22px] w-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <span class="text-[10px] font-medium">{% trans "Search" %}</span>
+    </a>
+    <a href="{% url 'listings:saved' %}" class="flex flex-col items-center justify-center gap-0.5 text-n-400">
+      <svg class="h-[22px] w-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.3 6.3a4.5 4.5 0 000 6.4L12 20.4l7.7-7.7a4.5 4.5 0 00-6.4-6.4L12 7.6l-1.3-1.3a4.5 4.5 0 00-6.4 0z"/></svg>
+      <span class="text-[10px] font-medium">{% trans "Favorites" %}</span>
+    </a>
+    <a href="{% url 'notifications:list' %}" class="relative flex flex-col items-center justify-center gap-0.5 text-n-400">
+      <svg class="h-[22px] w-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"/></svg>
+      {% if unread_notifications_count %}<span class="absolute right-4 top-2 h-2 w-2 rounded-full bg-p-500 ring-2 ring-white"></span>{% endif %}
+      <span class="text-[10px] font-medium">{% trans "Notifications" %}</span>
+    </a>
+    <a href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="flex flex-col items-center justify-center gap-0.5 text-p-600">
+      {% if user.is_authenticated and user.avatar %}<img src="{{ user.avatar.url }}" alt="" class="h-6 w-6 rounded-full object-cover ring-2 ring-p-200">
+      {% else %}<svg class="h-[22px] w-[22px] fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>{% endif %}
+      <span class="{% if user.is_authenticated %}sr-only{% else %}text-[10px] font-medium{% endif %}">{% trans "Profile" %}</span>
+    </a>
+  </div>
+</nav>
 {% endblock %}

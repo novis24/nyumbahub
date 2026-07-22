@@ -16,7 +16,7 @@ from apps.accounts.models import AccountRole, CustomUser, VerificationStatus
 from apps.subscriptions.models import Plan, Subscription, VideoPlanEntitlement
 from apps.listings.services.video_quota import complete_reservation, reserve_video_capacity
 from .forms import ListingForm
-from .models import GlobalVideoStoragePolicy, Listing, ListingImage, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision, ProductCategory
+from .models import GlobalVideoStoragePolicy, HeroGroup, HeroImage, Listing, ListingImage, ListingStatus, ListingType, ListingVideo, ListingVideoStatus, LocationPrecision, ProductCategory
 
 
 def form_data(**overrides):
@@ -248,6 +248,106 @@ class ListingImageUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(ListingVideo.objects.count(), 0)
+
+
+class HeroGroupAdminTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.override = override_settings(
+            MEDIA_ROOT=self.media_root,
+            STORAGES={
+                'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+                'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+            },
+        )
+        self.override.enable()
+        self.admin_user = CustomUser.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='secret',
+            role=AccountRole.ADMIN,
+        )
+        self.client.force_login(self.admin_user)
+
+    def tearDown(self):
+        self.override.disable()
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def hero_image_upload(self, index):
+        return image_upload(f'hero-{index}.jpg')
+
+    def hero_group_payload(self, count, initial=0):
+        data = {
+            'name': 'Homepage heroes',
+            'is_active': 'on',
+            'order': '0',
+            'rotation_seconds': '8',
+            'group_duration_seconds': '40',
+            'eyebrow': '',
+            'headline': '',
+            'subheading': '',
+            'images-TOTAL_FORMS': str(count),
+            'images-INITIAL_FORMS': str(initial),
+            'images-MIN_NUM_FORMS': '0',
+            'images-MAX_NUM_FORMS': '5',
+        }
+        for i in range(count):
+            data[f'images-{i}-alt_text'] = f'Hero {i}'
+            data[f'images-{i}-order'] = str(i)
+            if i < initial:
+                data[f'images-{i}-id'] = ''
+                data[f'images-{i}-group'] = ''
+            data[f'images-{i}-image'] = self.hero_image_upload(i)
+        return data
+
+    def test_add_hero_group_with_five_inline_images_saves(self):
+        response = self.client.post(reverse('admin:listings_herogroup_add'), data=self.hero_group_payload(5), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(HeroGroup.objects.count(), 1)
+        self.assertEqual(HeroImage.objects.count(), 5)
+
+    def test_add_hero_group_with_more_than_five_inline_images_shows_validation_error(self):
+        response = self.client.post(reverse('admin:listings_herogroup_add'), data=self.hero_group_payload(6))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'maximum of five images')
+        self.assertEqual(HeroGroup.objects.count(), 0)
+        self.assertEqual(HeroImage.objects.count(), 0)
+
+    def test_edit_hero_group_with_more_than_five_inline_images_shows_validation_error(self):
+        group = HeroGroup.objects.create(name='Existing heroes')
+        for i in range(5):
+            HeroImage.objects.create(group=group, image=self.hero_image_upload(i), order=i)
+        url = reverse('admin:listings_herogroup_change', args=[group.pk])
+        data = {
+            'name': group.name,
+            'is_active': 'on',
+            'order': '0',
+            'rotation_seconds': '8',
+            'group_duration_seconds': '40',
+            'eyebrow': '',
+            'headline': '',
+            'subheading': '',
+            'images-TOTAL_FORMS': '6',
+            'images-INITIAL_FORMS': '5',
+            'images-MIN_NUM_FORMS': '0',
+            'images-MAX_NUM_FORMS': '5',
+        }
+        for i, hero_image in enumerate(group.images.all()):
+            data[f'images-{i}-id'] = str(hero_image.pk)
+            data[f'images-{i}-group'] = str(group.pk)
+            data[f'images-{i}-alt_text'] = hero_image.alt_text
+            data[f'images-{i}-order'] = str(i)
+        data['images-5-image'] = self.hero_image_upload(5)
+        data['images-5-alt_text'] = 'Extra'
+        data['images-5-order'] = '5'
+
+        response = self.client.post(url, data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'maximum of five images')
+        self.assertEqual(group.images.count(), 5)
 
 
 class VideoQuotaTests(TestCase):

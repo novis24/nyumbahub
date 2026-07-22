@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts.models import AccountRole, CustomUser
+from apps.listings.models import Listing, ListingStatus, ListingType
 
 
 class HomePageTests(TestCase):
@@ -15,6 +16,12 @@ class HomePageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Find spaces that')
         self.assertContains(response, 'data-install-app')
+
+    def test_install_button_is_hidden_by_default(self):
+        response = self.client.get(reverse('core:home'))
+        html = response.content.decode()
+        self.assertIn('data-install-app onclick="installISellApp()" hidden', html)
+        self.assertIn('data-install-fallback hidden', html)
 
     def test_service_worker_controls_the_full_app_scope(self):
         response = self.client.get(reverse('core:service_worker'))
@@ -170,6 +177,57 @@ class BilingualInterfaceTests(TestCase):
         html = response.content.decode()
         self.assertIn('<html lang="sw"', html)
         self.assertIn('Nyumbani', html)
+
+    def test_language_cookie_persists_across_navigation_and_switches_back(self):
+        Listing.objects.create(
+            owner=self.user,
+            listing_type=ListingType.RENTAL,
+            status=ListingStatus.ACTIVE,
+            title='Mikocheni apartment',
+            description='Bright apartment near shops.',
+            price=450000,
+            location='Mikocheni',
+            city='Dar es Salaam',
+            bedrooms=2,
+            bathrooms=1,
+        )
+        response = self.client.post(reverse('set_language'), {'language': 'sw', 'next': reverse('accounts:profile')})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies[settings.LANGUAGE_COOKIE_NAME].value, 'sw')
+
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'sw'
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('accounts:profile'))
+        html = response.content.decode()
+        self.assertIn('<html lang="sw"', html)
+        self.assertIn('Nyumbani', html)
+
+        response = self.client.get(reverse('notifications:list'))
+        html = response.content.decode()
+        self.assertIn('<html lang="sw"', html)
+        self.assertIn('Nyumbani', html)
+
+        response = self.client.post(reverse('set_language'), {'language': 'en', 'next': reverse('accounts:profile')})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies[settings.LANGUAGE_COOKIE_NAME].value, 'en')
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'en'
+        response = self.client.get(reverse('accounts:profile'))
+        html = response.content.decode()
+        self.assertIn('<html lang="en"', html)
+        self.assertIn('Home', html)
+
+    def test_language_sensitive_html_varies_by_accept_language_and_cookie(self):
+        response = self.client.get(reverse('core:home'))
+        vary = {value.strip() for value in response.get('Vary', '').split(',')}
+        self.assertIn('Accept-Language', vary)
+        self.assertIn('Cookie', vary)
+
+    def test_service_worker_does_not_cache_language_specific_html(self):
+        response = self.client.get(reverse('core:service_worker'))
+        body = b''.join(response.streaming_content).decode()
+        self.assertIn("url.pathname.startsWith('/static/')", body)
+        self.assertNotIn("navigate", body)
+        self.assertNotIn("text/html", body)
 
     def test_locale_catalogs_are_compiled_and_have_no_empty_swahili_entries(self):
         locale_dir = Path(settings.LOCALE_PATHS[0]) / 'sw' / 'LC_MESSAGES'

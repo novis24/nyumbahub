@@ -199,6 +199,20 @@ def _render_profile(request, profile_user):
         .prefetch_related('images', 'videos', 'reviews')
         .order_by('-is_featured', '-created_at')
     )
+    search_query = request.GET.get('q', '').strip()
+    listing_type = request.GET.get('type', '').strip()
+    sort = request.GET.get('sort', '').strip()
+    filters_active = bool(search_query or listing_type or sort)
+
+    if search_query:
+        listings = listings.filter(title__icontains=search_query)
+    if listing_type in {'rental', 'sme', 'auto'}:
+        listings = listings.filter(listing_type=listing_type)
+    if sort == 'price':
+        listings = listings.order_by('price')
+    elif sort == 'views':
+        listings = listings.order_by('-views_count')
+
     listing_list = list(listings)
     profile_background_images = []
     for listing in listing_list:
@@ -226,6 +240,8 @@ def _render_profile(request, profile_user):
     if profile_user.whatsapp_phone:
         whatsapp_digits = ''.join(ch for ch in str(profile_user.whatsapp_phone) if ch.isdigit())
         whatsapp_link = f'https://wa.me/{whatsapp_digits}' if whatsapp_digits else ''
+    favorites_total = sum(listing.likes_count for listing in listing_list)
+    views_total = sum(listing.views_count for listing in listing_list)
     return render(request, 'accounts/profile.html', {
         'profile_user': profile_user,
         'profile_listings': listing_list,
@@ -239,6 +255,12 @@ def _render_profile(request, profile_user):
         },
         'recent_reviews': recent_reviews,
         'saved_ids': saved_ids,
+        'profile_search_query': search_query,
+        'profile_listing_type': listing_type,
+        'profile_sort': sort,
+        'profile_filters_active': filters_active,
+        'profile_favorites_total': favorites_total,
+        'profile_views_total': views_total,
     })
 
 

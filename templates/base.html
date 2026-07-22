@@ -1,7 +1,7 @@
 {% load i18n static %}
-{% get_current_language as CURRENT_LANGUAGE %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="{{ CURRENT_LANGUAGE|default:'en' }}" class="h-full">
+<html lang="{{ LANGUAGE_CODE }}" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -196,22 +196,26 @@
   const installButtons = () => document.querySelectorAll('[data-install-app]');
   const installFallbacks = () => document.querySelectorAll('[data-install-fallback]');
   const isIOSDevice = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const canUseInstallPrompt = () => window.isSecureContext;
   const updateInstallControls = () => {
-    const canPrompt = Boolean(deferredInstallPrompt) && !isStandaloneApp();
+    const standalone = isStandaloneApp();
+    const canPrompt = Boolean(deferredInstallPrompt) && canUseInstallPrompt() && !standalone;
     installButtons().forEach(button => {
       button.hidden = !canPrompt;
       button.disabled = !canPrompt;
       button.setAttribute('aria-hidden', canPrompt ? 'false' : 'true');
     });
     installFallbacks().forEach(fallback => {
-      fallback.hidden = canPrompt || isStandaloneApp();
+      fallback.hidden = canPrompt || standalone || !canUseInstallPrompt();
+      if (fallback.hidden) return;
       fallback.textContent = isIOSDevice()
         ? '{% trans "On iPhone or iPad: use Share, then Add to Home Screen." %}'
-        : '{% trans "Install from your browser menu when available." %}';
+        : '{% trans "Install appears only when your browser confirms this app is installable." %}';
     });
   };
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
+    if (!canUseInstallPrompt()) return;
     deferredInstallPrompt = event;
     updateInstallControls();
   });
@@ -233,16 +237,17 @@
     if (isStandaloneApp()) {
       showInstallHelp('{% trans "iSellTZ is already installed on this device." %}'); return;
     }
-    if (deferredInstallPrompt) {
+    if (deferredInstallPrompt && canUseInstallPrompt()) {
       deferredInstallPrompt.prompt();
       await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
       updateInstallControls();
       return;
     }
+    if (!canUseInstallPrompt()) return;
     showInstallHelp(isIOSDevice()
       ? '{% trans "On iPhone or iPad: tap the Share button in Safari, then choose Add to Home Screen. Open the installed app to enable push notifications." %}'
-      : '{% trans "Open your browser menu and choose Install app or Add to Home screen. If it is unavailable, reload the page over HTTPS." %}');
+      : '{% trans "The install button appears only after the browser confirms iSellTZ can be installed." %}');
   };
   updateInstallControls();
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(error=>console.warn('iSellTZ service worker registration failed', error)));

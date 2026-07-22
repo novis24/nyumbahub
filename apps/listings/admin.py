@@ -1,10 +1,26 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
+from django.utils.translation import gettext_lazy as _
 
 from .models import Cart, CartItem, HeroGroup, HeroImage, ListingReview, ProductAttribute, ProductCategory, SMEOrder, SMEOrderItem
 
 
+class HeroImageInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        active_forms = [
+            form
+            for form in self.forms
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False)
+        ]
+        if len(active_forms) > 5:
+            raise ValidationError(_('A hero group can contain a maximum of five images.'))
+
+
 class HeroImageInline(admin.TabularInline):
     model = HeroImage
+    formset = HeroImageInlineFormSet
     extra = 1
     max_num = 5
     fields = ('image', 'alt_text', 'order')

@@ -307,10 +307,12 @@ class HeroImage(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        siblings = HeroImage.objects.filter(group=self.group)
+        if not self.group_id:
+            return
+        siblings = HeroImage.objects.filter(group_id=self.group_id)
         if self.pk:
             siblings = siblings.exclude(pk=self.pk)
-        if self.group_id and siblings.count() >= 5:
+        if siblings.count() >= 5:
             raise ValidationError(_('A hero group can contain a maximum of five images.'))
 
     def save(self, *args, **kwargs):
